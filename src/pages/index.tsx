@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { api } from "@/utils/api";
-import { TeamDropdown } from "@/components/team-dropdown";
 
 function Header() {
   const { data: sessionData } = useSession();
@@ -28,12 +27,9 @@ function Header() {
 export default function Home() {
   const games = api.cfb.games.useQuery({ year: 2025, week: 1 });
 
-  const teams = games.data ? Array.from(new Set(games.data.flatMap((game) => [game.homeTeam, game.awayTeam]))).sort() : null;
-
   return (
     <>
       <Header />
-      { teams && <TeamDropdown teams={teams} /> }
       <main className="min-h-screen w-screen">
         <div className="flex w-full flex-col items-center gap-4 p-4">
           <h2 className="text-xl">Games for Week 1 of 2025</h2>
@@ -45,7 +41,7 @@ export default function Home() {
             <ul className="list-disc">
               {games.data?.map((game) => (
                 <li key={game.id}>
-                  {game.awayTeam} @ {game.homeTeam}
+                  {game.startDate.toLocaleString()} - {game.awayTeam} @ {game.homeTeam}
                 </li>
               ))}
             </ul>

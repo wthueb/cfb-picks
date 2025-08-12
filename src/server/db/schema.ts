@@ -19,11 +19,17 @@ export const posts = createTable(
       .notNull(),
     updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
   }),
-  (t) => [
-    index("created_by_idx").on(t.createdById),
-    index("name_idx").on(t.name),
-  ],
+  (t) => [index("created_by_idx").on(t.createdById), index("name_idx").on(t.name)],
 );
+
+export const teams = createTable("team", (d) => ({
+  id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+  name: d.text({ length: 256 }).notNull(),
+}));
+
+export const teamsRelations = relations(teams, ({ many }) => ({
+  users: many(users),
+}));
 
 export const users = createTable("user", (d) => ({
   id: d
@@ -35,10 +41,12 @@ export const users = createTable("user", (d) => ({
   email: d.text({ length: 255 }).notNull(),
   emailVerified: d.integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
   image: d.text({ length: 255 }),
+  teamId: d.integer({ mode: "number" }).references(() => teams.id),
 }));
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   accounts: many(accounts),
+  team: one(teams, { fields: [users.teamId], references: [teams.id] }),
 }));
 
 export const accounts = createTable(

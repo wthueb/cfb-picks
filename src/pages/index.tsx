@@ -39,11 +39,13 @@ export default function Home() {
             <p className="text-red-500">Error: {games.error.message}</p>
           ) : (
             <ul className="list-disc">
-              {games.data?.map((game) => (
-                <li key={game.id}>
-                  {game.startDate.toLocaleString()} - {game.awayTeam} @ {game.homeTeam}
-                </li>
-              ))}
+              {games.data
+                ? games.data.map((game) => (
+                    <li key={game.id}>
+                      {game.startDate.toLocaleString()} - {game.awayTeam} @ {game.homeTeam}
+                    </li>
+                  ))
+                : null}
             </ul>
           )}
         </div>

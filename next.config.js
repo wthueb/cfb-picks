@@ -18,6 +18,7 @@ const config = {
     defaultLocale: "en",
   },
   transpilePackages: ["next-auth"],
+  output: "standalone",
 };
 
 export default config;

@@ -1,0 +1,21 @@
+services:
+  app:
+    image: cfb-picks
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DATABASE_URL=file:./db.sqlite
+    platform: linux/amd64
+    working_dir: /app
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - DATABASE_URL=file:/config/db.sqlite
+      - CFB_API_KEY=${CFB_API_KEY}
+    volumes:
+      - .:/config
+    ports:
+      - 3000:3000
+

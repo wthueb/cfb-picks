@@ -1,8 +1,18 @@
+import { useEffect, useMemo, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { api } from "@/utils/api";
+import { api, type RouterOutputs } from "@/utils/api";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function Navbar() {
   const { data: sessionData } = useSession();
@@ -21,30 +31,115 @@ function Navbar() {
   );
 }
 
+type Week = RouterOutputs["cfb"]["calendar"][number];
+
+const seasonTypeNames: Record<Week["seasonType"], string> = {
+  regular: "Regular Season",
+  postseason: "Playoffs",
+};
+
+function WeekSelect(props: { onChange: (week: Week) => void }) {
+  const calendar = api.cfb.calendar.useQuery({ year: 2025 });
+
+  const bySeasonType = useMemo(() => {
+    return calendar.data?.reduce(
+      (acc, week) => {
+        acc[week.seasonType] ??= [];
+        acc[week.seasonType].push(week);
+        return acc;
+      },
+      {} as Record<Week["seasonType"], Week[]>,
+    );
+  }, [calendar.data]);
+
+  const [value, setValue] = useState("");
+
+  const now = useMemo(() => new Date(), []);
+
+  useEffect(() => {
+    if (!calendar.data) return;
+
+    const current =
+      calendar.data.find((week) => week.startDate <= now && week.endDate >= now) ??
+      calendar.data[0];
+    if (current) {
+      setValue(current.startDate.toISOString());
+    }
+  }, [calendar.data, now]);
+
+  const selectedWeek = useMemo(() => {
+    if (!calendar.data || !value) return;
+    const week = calendar.data.find((week) => week.startDate.toISOString() === value);
+    if (week) props.onChange(week);
+    return week;
+  }, [calendar.data, value, props]);
+
+  return (
+    <Select value={value} onValueChange={setValue} disabled={!calendar.data}>
+      <SelectTrigger>
+        <SelectValue placeholder="Loading...">
+          {selectedWeek
+            ? `Week ${selectedWeek.week} (${seasonTypeNames[selectedWeek.seasonType]})`
+            : "Select a week"}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {bySeasonType &&
+          Object.entries(bySeasonType).map(([seasonType, weeks]) => (
+            <SelectGroup key={seasonType}>
+              <SelectLabel>
+                {seasonTypeNames[seasonType as keyof typeof seasonTypeNames]}
+              </SelectLabel>
+              {weeks.map((week) => (
+                <SelectItem key={week.startDate.toISOString()} value={week.startDate.toISOString()}>
+                  Week {week.week}
+                  {week.startDate <= now && week.endDate >= now ? " (current)" : ""}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export default function Home() {
-  const games = api.cfb.games.useQuery({ year: 2025, week: 1 });
+  const [week, setWeek] = useState<Week>();
+
+  const games = api.cfb.games.useQuery(
+    { year: week?.season ?? 2025, week: week?.week, seasonType: week?.seasonType },
+    {
+      enabled: !!week,
+    },
+  );
 
   return (
     <>
       <Navbar />
       <main className="min-h-screen w-screen">
         <div className="flex w-full flex-col items-center gap-4 p-4">
-          <h2 className="text-xl">Games for Week 1 of 2025</h2>
-          {games.isLoading ? (
-            <p>Loading...</p>
-          ) : games.isError ? (
-            <p className="text-destructive">Error: {games.error.message}</p>
-          ) : (
-            <ul className="list-disc">
-              {games.data
-                ? games.data.map((game) => (
-                    <li key={game.id}>
-                      {game.startDate.toLocaleString()} - {game.awayTeam} @ {game.homeTeam}
+          <WeekSelect onChange={setWeek} />
+          {games.data ? (
+            <div className="w-full max-w-4xl">
+              {games.data.length === 0 ? (
+                <p>No games found for this week.</p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {games.data.map((game) => (
+                    <li
+                      key={game.id}
+                      className="hover:bg-accent flex justify-between rounded-md border p-2"
+                    >
+                      <span>
+                        {game.awayTeam} at {game.homeTeam}
+                      </span>
+                      <span>{game.startDate.toLocaleString()}</span>
                     </li>
-                  ))
-                : null}
-            </ul>
-          )}
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : null}
         </div>
       </main>
     </>

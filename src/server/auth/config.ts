@@ -1,30 +1,107 @@
+import type { AdapterSession, AdapterUser } from "@auth/core/adapters";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { and, eq, type InferSelectModel } from "drizzle-orm";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-import { db } from "@/server/db";
-import { accounts, sessions, users, verificationTokens } from "@/server/db/schema";
+import { env } from "~/env";
+import { db } from "~/server/db";
+import { accounts, sessions, teams, users, verificationTokens } from "~/server/db/schema";
 
-/**
- * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
- * object and keep type safety.
- *
- * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
- */
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: {
-      id: string;
-      // ...other properties
-      // role: UserRole;
-    } & DefaultSession["user"];
+    user: User;
   }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User extends InferSelectModel<typeof users> {
+    team: InferSelectModel<typeof teams> | null;
+  }
 }
+
+const baseAdapter = DrizzleAdapter(db, {
+  usersTable: users,
+  accountsTable: accounts,
+  sessionsTable: sessions,
+  verificationTokensTable: verificationTokens,
+});
+
+const customAdapter: typeof baseAdapter = {
+  ...baseAdapter,
+
+  async getUser(id): Promise<AdapterUser | null> {
+    const res = await db
+      .select()
+      .from(users)
+      .leftJoin(teams, eq(users.teamId, teams.id))
+      .where(eq(users.id, id))
+      .get();
+
+    if (!res) return null;
+
+    return {
+      ...res.user,
+      team: res.team,
+    };
+  },
+
+  async getUserByEmail(email): Promise<AdapterUser | null> {
+    const res = await db
+      .select()
+      .from(users)
+      .leftJoin(teams, eq(users.teamId, teams.id))
+      .where(eq(users.email, email))
+      .get();
+
+    if (!res) return null;
+
+    return {
+      ...res.user,
+      team: res.team,
+    };
+  },
+
+  async getUserByAccount({ provider, providerAccountId }): Promise<AdapterUser | null> {
+    const res = await db
+      .select()
+      .from(accounts)
+      .innerJoin(users, eq(accounts.userId, users.id))
+      .leftJoin(teams, eq(users.teamId, teams.id))
+      .where(
+        and(eq(accounts.provider, provider), eq(accounts.providerAccountId, providerAccountId)),
+      )
+      .get();
+
+    if (!res) return null;
+
+    return {
+      ...res.user,
+      team: res.team,
+    };
+  },
+
+  async getSessionAndUser(sessionToken): Promise<{
+    session: AdapterSession;
+    user: AdapterUser;
+  } | null> {
+    const res = await db
+      .select()
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .leftJoin(teams, eq(users.teamId, teams.id))
+      .where(eq(sessions.sessionToken, sessionToken))
+      .get();
+
+    if (!res) return null;
+
+    return {
+      session: res.session,
+      user: {
+        ...res.user,
+        team: res.team,
+      },
+    };
+  },
+};
 
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
@@ -34,8 +111,8 @@ declare module "next-auth" {
 export const authConfig = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
     }),
     /**
      * ...add more providers here.
@@ -47,20 +124,6 @@ export const authConfig = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
-    sessionsTable: sessions,
-    verificationTokensTable: verificationTokens,
-  }),
-  callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
-  },
+  adapter: customAdapter,
   trustHost: true,
 } satisfies NextAuthConfig;

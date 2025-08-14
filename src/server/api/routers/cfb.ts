@@ -1,7 +1,7 @@
 import z from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { client } from "@/server/cfb-api";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { client } from "~/server/cfb-api";
 
 export const cfbRouter = createTRPCRouter({
   games: protectedProcedure

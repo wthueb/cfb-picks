@@ -1,4 +1,4 @@
-import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { cfbRouter } from "./routers/cfb";
 
 /**

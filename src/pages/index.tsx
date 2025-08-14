@@ -1,9 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
-import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-import { api, type RouterOutputs } from "@/utils/api";
 import {
   Select,
   SelectContent,
@@ -12,24 +8,8 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-
-function Navbar() {
-  const { data: sessionData } = useSession();
-
-  return (
-    <nav className="bg-card text-card-foreground m-2 flex items-center justify-between gap-4 rounded-md border-1 px-3 py-1">
-      <Link href="/" className="text-2xl">
-        CFB Picks
-      </Link>
-      <div>
-        <Button variant="ghost" onClick={sessionData ? () => void signOut() : () => void signIn()}>
-          {sessionData ? "Sign out" : "Sign in"}
-        </Button>
-      </div>
-    </nav>
-  );
-}
+} from "~/components/ui/select";
+import { api, type RouterOutputs } from "~/utils/api";
 
 type Week = RouterOutputs["cfb"]["calendar"][number];
 
@@ -114,34 +94,29 @@ export default function Home() {
   );
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen w-screen">
-        <div className="flex w-full flex-col items-center gap-4 p-4">
-          <WeekSelect onChange={setWeek} />
-          {games.data ? (
-            <div className="w-full max-w-4xl">
-              {games.data.length === 0 ? (
-                <p>No games found for this week.</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {games.data.map((game) => (
-                    <li
-                      key={game.id}
-                      className="hover:bg-accent flex justify-between rounded-md border p-2"
-                    >
-                      <span>
-                        {game.awayTeam} at {game.homeTeam}
-                      </span>
-                      <span>{game.startDate.toLocaleString()}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ) : null}
+    <div className="flex w-full flex-col items-center gap-4 p-4">
+      <WeekSelect onChange={setWeek} />
+      {games.data ? (
+        <div className="w-full max-w-3xl">
+          {games.data.length === 0 ? (
+            <p>No games found for this week.</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {games.data.map((game) => (
+                <li
+                  key={game.id}
+                  className="hover:bg-accent flex justify-between rounded-md border p-2"
+                >
+                  <span>
+                    {game.awayTeam} at {game.homeTeam}
+                  </span>
+                  <span>{game.startDate.toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      </main>
-    </>
+      ) : null}
+    </div>
   );
 }

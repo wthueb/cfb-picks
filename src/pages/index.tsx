@@ -36,22 +36,25 @@ function WeekSelect(props: { onChange: (week: Week) => void }) {
 
   const now = useMemo(() => new Date(), []);
 
+  // on initial load, set the value to the current week, or the last week if no current week is found
   useEffect(() => {
     if (!calendar.data) return;
 
     const current =
-      calendar.data.find((week) => week.startDate <= now && week.endDate >= now) ??
-      calendar.data[0];
+      calendar.data.find((week) => week.endDate >= now) ?? calendar.data[calendar.data.length - 1];
+
     if (current) {
       setValue(current.startDate.toISOString());
     }
   }, [calendar.data, now]);
 
-  const selectedWeek = useMemo(() => {
+  const [selectedWeek, setSelectedWeek] = useState<Week | null>(null);
+
+  useEffect(() => {
     if (!calendar.data || !value) return;
     const week = calendar.data.find((week) => week.startDate.toISOString() === value);
     if (week) props.onChange(week);
-    return week;
+    setSelectedWeek(week ?? null);
   }, [calendar.data, value, props]);
 
   return (

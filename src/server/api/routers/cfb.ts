@@ -1,7 +1,76 @@
+import { RunCache } from "run-cache";
 import z from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { client } from "~/server/cfb-api";
+import type { operations } from "~/server/cfb-api/schema";
+
+async function getGamesForYear(year: number) {
+  const cached = await RunCache.get(`cfb-games-${year}`);
+
+  if (cached) {
+    return JSON.parse(
+      cached as string,
+    ) as operations["GetGames"]["responses"]["200"]["content"]["application/json"];
+  }
+
+  const res = await client.GET("/games", { params: { query: { year } } });
+
+  if (res.error) {
+    throw new Error(res);
+  }
+
+  await RunCache.set({
+    key: `cfb-games-${year}`,
+    value: JSON.stringify(res.data),
+    ttl: 1000 * 60 * 60, // 1 hr
+  });
+
+  return res.data;
+}
+
+async function getLinesForYear(year: number) {
+  const cached = await RunCache.get(`cfb-lines-${year}`);
+
+  if (cached) {
+    return JSON.parse(
+      cached as string,
+    ) as operations["GetLines"]["responses"]["200"]["content"]["application/json"];
+  }
+
+  const res = await client.GET("/lines", { params: { query: { year } } });
+
+  if (res.error) {
+    throw new Error(res);
+  }
+
+  await RunCache.set({
+    key: `cfb-lines-${year}`,
+    value: JSON.stringify(res.data),
+    ttl: 1000 * 60 * 30, // 30 min
+  });
+
+  return res.data;
+}
+
+async function getCalendarForYear(year: number) {
+  const cached = await RunCache.get(`cfb-calendar-${year}`);
+  if (cached) {
+    return JSON.parse(
+      cached as string,
+    ) as operations["GetCalendar"]["responses"]["200"]["content"]["application/json"];
+  }
+  const res = await client.GET("/calendar", { params: { query: { year } } });
+  if (res.error) {
+    throw new Error(res);
+  }
+  await RunCache.set({
+    key: `cfb-calendar-${year}`,
+    value: JSON.stringify(res.data),
+    ttl: 1000 * 60 * 60 * 6, // 6 hr
+  });
+  return res.data;
+}
 
 export const cfbRouter = createTRPCRouter({
   games: protectedProcedure
@@ -13,19 +82,16 @@ export const cfbRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data, error } = await client.GET("/games", { params: { query: input } });
-
-      if (error) {
-        throw new Error(error);
-      }
-
-      return data
+      const gamesForYear = await getGamesForYear(input.year);
+      return gamesForYear
         .filter(
           (game) =>
-            game.homeClassification === "fbs" ||
-            game.awayClassification === "fbs" ||
-            game.homeClassification === "fcs" ||
-            game.awayClassification === "fcs",
+            (!input.week || game.week === input.week) &&
+            (!input.seasonType || game.seasonType === input.seasonType) &&
+            (game.homeClassification === "fbs" ||
+              game.awayClassification === "fbs" ||
+              game.homeClassification === "fcs" ||
+              game.awayClassification === "fcs"),
         )
         .map((game) => ({ ...game, startDate: new Date(game.startDate) }))
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
@@ -39,19 +105,16 @@ export const cfbRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data, error } = await client.GET("/lines", { params: { query: input } });
+      const linesForYear = await getLinesForYear(input.year);
 
-      if (error) {
-        throw new Error(error);
-      }
-
-      return data
+      return linesForYear
         .filter(
           (line) =>
-            line.homeClassification === "fbs" ||
-            line.awayClassification === "fbs" ||
-            line.homeClassification === "fcs" ||
-            line.awayClassification === "fcs",
+            (!input.week || line.week === input.week) &&
+            (line.homeClassification === "fbs" ||
+              line.awayClassification === "fbs" ||
+              line.homeClassification === "fcs" ||
+              line.awayClassification === "fcs"),
         )
         .map((line) => ({ ...line, startDate: new Date(line.startDate) }))
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
@@ -64,11 +127,7 @@ export const cfbRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data, error } = await client.GET("/calendar", { params: { query: input } });
-
-      if (error) {
-        throw new Error(error);
-      }
+      const data = await getCalendarForYear(input.year);
 
       const normalWeeks = data.filter(
         (week) => week.seasonType === "regular" || week.seasonType === "postseason",

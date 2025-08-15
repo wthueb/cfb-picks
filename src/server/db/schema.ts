@@ -4,6 +4,39 @@ import { index, primaryKey, sqliteTableCreator } from "drizzle-orm/sqlite-core";
 
 export const createTable = sqliteTableCreator((name) => `cfb-picks_${name}`);
 
+export const pickTypes = [
+  "1Q_OVER",
+  "1H_OVER",
+  "FULL_OVER",
+  "1Q_UNDER",
+  "1H_UNDER",
+  "FULL_UNDER",
+  "1Q_TT",
+  "1H_TT",
+  "FULL_TT",
+  "SPREAD",
+] as const;
+
+export const picks = createTable("pick", (d) => ({
+  id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+  userId: d
+    .text({ length: 255 })
+    .notNull()
+    .references(() => users.id),
+  season: d.integer({ mode: "number" }).notNull(),
+  week: d.integer({ mode: "number" }).notNull(),
+  gameId: d.text({ length: 255 }).notNull(),
+  pickType: d.text({ enum: pickTypes }).notNull(),
+  total: d.real(),
+  spread: d.real(),
+  cfbTeamId: d.integer({ mode: "number" }),
+  createdAt: d.integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
+}));
+
+export const picksRelations = relations(picks, ({ one }) => ({
+  user: one(users, { fields: [picks.userId], references: [users.id] }),
+}));
+
 export const teams = createTable("team", (d) => ({
   id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   name: d.text({ length: 256 }).notNull(),

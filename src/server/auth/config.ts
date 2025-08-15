@@ -10,7 +10,7 @@ import { accounts, sessions, teams, users, verificationTokens } from "~/server/d
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: User;
+    user: User & { id: string };
   }
 
   interface User extends InferSelectModel<typeof users> {

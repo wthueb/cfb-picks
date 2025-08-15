@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -13,9 +13,15 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 
-export function TeamDropdown({ teams }: { teams: string[] }) {
+export function TeamDropdown(props: { teams: string[]; onChange: (team: string) => void }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (value) {
+      props.onChange(value);
+    }
+  }, [value, props]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -26,7 +32,7 @@ export function TeamDropdown({ teams }: { teams: string[] }) {
           aria-expanded={open}
           className="w-[200px] justify-between"
         >
-          {value ? teams.find((team) => team === value) : "Select team..."}
+          {value ? props.teams.find((team) => team === value) : "Select team..."}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -36,7 +42,7 @@ export function TeamDropdown({ teams }: { teams: string[] }) {
           <CommandList>
             <CommandEmpty>No team found.</CommandEmpty>
             <CommandGroup>
-              {teams.map((team) => (
+              {props.teams.map((team) => (
                 <CommandItem
                   key={team}
                   value={team}

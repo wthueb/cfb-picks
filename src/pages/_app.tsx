@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { api } from "~/utils/api";
 
+import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
 
 const inter = Inter({
@@ -41,11 +42,19 @@ const CFBPicks: AppType<{ session: Session | null }> = ({
         <title>CFB Picks</title>
       </Head>
       <SessionProvider session={session}>
-        <div className={inter.className}>
+        <div className={cn(inter.className, "flex min-h-screen w-screen min-w-[360px] flex-col")}>
           <Nav />
-          <main className="min-h-screen w-screen">
+          <main className="flex-1">
             <Component {...pageProps} />
           </main>
+          <footer className="text-muted-foreground m-2 text-center text-xs">
+            <span>
+              Made by{" "}
+              <a href="https://wthueb.dev" target="_blank" className="underline">
+                wthueb.dev
+              </a>
+            </span>
+          </footer>
         </div>
       </SessionProvider>
     </>

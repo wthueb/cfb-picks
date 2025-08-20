@@ -19,7 +19,7 @@ const seasonTypeNames: Record<Week["seasonType"], string> = {
   postseason: "Playoffs",
 };
 
-export function WeekSelect(props: { onChange: (week: Week) => void }) {
+export function WeekSelect(props: { onChange: (week: Week) => void; className?: string }) {
   const calendar = api.cfb.calendar.useQuery({ year: 2025 });
 
   const bySeasonType = useMemo(() => {
@@ -60,7 +60,7 @@ export function WeekSelect(props: { onChange: (week: Week) => void }) {
 
   return (
     <Select value={value} onValueChange={setValue} disabled={!calendar.data}>
-      <SelectTrigger>
+      <SelectTrigger className={props.className}>
         <SelectValue placeholder="Loading...">
           {selectedWeek
             ? `Week ${selectedWeek.week} (${seasonTypeNames[selectedWeek.seasonType]})`

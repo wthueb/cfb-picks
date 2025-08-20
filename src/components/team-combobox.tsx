@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -13,30 +13,19 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 
-export function TeamDropdown(props: { teams: string[]; onChange: (team: string) => void }) {
+export function TeamCombobox(props: { teams: string[]; onChange: (team: string | null) => void }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
-
-  useEffect(() => {
-    if (value) {
-      props.onChange(value);
-    }
-  }, [value, props]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-[200px] justify-between"
-        >
+        <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between">
           {value ? props.teams.find((team) => team === value) : "Select team..."}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="p-0">
         <Command>
           <CommandInput placeholder="Search team..." className="h-9" />
           <CommandList>
@@ -46,8 +35,14 @@ export function TeamDropdown(props: { teams: string[]; onChange: (team: string) 
                 <CommandItem
                   key={team}
                   value={team}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue);
+                  onSelect={() => {
+                    if (team !== value) {
+                      props.onChange(team);
+                      setValue(team);
+                    } else {
+                      props.onChange(null);
+                      setValue("");
+                    }
                     setOpen(false);
                   }}
                 >

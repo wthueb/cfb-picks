@@ -1,17 +1,19 @@
-import { and, eq, type InferInsertModel } from "drizzle-orm";
+import { and, eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 import z from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { picks, pickTypes, teams, users } from "~/server/db/schema";
+import type { RouterInputs } from "~/utils/api";
 
+type OverUnderPickType = Extract<(typeof pickTypes)[number], `${string}_OVER` | `${string}_UNDER`>;
 const overUnderPickTypes = pickTypes.filter(
   (type) => type.endsWith("OVER") || type.endsWith("UNDER"),
-) as Extract<(typeof pickTypes)[number], `${string}_OVER` | `${string}_UNDER`>[];
+) as OverUnderPickType[];
 
-const teamTotalPickTypes = pickTypes.filter((type) => type.endsWith("TT")) as Extract<
-  (typeof pickTypes)[number],
-  `${string}_TT`
->[];
+type TeamTotalPickType = Extract<(typeof pickTypes)[number], `${string}_TT`>;
+const teamTotalPickTypes = pickTypes.filter((type) => type.endsWith("TT")) as TeamTotalPickType[];
+
+export type Pick = { id: number } & RouterInputs["picks"]["makePick"];
 
 export const picksRouter = createTRPCRouter({
   selfPicks: protectedProcedure
@@ -23,22 +25,36 @@ export const picksRouter = createTRPCRouter({
         }),
       ),
     )
-    .query(async ({ input, ctx }) => {
-      const res = await ctx.db
-        .select()
-        .from(picks)
-        .innerJoin(users, eq(picks.userId, users.id))
-        .leftJoin(teams, eq(users.teamId, teams.id))
-        .where(
-          and(
-            eq(picks.userId, ctx.session.user.id),
-            input ? eq(picks.season, input.season) : undefined,
-            input?.week ? eq(picks.week, input.week) : undefined,
-          ),
-        );
+    .query(
+      async ({
+        input,
+        ctx,
+      }): Promise<
+        {
+          pick: Pick;
+          user: InferSelectModel<typeof users>;
+          team: InferSelectModel<typeof teams>;
+        }[]
+      > => {
+        const res = await ctx.db
+          .select()
+          .from(picks)
+          .innerJoin(users, eq(picks.userId, users.id))
+          .innerJoin(teams, eq(users.teamId, teams.id))
+          .where(
+            and(
+              eq(picks.userId, ctx.session.user.id),
+              input ? eq(picks.season, input.season) : undefined,
+              input?.week ? eq(picks.week, input.week) : undefined,
+            ),
+          );
 
-      return res;
-    }),
+        return res.map((r) => ({
+          ...r,
+          pick: r.pick as Pick,
+        }));
+      },
+    ),
 
   makePick: protectedProcedure
     .input(

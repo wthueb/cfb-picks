@@ -1,3 +1,4 @@
+import type { GetServerSidePropsContext } from "next";
 import { useState } from "react";
 import { GameCombobox } from "~/components/game-combobox";
 import { PickTypeSelect } from "~/components/pick-type-select";
@@ -16,6 +17,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { WeekSelect, type Week } from "~/components/week-select";
 import type { Pick } from "~/server/api/routers/picks";
+import { auth } from "~/server/auth";
 import { api } from "~/utils/api";
 
 function PickItem(props: { pick: Pick }) {
@@ -125,4 +127,19 @@ export default function Home() {
       )*/}
     </div>
   );
+}
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const session = await auth(ctx);
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/api/auth/signin",
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: {} };
 }

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { api } from "~/utils/api";
 
+import { Skeleton } from "~/components/ui/skeleton";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
 
@@ -16,7 +17,7 @@ const inter = Inter({
 });
 
 function Nav() {
-  const { data: sessionData } = useSession();
+  const session = useSession();
 
   return (
     <nav className="bg-card text-card-foreground m-2 flex items-center justify-between gap-4 rounded-md border-1 px-3 py-1">
@@ -24,11 +25,34 @@ function Nav() {
         CFB Picks
       </Link>
       <div>
-        <Button variant="ghost" onClick={sessionData ? () => void signOut() : () => void signIn()}>
-          {sessionData ? "Sign out" : "Sign in"}
-        </Button>
+        {session.status === "loading" ? (
+          <Skeleton className="h-9 w-[8ch]" />
+        ) : (
+          <Button variant="ghost" onClick={session.data ? () => signOut() : () => signIn()}>
+            {session.data ? "Sign out" : "Sign in"}
+          </Button>
+        )}
       </div>
     </nav>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="bg-muted text-muted-foreground flex justify-between p-2 text-xs">
+      <span>
+        by{" "}
+        <a href="https://wthueb.dev" target="_blank" className="underline">
+          wthueb.dev
+        </a>
+      </span>
+      <span>
+        data from{" "}
+        <a href="https://collegefootballdata.com" target="_blank" className="underline">
+          collegefootballdata.com
+        </a>
+      </span>
+    </footer>
   );
 }
 
@@ -47,14 +71,7 @@ const CFBPicks: AppType<{ session: Session | null }> = ({
           <main className="flex-1">
             <Component {...pageProps} />
           </main>
-          <footer className="text-muted-foreground m-2 text-center text-xs">
-            <span>
-              Made by{" "}
-              <a href="https://wthueb.dev" target="_blank" className="underline">
-                wthueb.dev
-              </a>
-            </span>
-          </footer>
+          <Footer />
         </div>
       </SessionProvider>
     </>

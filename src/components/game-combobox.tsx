@@ -21,14 +21,10 @@ export function GameCombobox(props: {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 
-  const games = props.games
-    .map((game) => ({
-      ...game,
-      label: `${game.awayTeam} @ ${game.homeTeam}`,
-    }))
-    .sort((a, b) => {
-      return a.label.localeCompare(b.label);
-    });
+  const games = props.games.map((game) => ({
+    ...game,
+    label: `${game.awayTeam} @ ${game.homeTeam}`,
+  }));
 
   const selectedGame = props.games.find((game) => game.id.toString() === value) ?? null;
 

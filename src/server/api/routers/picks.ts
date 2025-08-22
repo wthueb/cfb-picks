@@ -3,6 +3,7 @@ import z from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { durations, picks, teams, users } from "~/server/db/schema";
 import type { RouterInputs } from "~/utils/api";
+import { gameLocked } from "~/utils/dates";
 import { getGameById } from "./cfb";
 
 export type Pick = { id: number } & RouterInputs["picks"]["makePick"];
@@ -143,7 +144,7 @@ export const picksRouter = createTRPCRouter({
       throw new Error("Game not found for the pick");
     }
 
-    if (new Date(game.startDate) < new Date()) {
+    if (gameLocked(new Date(game.startDate))) {
       throw new Error("Cannot delete a pick for a game that has already started");
     }
 

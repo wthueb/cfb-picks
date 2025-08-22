@@ -43,10 +43,6 @@ export function AddPickDialog(
     },
     {
       enabled: !!props.week,
-      select: (data) => {
-        const now = new Date();
-        return data.filter((game) => game.startDate > now);
-      },
     },
   );
 

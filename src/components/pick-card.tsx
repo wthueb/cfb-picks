@@ -21,6 +21,7 @@ import {
 import { Skeleton } from "~/components/ui/skeleton";
 import type { Pick } from "~/server/api/routers/picks";
 import { api } from "~/utils/api";
+import { gameLocked } from "~/utils/dates";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
@@ -43,8 +44,6 @@ export function PickCard(props: { pick: Pick; num: number }) {
         ? game.data?.homeTeam
         : game.data?.awayTeam
       : undefined;
-
-  const now = new Date();
 
   return (
     <Card>
@@ -78,7 +77,7 @@ export function PickCard(props: { pick: Pick; num: number }) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          disabled={game.data.startDate <= now}
+                          disabled={gameLocked(game.data.startDate)}
                           className="text-destructive"
                         >
                           <Trash2 />
@@ -104,7 +103,7 @@ export function PickCard(props: { pick: Pick; num: number }) {
                     </AlertDialog>
                   </div>
                 </TooltipTrigger>
-                {game.data && game.data.startDate < now && (
+                {game.data && gameLocked(game.data.startDate) && (
                   <TooltipContent side="left" className="bg-accent">
                     <p className="text-accent-foreground text-sm">Game has already started.</p>
                   </TooltipContent>

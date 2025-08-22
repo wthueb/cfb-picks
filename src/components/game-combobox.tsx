@@ -12,6 +12,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/utils/api";
+import { gameLocked } from "~/utils/dates";
 
 export function GameCombobox(props: {
   games: RouterOutputs["cfb"]["games"];
@@ -45,6 +46,7 @@ export function GameCombobox(props: {
                 <CommandItem
                   key={game.id}
                   value={game.label}
+                  disabled={gameLocked(game.startDate)}
                   onSelect={() => {
                     if (game.id.toString() !== value) {
                       props.onChange(game);

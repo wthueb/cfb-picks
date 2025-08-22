@@ -15,7 +15,6 @@ import {
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
@@ -46,8 +45,6 @@ export function PickCard(props: { pick: Pick; num: number }) {
       : undefined;
 
   const now = new Date();
-
-  const pickTypeClean = props.pick.pickType.replace(/_/g, " ");
 
   return (
     <Card>
@@ -120,15 +117,17 @@ export function PickCard(props: { pick: Pick; num: number }) {
       <CardContent>
         <span>
           {props.pick.pickType === "SPREAD"
-            ? `${pickTypeClean}: ${team} @ ${props.pick.spread > 0 ? "+" : ""}${props.pick.spread} (${props.pick.odds > 0 ? "+" : ""}${props.pick.odds}${props.pick.double ? " x2" : ""})`
-            : props.pick.pickType.includes("_TT_")
-              ? `${pickTypeClean}: ${team} @ ${props.pick.total} (${props.pick.odds > 0 ? "+" : ""}${props.pick.odds}${props.pick.double ? " x2" : ""})`
-              : props.pick.pickType.endsWith("_OVER") || props.pick.pickType.endsWith("_UNDER")
-                ? `${pickTypeClean}: ${props.pick.total} (${props.pick.odds > 0 ? "+" : ""}${props.pick.odds}${props.pick.double ? " x2" : ""})`
-                : null}
+            ? `${team} ${props.pick.spread > 0 ? "+" : ""}${props.pick.spread}`
+            : props.pick.pickType === "MONEYLINE"
+              ? `${team} ML`
+              : props.pick.pickType.startsWith("TT_")
+                ? `${team} Team Total ${props.pick.pickType.endsWith("OVER") ? "o" : "u"}${props.pick.total}`
+                : `${props.pick.pickType === "OVER" ? "o" : "u"}${props.pick.total}`}
+          {props.pick.duration !== "FULL" && ` (${props.pick.duration}) `}
+          {` (${props.pick.odds > 0 ? "+" : ""}${props.pick.odds})${props.pick.double ? " (2u)" : ""}`}
         </span>
       </CardContent>
-      <CardFooter>current score</CardFooter>
+      {/*<CardFooter>current score</CardFooter>*/}
     </Card>
   );
 }

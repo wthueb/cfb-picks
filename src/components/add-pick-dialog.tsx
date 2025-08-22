@@ -1,7 +1,7 @@
-import { useImperativeHandle, useState } from "react";
+import { useEffect, useImperativeHandle, useState } from "react";
 import type { Week } from "~/server/api/routers/cfb";
-import type { OverUnderPickType, PickType, TeamTotalPickType } from "~/server/api/routers/picks";
-import { pickTypes } from "~/server/db/schema";
+import type { OverUnderPickType, TeamTotalPickType } from "~/server/api/routers/picks";
+import { durations, pickTypes, type Duration, type PickType } from "~/server/db/schema";
 import { api } from "~/utils/api";
 import { GameCombobox } from "./game-combobox";
 import { GenericSelect } from "./generic-select";
@@ -61,21 +61,24 @@ export function AddPickDialog(
   const [open, setOpen] = useState(false);
 
   const [game, setGame] = useState<NonNullable<typeof games.data>[number] | null>(null);
-  const [pickType, setPickType] = useState<PickType>("SPREAD");
+  const [pickType, setPickType] = useState<PickType>("MONEYLINE");
+  const [duration, setDuration] = useState<Duration>("FULL");
   const [odds, setOdds] = useState<number | null>(null);
   const [double, setDouble] = useState<boolean>(false);
   const [team, setTeam] = useState<number | null>(null);
   const [total, setTotal] = useState<number | null>(null);
   const [spread, setSpread] = useState<number | null>(null);
 
-  const pickTypeSelectItems = pickTypes.map((type) => ({
-    value: type,
-    display: type.replace(/_/g, " "),
-  }));
+  useEffect(() => {
+    if (game) {
+      setTeam(game.homeId);
+    }
+  }, [game]);
 
   const clear = () => {
     setGame(null);
     setPickType("SPREAD");
+    setDuration("FULL");
     setTotal(null);
     setTeam(null);
     setSpread(null);
@@ -105,12 +108,28 @@ export function AddPickDialog(
         week: props.week.week,
         gameId: game.id,
         pickType,
+        duration,
         odds,
         double,
         cfbTeamId: team,
         spread,
       });
-    } else if (pickType.includes("_TT_")) {
+    } else if (pickType === "MONEYLINE") {
+      if (!team) {
+        console.error("Team is required for MONEYLINE pick type.");
+        return;
+      }
+      makePick.mutate({
+        season: props.week.season,
+        week: props.week.week,
+        gameId: game.id,
+        pickType,
+        duration,
+        odds,
+        double,
+        cfbTeamId: team,
+      });
+    } else if (pickType.startsWith("TT_")) {
       if (!team) {
         console.error("Team is required for team total pick type.");
         return;
@@ -124,6 +143,7 @@ export function AddPickDialog(
         week: props.week.week,
         gameId: game.id,
         pickType: pickType as TeamTotalPickType,
+        duration,
         odds,
         double,
         cfbTeamId: team,
@@ -139,12 +159,19 @@ export function AddPickDialog(
         week: props.week.week,
         gameId: game.id,
         pickType: pickType as OverUnderPickType,
+        duration,
         odds,
         double,
         total,
       });
     }
   };
+
+  const pickTypeSelectItems = pickTypes.map((type) => ({
+    value: type,
+    display: type.replace(/_/g, " "),
+  }));
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
@@ -175,8 +202,8 @@ export function AddPickDialog(
                     className="w-[130px]"
                   />
                 </div>
-                {(pickType.endsWith("_OVER") || pickType.endsWith("_UNDER")) &&
-                  !pickType.includes("_TT_") && (
+                {(pickType.endsWith("OVER") || pickType.endsWith("UNDER")) &&
+                  !pickType.startsWith("TT_") && (
                     <>
                       <div className="flex flex-1 flex-col gap-4">
                         <Label>Total</Label>
@@ -191,8 +218,8 @@ export function AddPickDialog(
                       </div>
                     </>
                   )}
-                {(pickType.endsWith("_OVER") || pickType.endsWith("_UNDER")) &&
-                  pickType.includes("_TT_") && (
+                {(pickType.endsWith("OVER") || pickType.endsWith("UNDER")) &&
+                  pickType.startsWith("TT_") && (
                     <>
                       <div className="flex flex-1 flex-col gap-4">
                         <Label>Team</Label>
@@ -216,7 +243,7 @@ export function AddPickDialog(
                       </div>
                     </>
                   )}
-                {pickType === "SPREAD" && (
+                {(pickType === "SPREAD" || pickType === "MONEYLINE") && (
                   <>
                     <div className="flex flex-1 flex-col gap-4">
                       <Label>Team</Label>
@@ -227,16 +254,18 @@ export function AddPickDialog(
                         className="w-full"
                       />
                     </div>
-                    <div className="flex flex-col gap-4">
-                      <Label>Spread</Label>
-                      <Input
-                        type="number"
-                        placeholder="+/- number"
-                        step={0.5}
-                        onChange={(e) => setSpread(parseFloat(e.target.value))}
-                        className="w-[130px]"
-                      />
-                    </div>
+                    {pickType === "SPREAD" && (
+                      <div className="flex flex-col gap-4">
+                        <Label>Spread</Label>
+                        <Input
+                          type="number"
+                          placeholder="+/- number"
+                          step={0.5}
+                          onChange={(e) => setSpread(parseFloat(e.target.value))}
+                          className="w-[130px]"
+                        />
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -245,6 +274,10 @@ export function AddPickDialog(
             <Skeleton className="h-16.5 w-full" />
           )}
           <div className="flex items-center justify-evenly gap-4">
+            <div className="flex gap-4">
+              <Label>Duration</Label>
+              <GenericSelect items={durations} defaultValue="FULL" onChange={setDuration} />
+            </div>
             <div className="flex gap-4">
               <Label htmlFor="odds">Odds</Label>
               <Input

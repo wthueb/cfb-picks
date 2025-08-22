@@ -1,25 +1,16 @@
 import { and, eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 import z from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { picks, pickTypes, teams, users } from "~/server/db/schema";
+import { durations, picks, teams, users } from "~/server/db/schema";
 import type { RouterInputs } from "~/utils/api";
 
-export type PickType = (typeof pickTypes)[number];
-
-export type TeamTotalPickType = Extract<PickType, `${string}_TT_${"OVER" | "UNDER"}`>;
-const teamTotalPickTypes = pickTypes.filter(
-  (type) => type.endsWith("TT_OVER") || type.endsWith("TT_UNDER"),
-) as TeamTotalPickType[];
-
-export type OverUnderPickType = Exclude<
-  Extract<PickType, `${string}_OVER` | `${string}_UNDER`>,
-  TeamTotalPickType
->;
-const overUnderPickTypes = pickTypes.filter(
-  (type) => (type.endsWith("_OVER") || type.endsWith("_UNDER")) && !type.includes("_TT_"),
-) as OverUnderPickType[];
-
 export type Pick = { id: number } & RouterInputs["picks"]["makePick"];
+
+const teamTotalPickTypes = ["TT_OVER", "TT_UNDER"] as const;
+const overUnderPickTypes = ["OVER", "UNDER"] as const;
+
+export type TeamTotalPickType = (typeof teamTotalPickTypes)[number];
+export type OverUnderPickType = (typeof overUnderPickTypes)[number];
 
 export const picksRouter = createTRPCRouter({
   selfPicks: protectedProcedure
@@ -69,6 +60,7 @@ export const picksRouter = createTRPCRouter({
           season: z.number().min(2000).max(new Date().getFullYear()),
           week: z.number().min(1).max(52),
           gameId: z.number(),
+          duration: z.enum(durations),
           odds: z.number(),
           double: z.boolean(),
         }),
@@ -85,6 +77,10 @@ export const picksRouter = createTRPCRouter({
           z.object({
             pickType: z.literal("SPREAD"),
             spread: z.number(),
+            cfbTeamId: z.number(),
+          }),
+          z.object({
+            pickType: z.literal("MONEYLINE"),
             cfbTeamId: z.number(),
           }),
         ]),
@@ -112,6 +108,7 @@ export const picksRouter = createTRPCRouter({
         week: input.week,
         gameId: input.gameId,
         pickType: input.pickType,
+        duration: input.duration,
         odds: input.odds,
         double: input.double,
         total: "total" in input ? input.total : null,

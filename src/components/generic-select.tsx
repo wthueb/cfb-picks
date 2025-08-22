@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
+type GenericSelectItemWithDisplay<T extends string> = { value: T; display: string };
+
 export function GenericSelect<T extends string>(props: {
-  items: readonly (T | { value: T; display: string })[];
+  items: readonly (T | GenericSelectItemWithDisplay<T>)[];
   defaultValue: NoInfer<T>;
   onChange: (value: T) => void;
-  placeholder?: string;
   className?: string;
 }) {
   const [value, setValue] = useState<T>(props.defaultValue);
+
+  useEffect(() => {
+    setValue(props.defaultValue);
+  }, [props.defaultValue]);
+
+  const displayString =
+    typeof props.items[0] === "string"
+      ? value
+      : (props.items as GenericSelectItemWithDisplay<T>[]).find((item) => item.value === value)!
+          .display;
 
   return (
     <Select
@@ -19,7 +30,7 @@ export function GenericSelect<T extends string>(props: {
       }}
     >
       <SelectTrigger className={props.className}>
-        <SelectValue>{value || props.placeholder}</SelectValue>
+        <SelectValue>{displayString}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {props.items.map((item) =>

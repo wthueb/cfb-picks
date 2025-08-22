@@ -4,12 +4,11 @@ import { type AppType } from "next/app";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import Link from "next/link";
-
 import { Button } from "~/components/ui/button";
-import { api } from "~/utils/api";
-
 import { Skeleton } from "~/components/ui/skeleton";
 import { cn } from "~/lib/utils";
+import { api } from "~/utils/api";
+
 import "~/styles/globals.css";
 
 const inter = Inter({

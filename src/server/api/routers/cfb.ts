@@ -1,9 +1,11 @@
 import { RunCache } from "run-cache";
 import z from "zod";
-
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { client } from "~/server/cfb-api";
 import type { operations } from "~/server/cfb-api/schema";
+import type { RouterOutputs } from "~/utils/api";
+
+export type Week = RouterOutputs["cfb"]["calendar"][number];
 
 async function getGamesForYear(year: number) {
   const cached = await RunCache.get(`cfb-games-${year}`);
@@ -16,8 +18,8 @@ async function getGamesForYear(year: number) {
 
   const res = await client.GET("/games", { params: { query: { year } } });
 
-  if (res.error) {
-    throw new Error(res);
+  if (!res.data) {
+    throw new Error(res.error);
   }
 
   await RunCache.set({
@@ -27,6 +29,32 @@ async function getGamesForYear(year: number) {
   });
 
   return res.data;
+}
+
+async function getGameById(id: number) {
+  const cached = await RunCache.get(`cfb-game-${id}`);
+
+  if (cached) {
+    return JSON.parse(
+      cached as string,
+    ) as operations["GetGames"]["responses"]["200"]["content"]["application/json"][number];
+  }
+
+  const res = await client.GET("/games", { params: { query: { id } } });
+
+  if (!res.data) {
+    throw new Error(res.error);
+  }
+
+  const game = res.data[0];
+
+  await RunCache.set({
+    key: `cfb-game-${id}`,
+    value: JSON.stringify(game),
+    ttl: 1000 * 60 * 5, // 5 min
+  });
+
+  return game;
 }
 
 async function getLinesForYear(year: number) {
@@ -96,6 +124,16 @@ export const cfbRouter = createTRPCRouter({
         .map((game) => ({ ...game, startDate: new Date(game.startDate) }))
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
     }),
+
+  gameById: protectedProcedure.input(z.number().int().min(1)).query(async ({ input }) => {
+    const game = await getGameById(input);
+
+    if (!game) {
+      throw new Error(`Game with ID ${input} not found`);
+    }
+
+    return { ...game, startDate: new Date(game.startDate) };
+  }),
 
   lines: protectedProcedure
     .input(

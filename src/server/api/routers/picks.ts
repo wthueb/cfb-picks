@@ -1,17 +1,23 @@
 import { and, eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 import z from "zod";
-
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { picks, pickTypes, teams, users } from "~/server/db/schema";
 import type { RouterInputs } from "~/utils/api";
 
-type OverUnderPickType = Extract<(typeof pickTypes)[number], `${string}_OVER` | `${string}_UNDER`>;
-const overUnderPickTypes = pickTypes.filter(
-  (type) => type.endsWith("OVER") || type.endsWith("UNDER"),
-) as OverUnderPickType[];
+export type PickType = (typeof pickTypes)[number];
 
-type TeamTotalPickType = Extract<(typeof pickTypes)[number], `${string}_TT`>;
-const teamTotalPickTypes = pickTypes.filter((type) => type.endsWith("TT")) as TeamTotalPickType[];
+export type TeamTotalPickType = Extract<PickType, `${string}_TT_${"OVER" | "UNDER"}`>;
+const teamTotalPickTypes = pickTypes.filter(
+  (type) => type.endsWith("TT_OVER") || type.endsWith("TT_UNDER"),
+) as TeamTotalPickType[];
+
+export type OverUnderPickType = Exclude<
+  Extract<PickType, `${string}_OVER` | `${string}_UNDER`>,
+  TeamTotalPickType
+>;
+const overUnderPickTypes = pickTypes.filter(
+  (type) => (type.endsWith("_OVER") || type.endsWith("_UNDER")) && !type.includes("_TT_"),
+) as OverUnderPickType[];
 
 export type Pick = { id: number } & RouterInputs["picks"]["makePick"];
 
@@ -62,7 +68,9 @@ export const picksRouter = createTRPCRouter({
         z.object({
           season: z.number().min(2000).max(new Date().getFullYear()),
           week: z.number().min(1).max(52),
-          gameId: z.string(),
+          gameId: z.number(),
+          odds: z.number(),
+          double: z.boolean(),
         }),
         z.union([
           z.object({
@@ -104,6 +112,8 @@ export const picksRouter = createTRPCRouter({
         week: input.week,
         gameId: input.gameId,
         pickType: input.pickType,
+        odds: input.odds,
+        double: input.double,
         total: "total" in input ? input.total : null,
         spread: "spread" in input ? input.spread : null,
         cfbTeamId: "cfbTeamId" in input ? input.cfbTeamId : null,
@@ -113,4 +123,14 @@ export const picksRouter = createTRPCRouter({
 
       return newPick;
     }),
+
+  deletePick: protectedProcedure.input(z.number().int()).mutation(async ({ input, ctx }) => {
+    const res = await ctx.db
+      .delete(picks)
+      .where(and(eq(picks.id, input), eq(picks.userId, ctx.session.user.id)));
+
+    if (res.rowsAffected === 0) {
+      throw new Error("Pick not found or not authorized to delete");
+    }
+  }),
 });

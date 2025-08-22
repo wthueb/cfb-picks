@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-
-import { api, type RouterOutputs } from "~/utils/api";
-
+import type { Week } from "~/server/api/routers/cfb";
+import { api } from "~/utils/api";
 import {
   Select,
   SelectContent,
@@ -12,15 +11,26 @@ import {
   SelectValue,
 } from "./ui/select";
 
-export type Week = RouterOutputs["cfb"]["calendar"][number];
-
 const seasonTypeNames: Record<Week["seasonType"], string> = {
   regular: "Regular Season",
   postseason: "Playoffs",
 };
 
 export function WeekSelect(props: { onChange: (week: Week) => void; className?: string }) {
-  const calendar = api.cfb.calendar.useQuery({ year: 2025 });
+  const calendar = api.cfb.calendar.useQuery(
+    { year: parseInt(process.env.NEXT_PUBLIC_SEASON!) },
+    {
+      select: (data) => {
+        const current = data.find((week) => week.endDate >= now) ?? data[data.length - 1];
+
+        if (current) {
+          setValue(current.startDate.toISOString());
+        }
+
+        return data;
+      },
+    },
+  );
 
   const bySeasonType = useMemo(() => {
     return calendar.data?.reduce(
@@ -34,21 +44,6 @@ export function WeekSelect(props: { onChange: (week: Week) => void; className?: 
   }, [calendar.data]);
 
   const [value, setValue] = useState("");
-
-  const now = useMemo(() => new Date(), []);
-
-  // on initial load, set the value to the current week, or the last week if no current week is found
-  useEffect(() => {
-    if (!calendar.data) return;
-
-    const current =
-      calendar.data.find((week) => week.endDate >= now) ?? calendar.data[calendar.data.length - 1];
-
-    if (current) {
-      setValue(current.startDate.toISOString());
-    }
-  }, [calendar.data, now]);
-
   const [selectedWeek, setSelectedWeek] = useState<Week | null>(null);
 
   useEffect(() => {
@@ -57,6 +52,8 @@ export function WeekSelect(props: { onChange: (week: Week) => void; className?: 
     if (week) props.onChange(week);
     setSelectedWeek(week ?? null);
   }, [calendar.data, value, props]);
+
+  const now = new Date();
 
   return (
     <Select value={value} onValueChange={setValue} disabled={!calendar.data}>

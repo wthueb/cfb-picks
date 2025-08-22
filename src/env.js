@@ -10,7 +10,7 @@ export const env = createEnv({
     AUTH_SECRET: process.env.NODE_ENV === "production" ? z.string() : z.string().optional(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.url(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     CFB_API_KEY: z.string(),
   },
@@ -21,7 +21,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_SEASON: z.coerce.number().int(),
   },
 
   /**
@@ -35,6 +35,7 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
     CFB_API_KEY: process.env.CFB_API_KEY,
+    NEXT_PUBLIC_SEASON: process.env.NEXT_PUBLIC_SEASON,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -1,6 +1,5 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
-
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -57,7 +56,14 @@ export function GameCombobox(props: {
                     setOpen(false);
                   }}
                 >
-                  {game.label} ({game.startDate.toLocaleString()})
+                  {game.label} (
+                  {game.startDate.toLocaleString("en-US", {
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  )
                   <Check
                     className={cn(
                       "ml-auto",

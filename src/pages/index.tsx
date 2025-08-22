@@ -33,7 +33,11 @@ export default function Home() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>
-                  <AddPickDialog week={week} ref={dialogRef}>
+                  <AddPickDialog
+                    week={week}
+                    canDouble={!picks.data?.some((p) => p.pick.double)}
+                    ref={dialogRef}
+                  >
                     <Button
                       disabled={picks.data && picks.data.length >= 5}
                       onClick={dialogRef.current?.clear}

@@ -3,6 +3,7 @@ import z from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { durations, picks, teams, users } from "~/server/db/schema";
 import type { RouterInputs } from "~/utils/api";
+import { getGameById } from "./cfb";
 
 export type Pick = { id: number } & RouterInputs["picks"]["makePick"];
 
@@ -102,6 +103,10 @@ export const picksRouter = createTRPCRouter({
         throw new Error("Already have 5 picks for this week");
       }
 
+      if (input.double && existingPicks.some((p) => p.double)) {
+        throw new Error("Cannot have more than one double pick per week");
+      }
+
       const newPick: InferInsertModel<typeof picks> = {
         userId: ctx.session.user.id,
         season: input.season,
@@ -122,6 +127,26 @@ export const picksRouter = createTRPCRouter({
     }),
 
   deletePick: protectedProcedure.input(z.number().int()).mutation(async ({ input, ctx }) => {
+    const pick = await ctx.db
+      .select()
+      .from(picks)
+      .where(and(eq(picks.id, input), eq(picks.userId, ctx.session.user.id)))
+      .get();
+
+    if (!pick) {
+      throw new Error("Pick not found or not authorized to delete");
+    }
+
+    const game = await getGameById(pick.gameId, true);
+
+    if (!game) {
+      throw new Error("Game not found for the pick");
+    }
+
+    if (new Date(game.startDate) < new Date()) {
+      throw new Error("Cannot delete a pick for a game that has already started");
+    }
+
     const res = await ctx.db
       .delete(picks)
       .where(and(eq(picks.id, input), eq(picks.userId, ctx.session.user.id)));

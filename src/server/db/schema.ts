@@ -50,7 +50,7 @@ export const users = createTable("user", (d) => ({
     .$defaultFn(() => crypto.randomUUID()),
   name: d.text({ length: 255 }),
   email: d.text({ length: 255 }).notNull(),
-  emailVerified: d.integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
+  emailVerified: d.integer({ mode: "timestamp" }),
   image: d.text({ length: 255 }),
   teamId: d.integer({ mode: "number" }).references(() => teams.id),
 }));

@@ -20,6 +20,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Skeleton } from "./ui/skeleton";
 import { Switch } from "./ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 export type AddPickDialogHandle = {
   clear: () => void;
@@ -28,6 +29,7 @@ export type AddPickDialogHandle = {
 export function AddPickDialog(
   props: React.PropsWithChildren<{
     week: Week | null;
+    canDouble: boolean;
     ref?: React.Ref<AddPickDialogHandle>;
   }>,
 ) {
@@ -191,59 +193,32 @@ export function AddPickDialog(
             <GameCombobox games={games.data ?? []} onChange={setGame} />
           </div>
           {game ? (
-            <>
-              <div className="flex gap-4">
-                <div className="flex flex-col gap-4">
-                  <Label>Pick Type</Label>
-                  <GenericSelect
-                    items={pickTypeSelectItems}
-                    defaultValue={pickType}
-                    onChange={setPickType}
-                    className="w-[130px]"
-                  />
-                </div>
-                {(pickType.endsWith("OVER") || pickType.endsWith("UNDER")) &&
-                  !pickType.startsWith("TT_") && (
-                    <>
-                      <div className="flex flex-1 flex-col gap-4">
-                        <Label>Total</Label>
-                        <Input
-                          type="number"
-                          placeholder="number"
-                          min={0}
-                          step={0.5}
-                          onChange={(e) => setTotal(parseFloat(e.target.value))}
-                          className="w-full"
-                        />
-                      </div>
-                    </>
-                  )}
-                {(pickType.endsWith("OVER") || pickType.endsWith("UNDER")) &&
-                  pickType.startsWith("TT_") && (
-                    <>
-                      <div className="flex flex-1 flex-col gap-4">
-                        <Label>Team</Label>
-                        <GenericSelect
-                          items={[game.homeTeam, game.awayTeam]}
-                          defaultValue={game.homeTeam}
-                          onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-4">
-                        <Label>Total</Label>
-                        <Input
-                          type="number"
-                          placeholder="number"
-                          min={0}
-                          step={0.5}
-                          onChange={(e) => setTotal(parseFloat(e.target.value))}
-                          className="w-[130px]"
-                        />
-                      </div>
-                    </>
-                  )}
-                {(pickType === "SPREAD" || pickType === "MONEYLINE") && (
+            <div className="flex gap-4">
+              <div className="flex flex-col gap-4">
+                <Label>Pick Type</Label>
+                <GenericSelect
+                  items={pickTypeSelectItems}
+                  defaultValue={pickType}
+                  onChange={setPickType}
+                  className="w-[130px]"
+                />
+              </div>
+              {(pickType.endsWith("OVER") || pickType.endsWith("UNDER")) &&
+                !pickType.startsWith("TT_") && (
+                  <div className="flex flex-1 flex-col gap-4">
+                    <Label>Total</Label>
+                    <Input
+                      type="number"
+                      placeholder="number"
+                      min={0}
+                      step={0.5}
+                      onChange={(e) => setTotal(parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+              {(pickType.endsWith("OVER") || pickType.endsWith("UNDER")) &&
+                pickType.startsWith("TT_") && (
                   <>
                     <div className="flex flex-1 flex-col gap-4">
                       <Label>Team</Label>
@@ -254,22 +229,45 @@ export function AddPickDialog(
                         className="w-full"
                       />
                     </div>
-                    {pickType === "SPREAD" && (
-                      <div className="flex flex-col gap-4">
-                        <Label>Spread</Label>
-                        <Input
-                          type="number"
-                          placeholder="+/- number"
-                          step={0.5}
-                          onChange={(e) => setSpread(parseFloat(e.target.value))}
-                          className="w-[130px]"
-                        />
-                      </div>
-                    )}
+                    <div className="flex flex-col gap-4">
+                      <Label>Total</Label>
+                      <Input
+                        type="number"
+                        placeholder="number"
+                        min={0}
+                        step={0.5}
+                        onChange={(e) => setTotal(parseFloat(e.target.value))}
+                        className="w-[130px]"
+                      />
+                    </div>
                   </>
                 )}
-              </div>
-            </>
+              {(pickType === "SPREAD" || pickType === "MONEYLINE") && (
+                <>
+                  <div className="flex flex-1 flex-col gap-4">
+                    <Label>Team</Label>
+                    <GenericSelect
+                      items={[game.homeTeam, game.awayTeam]}
+                      defaultValue={game.homeTeam}
+                      onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
+                      className="w-full"
+                    />
+                  </div>
+                  {pickType === "SPREAD" && (
+                    <div className="flex flex-col gap-4">
+                      <Label>Spread</Label>
+                      <Input
+                        type="number"
+                        placeholder="+/- number"
+                        step={0.5}
+                        onChange={(e) => setSpread(parseFloat(e.target.value))}
+                        className="w-[130px]"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           ) : (
             <Skeleton className="h-16.5 w-full" />
           )}
@@ -291,7 +289,22 @@ export function AddPickDialog(
             </div>
             <div className="flex gap-4">
               <Label htmlFor="double">Double</Label>
-              <Switch id="double" disabled={false} onCheckedChange={setDouble} />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Switch id="double" disabled={!props.canDouble} onCheckedChange={setDouble} />
+                    </div>
+                  </TooltipTrigger>
+                  {!props.canDouble && (
+                    <TooltipContent side="top" className="bg-accent">
+                      <p className="text-accent-foreground text-sm">
+                        Already made a double pick this week.
+                      </p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           <DialogFooter>

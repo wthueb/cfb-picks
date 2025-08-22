@@ -113,6 +113,7 @@ export const authConfig = {
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
     }),
     /**
      * ...add more providers here.
@@ -126,4 +127,22 @@ export const authConfig = {
   ],
   adapter: customAdapter,
   trustHost: true,
+  callbacks: {
+    async signIn({ user }) {
+      const dbUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, user.email ?? ""))
+        .get();
+
+      if (!dbUser) {
+        console.warn(
+          `User with email ${user.email} tried to sign in but does not exist in the db.`,
+        );
+        return false;
+      }
+
+      return true;
+    },
+  },
 } satisfies NextAuthConfig;

@@ -115,17 +115,21 @@ export function PickCard(props: { pick: Pick; num: number }) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <span>
-          {props.pick.pickType === "SPREAD"
-            ? `${team} ${props.pick.spread > 0 ? "+" : ""}${props.pick.spread}`
-            : props.pick.pickType === "MONEYLINE"
-              ? `${team} ML`
-              : props.pick.pickType.startsWith("TT_")
-                ? `${team} Team Total ${props.pick.pickType.endsWith("OVER") ? "o" : "u"}${props.pick.total}`
-                : `${props.pick.pickType === "OVER" ? "o" : "u"}${props.pick.total}`}
-          {props.pick.duration !== "FULL" && ` (${props.pick.duration}) `}
-          {` (${props.pick.odds > 0 ? "+" : ""}${props.pick.odds})${props.pick.double ? " (2u)" : ""}`}
-        </span>
+        {game.data ? (
+          <span>
+            {props.pick.pickType === "SPREAD"
+              ? `${team} ${props.pick.spread > 0 ? "+" : ""}${props.pick.spread}`
+              : props.pick.pickType === "MONEYLINE"
+                ? `${team} ML`
+                : props.pick.pickType.startsWith("TT_")
+                  ? `${team} Team Total ${props.pick.pickType.endsWith("OVER") ? "o" : "u"}${props.pick.total}`
+                  : `${props.pick.pickType === "OVER" ? "o" : "u"}${props.pick.total}`}
+            {props.pick.duration !== "FULL" && ` (${props.pick.duration}) `}
+            {` (${props.pick.odds > 0 ? "+" : ""}${props.pick.odds})${props.pick.double ? " (2u)" : ""}`}
+          </span>
+        ) : (
+          <Skeleton className="h-6 w-full" />
+        )}
       </CardContent>
       {/*<CardFooter>current score</CardFooter>*/}
     </Card>

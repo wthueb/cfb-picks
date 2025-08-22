@@ -31,10 +31,10 @@ async function getGamesForYear(year: number) {
   return res.data;
 }
 
-async function getGameById(id: number) {
+export async function getGameById(id: number, skipCache = false) {
   const cached = await RunCache.get(`cfb-game-${id}`);
 
-  if (cached) {
+  if (!skipCache && cached) {
     return JSON.parse(
       cached as string,
     ) as operations["GetGames"]["responses"]["200"]["content"]["application/json"][number];

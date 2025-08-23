@@ -77,9 +77,4 @@ const CFBPicks: AppType<{ session: Session | null }> = ({
   );
 };
 
-CFBPicks.getInitialProps = async (appCtx) => {
-  const session = await getSession(appCtx.ctx);
-  return { session };
-};
-
 export default api.withTRPC(CFBPicks);

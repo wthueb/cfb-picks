@@ -14,7 +14,7 @@ export default function Home() {
 
   const picks = api.picks.selfPicks.useQuery(
     {
-      season: week?.season ?? parseInt(process.env.NEXT_PUBLIC_SEASON!),
+      season: week?.season,
       week: week?.week,
     },
     {
@@ -76,7 +76,7 @@ export default function Home() {
 }
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
-  const session = await auth(ctx);
+  const session = await auth(ctx.req, ctx.res);
 
   if (!session) {
     return {

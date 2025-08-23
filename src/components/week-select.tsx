@@ -18,7 +18,7 @@ const seasonTypeNames: Record<Week["seasonType"], string> = {
 
 export function WeekSelect(props: { onChange: (week: Week) => void; className?: string }) {
   const calendar = api.cfb.calendar.useQuery(
-    { year: parseInt(process.env.NEXT_PUBLIC_SEASON!) },
+    {},
     {
       select: (data) => {
         const current = data.find((week) => week.endDate >= now) ?? data[data.length - 1];

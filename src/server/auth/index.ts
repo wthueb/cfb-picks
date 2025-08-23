@@ -1,10 +1,12 @@
-import NextAuth from "next-auth";
-import { cache } from "react";
-
+import type { GetServerSidePropsContext, NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth";
 import { authConfig } from "./config";
 
-const { auth: uncachedAuth, handlers, signIn, signOut } = NextAuth(authConfig);
-
-const auth = cache(uncachedAuth);
-
-export { auth, handlers, signIn, signOut };
+export function auth(
+  ...args:
+    | [GetServerSidePropsContext["req"], GetServerSidePropsContext["res"]]
+    | [NextApiRequest, NextApiResponse]
+    | []
+) {
+  return getServerSession(...args, authConfig);
+}

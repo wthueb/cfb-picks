@@ -1,5 +1,6 @@
 import { and, eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 import z from "zod";
+import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { durations, picks, teams, users } from "~/server/db/schema";
 import type { RouterInputs } from "~/utils/api";
@@ -19,7 +20,7 @@ export const picksRouter = createTRPCRouter({
     .input(
       z.optional(
         z.object({
-          season: z.number().min(2000).max(new Date().getFullYear()),
+          season: z.number().min(2000).max(new Date().getFullYear()).optional().default(env.SEASON),
           week: z.number().min(1).max(52).optional(),
         }),
       ),
@@ -29,11 +30,7 @@ export const picksRouter = createTRPCRouter({
         input,
         ctx,
       }): Promise<
-        {
-          pick: Pick;
-          user: InferSelectModel<typeof users>;
-          team: InferSelectModel<typeof teams>;
-        }[]
+        { pick: Pick; user: InferSelectModel<typeof users>; team: InferSelectModel<typeof teams> }[]
       > => {
         const res = await ctx.db
           .select()

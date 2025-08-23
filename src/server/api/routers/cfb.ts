@@ -1,5 +1,6 @@
 import { RunCache } from "run-cache";
 import z from "zod";
+import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { client } from "~/server/cfb-api";
 import type { operations } from "~/server/cfb-api/schema";
@@ -104,7 +105,7 @@ export const cfbRouter = createTRPCRouter({
   games: protectedProcedure
     .input(
       z.object({
-        year: z.number().min(2000).max(new Date().getFullYear()),
+        year: z.number().min(2000).max(new Date().getFullYear()).optional().default(env.SEASON),
         week: z.optional(z.number().min(1).max(52)),
         seasonType: z.optional(z.enum(["regular", "postseason"])),
       }),
@@ -161,7 +162,7 @@ export const cfbRouter = createTRPCRouter({
   calendar: protectedProcedure
     .input(
       z.object({
-        year: z.number().min(2000).max(new Date().getFullYear()),
+        year: z.number().min(2000).max(new Date().getFullYear()).optional().default(env.SEASON),
       }),
     )
     .query(async ({ input }) => {

@@ -1,16 +1,15 @@
-import type { AdapterSession, AdapterUser } from "@auth/core/adapters";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { and, eq, type InferSelectModel } from "drizzle-orm";
-import { type DefaultSession, type NextAuthConfig } from "next-auth";
+import { eq, type InferSelectModel } from "drizzle-orm";
+import { type DefaultSession, type NextAuthOptions } from "next-auth";
+import type { Adapter, AdapterSession, AdapterUser } from "next-auth/adapters";
 import GoogleProvider from "next-auth/providers/google";
-
 import { env } from "~/env";
 import { db } from "~/server/db";
 import { accounts, sessions, teams, users, verificationTokens } from "~/server/db/schema";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: User & { id: string };
+    user: { id: string } & DefaultSession["user"];
   }
 
   interface User extends InferSelectModel<typeof users> {
@@ -25,108 +24,76 @@ const baseAdapter = DrizzleAdapter(db, {
   verificationTokensTable: verificationTokens,
 });
 
-const customAdapter: typeof baseAdapter = {
+type BaseAdapterUser = Exclude<AdapterUser, "team">;
+
+async function populateTeam(user: BaseAdapterUser) {
+  if (user.teamId === null) return user;
+
+  const team = await db.select().from(teams).where(eq(teams.id, user.teamId)).get();
+
+  return { ...user, team: team ?? null };
+}
+
+const customAdapter: Adapter = {
   ...baseAdapter,
 
-  async getUser(id): Promise<AdapterUser | null> {
-    const res = await db
-      .select()
-      .from(users)
-      .leftJoin(teams, eq(users.teamId, teams.id))
-      .where(eq(users.id, id))
-      .get();
+  async getUser(id) {
+    const user = (await baseAdapter.getUser?.(id)) as BaseAdapterUser | null;
+    if (!user) return null;
 
-    if (!res) return null;
-
-    return {
-      ...res.user,
-      team: res.team,
-    };
+    return await populateTeam(user);
   },
 
-  async getUserByEmail(email): Promise<AdapterUser | null> {
-    const res = await db
-      .select()
-      .from(users)
-      .leftJoin(teams, eq(users.teamId, teams.id))
-      .where(eq(users.email, email))
-      .get();
+  async getUserByEmail(email) {
+    const user = (await baseAdapter.getUserByEmail?.(email)) as BaseAdapterUser | null;
+    if (!user) return null;
 
-    if (!res) return null;
-
-    return {
-      ...res.user,
-      team: res.team,
-    };
+    return await populateTeam(user);
   },
 
-  async getUserByAccount({ provider, providerAccountId }): Promise<AdapterUser | null> {
-    const res = await db
-      .select()
-      .from(accounts)
-      .innerJoin(users, eq(accounts.userId, users.id))
-      .leftJoin(teams, eq(users.teamId, teams.id))
-      .where(
-        and(eq(accounts.provider, provider), eq(accounts.providerAccountId, providerAccountId)),
-      )
-      .get();
+  async getUserByAccount(account) {
+    const user = (await baseAdapter.getUserByAccount?.(account)) as BaseAdapterUser | null;
+    if (!user) return null;
 
-    if (!res) return null;
-
-    return {
-      ...res.user,
-      team: res.team,
-    };
+    return await populateTeam(user);
   },
 
-  async getSessionAndUser(sessionToken): Promise<{
-    session: AdapterSession;
-    user: AdapterUser;
-  } | null> {
-    const res = await db
-      .select()
-      .from(sessions)
-      .innerJoin(users, eq(sessions.userId, users.id))
-      .leftJoin(teams, eq(users.teamId, teams.id))
-      .where(eq(sessions.sessionToken, sessionToken))
-      .get();
+  async updateUser(partialUser) {
+    const user = (await baseAdapter.updateUser?.(partialUser)) as BaseAdapterUser;
+    if (user.teamId === null) return user;
 
+    return await populateTeam(user);
+  },
+
+  async deleteUser(userId) {
+    const user = (await baseAdapter.deleteUser?.(userId)) as BaseAdapterUser | null;
+    if (!user) return null;
+
+    return await populateTeam(user);
+  },
+
+  async getSessionAndUser(sessionToken) {
+    const res = (await baseAdapter.getSessionAndUser?.(sessionToken)) as {
+      session: Exclude<AdapterSession, "user"> & DefaultSession["user"];
+      user: BaseAdapterUser;
+    } | null;
     if (!res) return null;
 
-    return {
-      session: res.session,
-      user: {
-        ...res.user,
-        team: res.team,
-      },
-    };
+    const { session, user } = res;
+
+    return { session, user: await populateTeam(user) };
   },
 };
 
-/**
- * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
- *
- * @see https://next-auth.js.org/configuration/options
- */
-export const authConfig = {
+export const authConfig: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
   ],
   adapter: customAdapter,
-  trustHost: true,
   callbacks: {
     async signIn({ user }) {
       const dbUser = await db
@@ -144,5 +111,17 @@ export const authConfig = {
 
       return true;
     },
+
+    async session({ session, user }) {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+          teamId: user.teamId ?? null,
+          team: user.team ?? null,
+        },
+      };
+    },
   },
-} satisfies NextAuthConfig;
+};

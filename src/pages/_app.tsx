@@ -1,5 +1,5 @@
 import { type Session } from "next-auth";
-import { SessionProvider, signIn, signOut, useSession } from "next-auth/react";
+import { getSession, SessionProvider, signIn, signOut, useSession } from "next-auth/react";
 import { type AppType } from "next/app";
 import { Inter } from "next/font/google";
 import Head from "next/head";
@@ -75,6 +75,11 @@ const CFBPicks: AppType<{ session: Session | null }> = ({
       </SessionProvider>
     </>
   );
+};
+
+CFBPicks.getInitialProps = async (appCtx) => {
+  const session = await getSession(appCtx.ctx);
+  return { session };
 };
 
 export default api.withTRPC(CFBPicks);

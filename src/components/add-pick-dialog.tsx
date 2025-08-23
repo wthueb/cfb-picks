@@ -37,7 +37,7 @@ export function AddPickDialog(
 
   const games = api.cfb.games.useQuery(
     {
-      year: props.week?.season ?? parseInt(process.env.NEXT_PUBLIC_SEASON!),
+      year: props.week?.season,
       week: props.week?.week,
       seasonType: props.week?.seasonType,
     },

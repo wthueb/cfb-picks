@@ -4,8 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        - DATABASE_URL=${DATABASE_URL}
     platform: linux/amd64
     working_dir: /app
     environment:
@@ -15,6 +13,7 @@ services:
       - DATABASE_URL=file:/config/db.sqlite
       - CFB_API_KEY=${CFB_API_KEY}
       - SEASON=${SEASON}
+      - NEXTAUTH_URL=http://localhost:3000
     volumes:
       - .:/config
     ports:

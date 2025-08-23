@@ -48,7 +48,7 @@ export function PickCard(props: { pick: Pick; num: number }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pick {props.num + 1}</CardTitle>
+        <CardTitle className="text-primary-foreground">Pick {props.num + 1}</CardTitle>
         <CardDescription>
           {game.data ? (
             `${game.data.awayTeam} @ ${game.data.homeTeam} (${game.data.startDate.toLocaleString(

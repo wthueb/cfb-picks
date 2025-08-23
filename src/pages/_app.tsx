@@ -19,15 +19,19 @@ function Nav() {
   const session = useSession();
 
   return (
-    <nav className="bg-card text-card-foreground m-2 flex items-center justify-between gap-4 rounded-md border-1 px-3 py-1">
-      <Link href="/" className="text-2xl">
+    <nav className="bg-card text-card-foreground m-2 flex h-10 items-center justify-between gap-4 rounded-md border-1 px-4">
+      <Link href="/" className="text-primary-foreground text-2xl font-semibold">
         CFB Picks
       </Link>
       <div>
         {session.status === "loading" ? (
-          <Skeleton className="h-9 w-[8ch]" />
+          <Skeleton className="h-8 w-[8ch]" />
         ) : (
-          <Button variant="ghost" onClick={session.data ? () => signOut() : () => signIn()}>
+          <Button
+            variant="ghost"
+            onClick={session.data ? () => signOut() : () => signIn()}
+            className="text-muted-foreground"
+          >
             {session.data ? "Sign out" : "Sign in"}
           </Button>
         )}
@@ -38,7 +42,7 @@ function Nav() {
 
 function Footer() {
   return (
-    <footer className="bg-muted text-muted-foreground flex justify-between p-2 text-xs">
+    <footer className="bg-muted text-muted-foreground flex justify-between p-2 text-xs opacity-50">
       <span>
         by{" "}
         <a href="https://wthueb.dev" target="_blank" className="underline">

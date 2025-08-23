@@ -1,4 +1,4 @@
-import type { GetServerSidePropsContext } from "next";
+import type { GetServerSideProps } from "next";
 import { useRef, useState } from "react";
 import { AddPickDialog, type AddPickDialogHandle } from "~/components/add-pick-dialog";
 import { PickCard } from "~/components/pick-card";
@@ -25,9 +25,9 @@ export default function Home() {
   const dialogRef = useRef<AddPickDialogHandle>(null);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 p-4 pt-2">
+    <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 py-2">
       <div className="sticky top-2 flex w-full items-center gap-4">
-        <WeekSelect onChange={setWeek} className="bg-accent flex-grow" />
+        <WeekSelect onChange={setWeek} className="bg-accent text-accent-foreground flex-1" />
         {week && (
           <TooltipProvider>
             <Tooltip>
@@ -75,7 +75,7 @@ export default function Home() {
   );
 }
 
-export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await auth(ctx.req, ctx.res);
 
   if (!session) {
@@ -88,4 +88,4 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   }
 
   return { props: {} };
-}
+};

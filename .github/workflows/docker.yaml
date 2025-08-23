@@ -55,5 +55,7 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
           push: true
-          tags: wthueb/cfb-picks:latest
+          tags: |
+            wthueb/cfb-picks:latest
+            ghcr.io/wthueb/cfb-picks:latest
           labels: ${{ steps.meta.outputs.labels }}

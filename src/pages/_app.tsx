@@ -1,5 +1,5 @@
 import { type Session } from "next-auth";
-import { getSession, SessionProvider, signIn, signOut, useSession } from "next-auth/react";
+import { SessionProvider, signIn, signOut, useSession } from "next-auth/react";
 import { type AppType } from "next/app";
 import { Inter } from "next/font/google";
 import Head from "next/head";
@@ -7,9 +7,8 @@ import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import { cn } from "~/lib/utils";
-import { api } from "~/utils/api";
-
 import "~/styles/globals.css";
+import { api } from "~/utils/api";
 
 const inter = Inter({
   subsets: ["latin"],

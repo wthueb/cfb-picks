@@ -25,7 +25,7 @@ export default function Home() {
   const dialogRef = useRef<AddPickDialogHandle>(null);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 py-2">
+    <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">
       <div className="sticky top-2 flex w-full items-center gap-4">
         <WeekSelect onChange={setWeek} className="bg-accent text-accent-foreground flex-1" />
         {week && (

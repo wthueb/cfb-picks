@@ -12,10 +12,10 @@ export type Duration = (typeof durations)[number];
 
 export const picks = createTable("pick", (d) => ({
   id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-  userId: d
-    .text({ length: 255 })
+  teamId: d
+    .integer({ mode: "number" })
     .notNull()
-    .references(() => users.id),
+    .references(() => teams.id),
   season: d.integer({ mode: "number" }).notNull(),
   week: d.integer({ mode: "number" }).notNull(),
   gameId: d.integer({ mode: "number" }).notNull(),
@@ -30,7 +30,7 @@ export const picks = createTable("pick", (d) => ({
 }));
 
 export const picksRelations = relations(picks, ({ one }) => ({
-  user: one(users, { fields: [picks.userId], references: [users.id] }),
+  user: one(teams, { fields: [picks.teamId], references: [teams.id] }),
 }));
 
 export const teams = createTable("team", (d) => ({

@@ -12,7 +12,7 @@ import { api } from "~/utils/api";
 export default function Home() {
   const [week, setWeek] = useState<Week | null>(null);
 
-  const picks = api.picks.selfPicks.useQuery(
+  const picks = api.picks.teamPicks.useQuery(
     {
       season: week?.season,
       week: week?.week,

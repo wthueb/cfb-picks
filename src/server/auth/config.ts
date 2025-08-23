@@ -9,10 +9,12 @@ import { accounts, sessions, teams, users, verificationTokens } from "~/server/d
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: { id: string } & DefaultSession["user"];
+    user: User & DefaultSession["user"];
   }
 
   interface User extends InferSelectModel<typeof users> {
+    id: string;
+    teamId: number | null;
     team: InferSelectModel<typeof teams> | null;
   }
 }

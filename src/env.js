@@ -10,6 +10,7 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     CFB_API_KEY: z.string(),
     SEASON: z.coerce.number().int(),
+    NEXTAUTH_URL: z.url(),
   },
 
   client: {},
@@ -22,6 +23,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     CFB_API_KEY: process.env.CFB_API_KEY,
     SEASON: process.env.SEASON,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,

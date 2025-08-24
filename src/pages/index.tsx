@@ -1,4 +1,3 @@
-import type { GetServerSideProps } from "next";
 import { useMemo, useRef, useState } from "react";
 import { AddPickDialog, type AddPickDialogHandle } from "~/components/add-pick-dialog";
 import { PickCard } from "~/components/pick-card";
@@ -8,7 +7,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import type { Week } from "~/server/api/routers/cfb";
 import type { Pick } from "~/server/api/routers/picks";
-import { auth } from "~/server/auth";
+import { withSession } from "~/server/auth";
 import { api } from "~/utils/api";
 
 function PickList(props: { picks: Pick[] }) {
@@ -133,17 +132,4 @@ export default function Home() {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const session = await auth(ctx.req, ctx.res);
-
-  if (!session) {
-    return {
-      redirect: {
-        destination: "/api/auth/signin",
-        permanent: false,
-      },
-    };
-  }
-
-  return { props: {} };
-};
+export const getServerSideProps = withSession();

@@ -21,6 +21,7 @@ import {
 import { Skeleton } from "~/components/ui/skeleton";
 import type { Game } from "~/server/api/routers/cfb";
 import type { Pick } from "~/server/api/routers/picks";
+import { isTeamTotalPickType } from "~/server/db/schema";
 import { api } from "~/utils/api";
 import { gameLocked } from "~/utils/dates";
 import { Button } from "./ui/button";
@@ -199,7 +200,7 @@ export function PickCard(props: { pick: Pick; num: number }) {
               ? `${team} ${props.pick.spread > 0 ? "+" : ""}${props.pick.spread}`
               : props.pick.pickType === "MONEYLINE"
                 ? `${team} ML`
-                : props.pick.pickType.startsWith("TT_")
+                : isTeamTotalPickType(props.pick.pickType)
                   ? `${team} Team Total ${props.pick.pickType.endsWith("OVER") ? "o" : "u"}${props.pick.total}`
                   : `${props.pick.pickType === "OVER" ? "o" : "u"}${props.pick.total}`}
             {props.pick.duration !== "FULL" && ` (${props.pick.duration}) `}

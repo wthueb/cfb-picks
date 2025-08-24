@@ -1,10 +1,15 @@
 import { useEffect, useImperativeHandle, useState } from "react";
 import type { Week } from "~/server/api/routers/cfb";
-import type { OverUnderPickType, TeamTotalPickType } from "~/server/api/routers/picks";
-import { durations, pickTypes, type Duration, type PickType } from "~/server/db/schema";
+import {
+  durations,
+  isTeamTotalPickType,
+  pickTypes,
+  type Duration,
+  type PickType,
+} from "~/server/db/schema";
 import { api } from "~/utils/api";
 import { GameCombobox } from "./game-combobox";
-import { GenericSelect } from "./generic-select";
+import { Select } from "./select";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -127,7 +132,7 @@ export function AddPickDialog(
         double,
         cfbTeamId: team,
       });
-    } else if (pickType.startsWith("TT_")) {
+    } else if (isTeamTotalPickType(pickType)) {
       if (!team) {
         console.error("Team is required for team total pick type.");
         return;
@@ -140,7 +145,7 @@ export function AddPickDialog(
         season: props.week.season,
         week: props.week.week,
         gameId: game.id,
-        pickType: pickType as TeamTotalPickType,
+        pickType,
         duration,
         odds,
         double,
@@ -156,7 +161,7 @@ export function AddPickDialog(
         season: props.week.season,
         week: props.week.week,
         gameId: game.id,
-        pickType: pickType as OverUnderPickType,
+        pickType,
         duration,
         odds,
         double,
@@ -193,57 +198,18 @@ export function AddPickDialog(
               <div className="flex flex-wrap justify-evenly gap-4">
                 <div className="flex flex-col gap-2">
                   <Label>Pick Type</Label>
-                  <GenericSelect
+                  <Select
                     items={pickTypeSelectItems}
                     defaultValue={pickType}
                     onChange={setPickType}
                     className="w-[130px]"
                   />
                 </div>
-                {(pickType.endsWith("OVER") || pickType.endsWith("UNDER")) &&
-                  !pickType.startsWith("TT_") && (
-                    <div className="flex flex-1 flex-col gap-2">
-                      <Label>Total</Label>
-                      <Input
-                        type="number"
-                        placeholder="number"
-                        min={0}
-                        step={0.5}
-                        onChange={(e) => setTotal(parseFloat(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                  )}
-                {(pickType.endsWith("OVER") || pickType.endsWith("UNDER")) &&
-                  pickType.startsWith("TT_") && (
-                    <>
-                      <div className="flex flex-1 flex-col gap-2">
-                        <Label>Team</Label>
-                        <GenericSelect
-                          items={[game.homeTeam, game.awayTeam]}
-                          defaultValue={game.homeTeam}
-                          onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Label>Total</Label>
-                        <Input
-                          type="number"
-                          placeholder="number"
-                          min={0}
-                          step={0.5}
-                          onChange={(e) => setTotal(parseFloat(e.target.value))}
-                          className="w-[130px]"
-                        />
-                      </div>
-                    </>
-                  )}
-                {(pickType === "SPREAD" || pickType === "MONEYLINE") && (
+                {pickType === "SPREAD" || pickType === "MONEYLINE" ? (
                   <>
                     <div className="flex flex-1 flex-col gap-2">
                       <Label>Team</Label>
-                      <GenericSelect
+                      <Select
                         items={[game.homeTeam, game.awayTeam]}
                         defaultValue={game.homeTeam}
                         onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
@@ -263,6 +229,41 @@ export function AddPickDialog(
                       </div>
                     )}
                   </>
+                ) : isTeamTotalPickType(pickType) ? (
+                  <>
+                    <div className="flex flex-1 flex-col gap-2">
+                      <Label>Team</Label>
+                      <Select
+                        items={[game.homeTeam, game.awayTeam]}
+                        defaultValue={game.homeTeam}
+                        onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>Total</Label>
+                      <Input
+                        type="number"
+                        placeholder="number"
+                        min={0}
+                        step={0.5}
+                        onChange={(e) => setTotal(parseFloat(e.target.value))}
+                        className="w-[130px]"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-1 flex-col gap-2">
+                    <Label>Total</Label>
+                    <Input
+                      type="number"
+                      placeholder="number"
+                      min={0}
+                      step={0.5}
+                      onChange={(e) => setTotal(parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
                 )}
               </div>
             ) : (
@@ -271,7 +272,7 @@ export function AddPickDialog(
             <div className="flex flex-wrap items-center justify-evenly gap-4">
               <div className="flex gap-2">
                 <Label>Duration</Label>
-                <GenericSelect items={durations} defaultValue="FULL" onChange={setDuration} />
+                <Select items={durations} defaultValue="FULL" onChange={setDuration} />
               </div>
               <div className="flex gap-2">
                 <Label htmlFor="odds">Odds</Label>

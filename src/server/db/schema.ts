@@ -4,11 +4,24 @@ import { index, primaryKey, sqliteTableCreator } from "drizzle-orm/sqlite-core";
 
 export const createTable = sqliteTableCreator((name) => `cfb-picks_${name}`);
 
-export const pickTypes = ["OVER", "UNDER", "TT_OVER", "TT_UNDER", "SPREAD", "MONEYLINE"] as const;
+export const teamTotalPickTypes = ["TT_OVER", "TT_UNDER"] as const;
+export const overUnderPickTypes = ["OVER", "UNDER"] as const;
+export const pickTypes = [
+  ...teamTotalPickTypes,
+  ...overUnderPickTypes,
+  "SPREAD",
+  "MONEYLINE",
+] as const;
 export const durations = ["1Q", "1H", "FULL"] as const;
 
+export type TeamTotalPickType = (typeof teamTotalPickTypes)[number];
+export type OverUnderPickType = (typeof overUnderPickTypes)[number];
 export type PickType = (typeof pickTypes)[number];
 export type Duration = (typeof durations)[number];
+
+export function isTeamTotalPickType(pickType: PickType): pickType is TeamTotalPickType {
+  return teamTotalPickTypes.includes(pickType as TeamTotalPickType);
+}
 
 export const picks = createTable("pick", (d) => ({
   id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),

@@ -1,16 +1,67 @@
 import type { GetServerSideProps } from "next";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AddPickDialog, type AddPickDialogHandle } from "~/components/add-pick-dialog";
 import { PickCard } from "~/components/pick-card";
+import { Select } from "~/components/select";
 import { Button } from "~/components/ui/button";
+import { Skeleton } from "~/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
-import { WeekSelect } from "~/components/week-select";
 import type { Week } from "~/server/api/routers/cfb";
+import type { Pick } from "~/server/api/routers/picks";
 import { auth } from "~/server/auth";
 import { api } from "~/utils/api";
 
+function PickList(props: { picks: Pick[] }) {
+  return (
+    <div className="w-full">
+      {props.picks.length === 0 ? (
+        <p className="text-center">No picks found for this week.</p>
+      ) : (
+        <ul className="flex flex-col gap-4">
+          {props.picks.map((pick, i) => (
+            <li key={pick.id}>
+              <PickCard pick={pick} num={i} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const [week, setWeek] = useState<Week | null>(null);
+  const [currentWeek, setCurrentWeek] = useState<Week | null>(null);
+
+  const calendar = api.cfb.calendar.useQuery(
+    {},
+    {
+      select: (data) => {
+        const current = data.find((week) => week.endDate >= new Date()) ?? data[data.length - 1];
+
+        if (current && currentWeek !== current) {
+          setWeek(current);
+          setCurrentWeek(current);
+        }
+
+        return data;
+      },
+    },
+  );
+
+  const weeksBySeasonType = useMemo(
+    () =>
+      calendar.data?.reduce(
+        (acc, week) => {
+          const group = week.seasonType === "regular" ? "Regular Season" : "Playoffs";
+          acc[group] ??= [];
+          acc[group].push(`Week ${week.week}`);
+          return acc;
+        },
+        {} as Record<"Regular Season" | "Playoffs", `Week ${number}`[]>,
+      ),
+    [calendar.data],
+  );
 
   const picks = api.picks.teamPicks.useQuery(
     {
@@ -27,7 +78,28 @@ export default function Home() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">
       <div className="sticky top-2 flex w-full items-center gap-4">
-        <WeekSelect onChange={setWeek} className="bg-accent text-accent-foreground flex-1" />
+        {weeksBySeasonType ? (
+          <Select
+            items={weeksBySeasonType}
+            defaultValue={`${currentWeek!.seasonType === "regular" ? "Regular Season" : "Playoffs"}-Week ${currentWeek!.week}`}
+            onChange={(v) => {
+              const [seasonType, display] = v.split("-") as [
+                keyof typeof weeksBySeasonType,
+                `Week ${number}`,
+              ];
+              const weekNum = parseInt(display.replace("Week ", ""));
+              const selectedWeek = calendar.data!.find(
+                (w) =>
+                  w.seasonType === (seasonType === "Regular Season" ? "regular" : "postseason") &&
+                  w.week === weekNum,
+              )!;
+              setWeek(selectedWeek);
+            }}
+            className="bg-accent text-accent-foreground flex-1"
+          />
+        ) : (
+          <Skeleton className="h-10 flex-1 rounded" />
+        )}
         {week && (
           <TooltipProvider>
             <Tooltip>
@@ -35,7 +107,7 @@ export default function Home() {
                 <div>
                   <AddPickDialog
                     week={week}
-                    canDouble={!picks.data?.some((p) => p.pick.double)}
+                    canDouble={!picks.data?.some((p) => p.double)}
                     ref={dialogRef}
                   >
                     <Button
@@ -56,21 +128,7 @@ export default function Home() {
           </TooltipProvider>
         )}
       </div>
-      {picks.data && (
-        <div className="w-full">
-          {picks.data.length === 0 ? (
-            <p className="text-center">No picks found for this week.</p>
-          ) : (
-            <ul className="flex flex-col gap-4">
-              {picks.data.map((res, i) => (
-                <li key={res.pick.id}>
-                  <PickCard pick={res.pick} num={i} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {picks.data && <PickList picks={picks.data} />}
     </div>
   );
 }

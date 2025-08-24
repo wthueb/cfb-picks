@@ -35,6 +35,7 @@ enum PickResult {
 
 function isPickWinner(pick: Pick, game: Game): PickResult | null {
   if (!game.completed) return null;
+  if (game.id === 401767135 && pick.duration === "FULL") return PickResult.PUSH;
 
   const homeLineScores = game.homeLineScores ?? [0, 0, 0, 0];
   const awayLineScores = game.awayLineScores ?? [0, 0, 0, 0];

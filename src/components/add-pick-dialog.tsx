@@ -33,13 +33,12 @@ export type AddPickDialogHandle = {
   clear: () => void;
 };
 
-export function AddPickDialog(
-  props: React.PropsWithChildren<{
-    pick?: Pick;
-    week: Week;
-    ref?: React.Ref<AddPickDialogHandle>;
-  }>,
-) {
+export function AddPickDialog(props: {
+  pick?: Pick;
+  week: Week;
+  ref?: React.Ref<AddPickDialogHandle>;
+  children: React.ReactNode;
+}) {
   useImperativeHandle(props.ref, () => ({ clear }));
 
   const games = api.cfb.games.useQuery({
@@ -199,6 +198,8 @@ export function AddPickDialog(
     display: type.replace(/_/g, " "),
   }));
 
+  const selectedTeamName = (team === game?.awayId ? game?.awayTeam : game?.homeTeam) ?? "";
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
@@ -234,7 +235,7 @@ export function AddPickDialog(
                     <Label>Team</Label>
                     <Select
                       items={[game.homeTeam, game.awayTeam]}
-                      defaultValue={game.homeTeam}
+                      defaultValue={selectedTeamName}
                       onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
                       className="w-full"
                     />
@@ -259,7 +260,7 @@ export function AddPickDialog(
                     <Label>Team</Label>
                     <Select
                       items={[game.homeTeam, game.awayTeam]}
-                      defaultValue={game.homeTeam}
+                      defaultValue={selectedTeamName}
                       onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
                       className="w-full"
                     />

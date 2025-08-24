@@ -1,4 +1,4 @@
-import { useState, type JSX } from "react";
+import { useEffect, useState, type JSX } from "react";
 import {
   Select as NormalSelect,
   SelectContent,
@@ -32,6 +32,10 @@ export function Select<T extends string, G extends string>(props: {
 }) {
   const [value, setValue] = useState<T | `${G}-${T}`>(props.defaultValue);
 
+  useEffect(() => {
+    setValue(props.defaultValue);
+  }, [props.defaultValue]);
+
   let displayString: string;
 
   if (!Array.isArray(props.items)) {
@@ -58,7 +62,7 @@ export function Select<T extends string, G extends string>(props: {
       value={value}
       onValueChange={(v) => {
         setValue(v as T | `${G}-${T}`);
-        props.onChange(v as T);
+        props.onChange(v as T | `${G}-${T}`);
       }}
     >
       <SelectTrigger className={props.className}>

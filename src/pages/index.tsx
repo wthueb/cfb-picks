@@ -10,24 +10,6 @@ import type { Pick } from "~/server/api/routers/picks";
 import { withSession } from "~/server/auth";
 import { api } from "~/utils/api";
 
-function PickList(props: { picks: Pick[] }) {
-  return (
-    <div className="w-full">
-      {props.picks.length === 0 ? (
-        <p className="text-center">No picks found for this week.</p>
-      ) : (
-        <ul className="flex flex-col gap-4">
-          {props.picks.map((pick, i) => (
-            <li key={pick.id}>
-              <PickCard pick={pick} num={i} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 export default function Home() {
   const [week, setWeek] = useState<Week | null>(null);
   const [currentWeek, setCurrentWeek] = useState<Week | null>(null);
@@ -72,8 +54,6 @@ export default function Home() {
     },
   );
 
-  const dialogRef = useRef<AddPickDialogHandle>(null);
-
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">
       <div className="sticky top-2 flex w-full items-center gap-4">
@@ -99,31 +79,52 @@ export default function Home() {
         ) : (
           <Skeleton className="h-10 flex-1 rounded" />
         )}
-        {week && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <AddPickDialog week={week} ref={dialogRef}>
-                    <Button
-                      disabled={picks.data && picks.data.length >= 5}
-                      onClick={dialogRef.current?.clear}
-                    >
-                      Add Pick
-                    </Button>
-                  </AddPickDialog>
-                </div>
-              </TooltipTrigger>
-              {picks.data && picks.data.length >= 5 && (
-                <TooltipContent side="left" className="bg-accent">
-                  <p className="text-accent-foreground text-sm">Max 5 picks per week</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        )}
+        {week && <AddPickButton week={week} disabled={!picks.data || picks.data.length >= 5} />}
       </div>
-      {picks.data && <PickList picks={picks.data} />}
+      {week && picks.data && <PickList picks={picks.data} week={week} />}
+    </div>
+  );
+}
+
+function AddPickButton(props: { week: Week; disabled: boolean }) {
+  const dialogRef = useRef<AddPickDialogHandle>(null);
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>
+            <AddPickDialog week={props.week} ref={dialogRef}>
+              <Button disabled={props.disabled} onClick={dialogRef.current?.clear}>
+                Add Pick
+              </Button>
+            </AddPickDialog>
+          </div>
+        </TooltipTrigger>
+        {props.disabled && (
+          <TooltipContent side="left" className="bg-accent">
+            <p className="text-accent-foreground text-sm">Max 5 picks per week</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function PickList(props: { picks: Pick[]; week: Week }) {
+  return (
+    <div className="w-full">
+      {props.picks.length === 0 ? (
+        <p className="text-center">No picks found for this week.</p>
+      ) : (
+        <ul className="flex flex-col gap-4">
+          {props.picks.map((pick, i) => (
+            <li key={pick.id}>
+              <PickCard pick={pick} num={i} week={props.week} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -9,11 +9,12 @@ import {
   teams,
   teamTotalPickTypes,
 } from "~/server/db/schema";
-import { gameLocked } from "~/utils/dates";
+import { isGameLocked } from "~/utils/dates";
 import { getGameById } from "./cfb";
 
 const ZodPick = z.intersection(
   z.object({
+    id: z.number().optional(),
     season: z.number().min(2000).max(new Date().getFullYear()),
     week: z.number().min(1).max(52),
     gameId: z.number(),
@@ -97,16 +98,49 @@ export const picksRouter = createTRPCRouter({
         ),
       );
 
-    if (existingPicks.length > 5) {
+    if (!input.id && existingPicks.length > 5) {
       throw new Error("Already have 5 picks for this week");
     }
 
-    if (input.double && existingPicks.some((p) => p.double)) {
+    if (input.double && existingPicks.filter((p) => p.id !== input.id).some((p) => p.double)) {
+      console.error("Existing picks:", existingPicks);
       throw new Error("Cannot have more than one double pick per week");
     }
 
-    const newPick: InferInsertModel<typeof picks> = {
-      teamId: ctx.session.user.teamId,
+    if (!input.id) {
+      const newPick: InferInsertModel<typeof picks> = {
+        teamId: ctx.session.user.teamId,
+        season: input.season,
+        week: input.week,
+        gameId: input.gameId,
+        pickType: input.pickType,
+        duration: input.duration,
+        odds: input.odds,
+        double: input.double,
+        total: "total" in input ? input.total : null,
+        spread: "spread" in input ? input.spread : null,
+        cfbTeamId: "cfbTeamId" in input ? input.cfbTeamId : null,
+      };
+
+      const res = await ctx.db.insert(picks).values(newPick).returning();
+
+      if (res.length !== 1) {
+        throw new Error("Failed to create pick");
+      }
+
+      return res[0]!;
+    }
+
+    const pick = existingPicks.find((p) => p.id === input.id);
+    if (!pick) throw new Error("Pick not found or not authorized to edit");
+
+    const game = await getGameById(pick.gameId, true);
+    if (!game) throw new Error("Game not found for the pick");
+
+    if (isGameLocked(new Date(game.startDate)))
+      throw new Error("Cannot edit a pick for a game that has already started");
+
+    const updatedPick: Omit<InferInsertModel<typeof picks>, "id" | "teamId"> = {
       season: input.season,
       week: input.week,
       gameId: input.gameId,
@@ -119,9 +153,17 @@ export const picksRouter = createTRPCRouter({
       cfbTeamId: "cfbTeamId" in input ? input.cfbTeamId : null,
     };
 
-    await ctx.db.insert(picks).values(newPick);
+    const res = await ctx.db
+      .update(picks)
+      .set(updatedPick)
+      .where(and(eq(picks.id, input.id), eq(picks.teamId, ctx.session.user.teamId)))
+      .returning();
 
-    return newPick;
+    if (res.length !== 1) {
+      throw new Error("Pick not found or not authorized to edit");
+    }
+
+    return res[0]!;
   }),
 
   deletePick: protectedProcedure.input(z.number().int()).mutation(async ({ input, ctx }) => {
@@ -145,7 +187,7 @@ export const picksRouter = createTRPCRouter({
       throw new Error("Game not found for the pick");
     }
 
-    if (gameLocked(new Date(game.startDate))) {
+    if (isGameLocked(new Date(game.startDate))) {
       throw new Error("Cannot delete a pick for a game that has already started");
     }
 

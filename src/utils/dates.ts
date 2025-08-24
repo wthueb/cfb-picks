@@ -5,7 +5,7 @@ function getNoon(date: Date) {
   return noon;
 }
 
-export function gameLocked(startDate: Date) {
+export function isGameLocked(startDate: Date) {
   const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const startDateUtc = fromZonedTime(startDate, localTimeZone);

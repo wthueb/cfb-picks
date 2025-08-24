@@ -1,5 +1,6 @@
 import { useEffect, useImperativeHandle, useState } from "react";
 import type { Week } from "~/server/api/routers/cfb";
+import type { Pick } from "~/server/api/routers/picks";
 import {
   durations,
   isTeamTotalPickType,
@@ -33,6 +34,7 @@ export type AddPickDialogHandle = {
 
 export function AddPickDialog(
   props: React.PropsWithChildren<{
+    pick?: Pick;
     week: Week;
     ref?: React.Ref<AddPickDialogHandle>;
   }>,
@@ -46,7 +48,9 @@ export function AddPickDialog(
   });
 
   const picks = api.picks.teamPicks.useQuery({ season: props.week.season, week: props.week.week });
-  const canDouble = picks.data ? !picks.data.some((pick) => pick.double) : false;
+  const canDouble = picks.data
+    ? !picks.data.filter((p) => p.id !== props.pick?.id).some((pick) => pick.double)
+    : false;
 
   const utils = api.useUtils();
 
@@ -60,30 +64,43 @@ export function AddPickDialog(
 
   const [open, setOpen] = useState(false);
 
-  const [game, setGame] = useState<NonNullable<typeof games.data>[number] | null>(null);
+  const [game, setGame] = useState<NonNullable<typeof games.data>[number]>();
   const [pickType, setPickType] = useState<PickType>("MONEYLINE");
   const [duration, setDuration] = useState<Duration>("FULL");
-  const [odds, setOdds] = useState<number | null>(null);
+  const [odds, setOdds] = useState<number>();
   const [double, setDouble] = useState<boolean>(false);
-  const [team, setTeam] = useState<number | null>(null);
-  const [total, setTotal] = useState<number | null>(null);
-  const [spread, setSpread] = useState<number | null>(null);
+  const [team, setTeam] = useState<number>();
+  const [total, setTotal] = useState<number>();
+  const [spread, setSpread] = useState<number>();
 
   useEffect(() => {
-    if (game) {
+    if (props.pick) {
+      setGame(games.data?.find((g) => g.id === props.pick!.gameId));
+      setPickType(props.pick.pickType);
+      setDuration(props.pick.duration);
+      setOdds(props.pick.odds);
+      setDouble(props.pick.double);
+      setTeam("cfbTeamId" in props.pick ? props.pick.cfbTeamId : undefined);
+      setTotal("total" in props.pick ? props.pick.total : undefined);
+      setSpread("spread" in props.pick ? props.pick.spread : undefined);
+    }
+  }, [games.data, props.pick]);
+
+  useEffect(() => {
+    if (game && (team === undefined || (team && ![game.homeId, game.awayId].includes(team)))) {
       setTeam(game.homeId);
     }
-  }, [game]);
+  }, [game, team]);
 
   const clear = () => {
-    setGame(null);
+    setGame(undefined);
     setPickType("SPREAD");
     setDuration("FULL");
-    setTotal(null);
-    setTeam(null);
-    setSpread(null);
-    setOdds(null);
+    setOdds(undefined);
     setDouble(false);
+    setTeam(undefined);
+    setTotal(undefined);
+    setSpread(undefined);
   };
 
   const addPick = () => {
@@ -104,6 +121,7 @@ export function AddPickDialog(
         return;
       }
       makePick.mutate({
+        id: props.pick?.id,
         season: props.week.season,
         week: props.week.week,
         gameId: game.id,
@@ -120,6 +138,7 @@ export function AddPickDialog(
         return;
       }
       makePick.mutate({
+        id: props.pick?.id,
         season: props.week.season,
         week: props.week.week,
         gameId: game.id,
@@ -139,6 +158,7 @@ export function AddPickDialog(
         return;
       }
       makePick.mutate({
+        id: props.pick?.id,
         season: props.week.season,
         week: props.week.week,
         gameId: game.id,
@@ -155,6 +175,7 @@ export function AddPickDialog(
         return;
       }
       makePick.mutate({
+        id: props.pick?.id,
         season: props.week.season,
         week: props.week.week,
         gameId: game.id,
@@ -178,7 +199,7 @@ export function AddPickDialog(
       <DialogContent>
         <DialogHeader className="text-center">
           <DialogTitle>
-            Add Pick for Week {props.week.week} (
+            {!props.pick ? "Add" : "Edit"} Pick for Week {props.week.week} (
             {props.week.seasonType === "regular" ? "Regular Season" : "Playoffs"})
           </DialogTitle>
           <DialogDescription>
@@ -188,7 +209,7 @@ export function AddPickDialog(
         <div className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label>Game</Label>
-            <GameCombobox games={games.data ?? []} onChange={setGame} />
+            <GameCombobox games={games.data ?? []} defaultValue={game} onChange={setGame} />
           </div>
           {game ? (
             <div className="flex flex-wrap justify-evenly gap-4">
@@ -219,6 +240,7 @@ export function AddPickDialog(
                         type="number"
                         placeholder="+/- number"
                         step={0.5}
+                        defaultValue={spread}
                         onChange={(e) => setSpread(parseFloat(e.target.value))}
                         className="w-[130px]"
                       />
@@ -243,6 +265,7 @@ export function AddPickDialog(
                       placeholder="number"
                       min={0}
                       step={0.5}
+                      defaultValue={total}
                       onChange={(e) => setTotal(parseFloat(e.target.value))}
                       className="w-[130px]"
                     />
@@ -256,6 +279,7 @@ export function AddPickDialog(
                     placeholder="number"
                     min={0}
                     step={0.5}
+                    defaultValue={total}
                     onChange={(e) => setTotal(parseFloat(e.target.value))}
                     className="w-full"
                   />
@@ -268,7 +292,7 @@ export function AddPickDialog(
           <div className="flex flex-wrap items-center justify-evenly gap-4">
             <div className="flex gap-2">
               <Label>Duration</Label>
-              <Select items={durations} defaultValue="FULL" onChange={setDuration} />
+              <Select items={durations} defaultValue={duration} onChange={setDuration} />
             </div>
             <div className="flex gap-2">
               <Label htmlFor="odds">Odds</Label>
@@ -277,6 +301,7 @@ export function AddPickDialog(
                 type="number"
                 placeholder="+/- number"
                 step={10}
+                defaultValue={odds}
                 onChange={(e) => setOdds(parseFloat(e.target.value))}
                 className="w-[130px]"
               />
@@ -287,7 +312,12 @@ export function AddPickDialog(
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div>
-                      <Switch id="double" disabled={!canDouble} onCheckedChange={setDouble} />
+                      <Switch
+                        id="double"
+                        disabled={!canDouble}
+                        defaultChecked={double}
+                        onCheckedChange={setDouble}
+                      />
                     </div>
                   </TooltipTrigger>
                   {!canDouble && (

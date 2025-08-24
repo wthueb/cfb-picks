@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -11,15 +11,23 @@ import {
 } from "~/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
+import type { Game } from "~/server/api/routers/cfb";
 import type { RouterOutputs } from "~/utils/api";
-import { gameLocked } from "~/utils/dates";
+import { isGameLocked } from "~/utils/dates";
 
 export function GameCombobox(props: {
   games: RouterOutputs["cfb"]["games"];
-  onChange: (game: RouterOutputs["cfb"]["games"][number] | null) => void;
+  defaultValue?: Game;
+  onChange: (game?: RouterOutputs["cfb"]["games"][number]) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (props.defaultValue) {
+      setValue(props.defaultValue.id.toString());
+    }
+  }, [props.defaultValue]);
 
   const games = props.games.map((game) => ({
     ...game,
@@ -46,14 +54,14 @@ export function GameCombobox(props: {
                 <CommandItem
                   key={game.id}
                   value={game.label}
-                  disabled={gameLocked(game.startDate)}
+                  disabled={isGameLocked(game.startDate)}
                   onSelect={() => {
                     if (game.id.toString() !== value) {
                       props.onChange(game);
                       setValue(game.id.toString());
                     } else {
                       setValue("");
-                      props.onChange(null);
+                      props.onChange(undefined);
                     }
                     setOpen(false);
                   }}

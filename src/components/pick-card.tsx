@@ -1,4 +1,4 @@
-import { Check, CircleDashed, Minus, Trash2, X } from "lucide-react";
+import { Check, CircleDashed, Minus, Pencil, Trash2, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,11 +19,12 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import type { Game } from "~/server/api/routers/cfb";
+import type { Game, Week } from "~/server/api/routers/cfb";
 import type { Pick } from "~/server/api/routers/picks";
 import { isTeamTotalPickType } from "~/server/db/schema";
 import { api } from "~/utils/api";
-import { gameLocked } from "~/utils/dates";
+import { isGameLocked } from "~/utils/dates";
+import { AddPickDialog } from "./add-pick-dialog";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
@@ -84,17 +85,9 @@ function isPickWinner(pick: Pick, game: Game): PickResult | null {
   throw new Error("Invalid pick type");
 }
 
-export function PickCard(props: { pick: Pick; num: number }) {
+export function PickCard(props: { pick: Pick; num: number; week: Week }) {
   const game = api.cfb.gameById.useQuery(props.pick.gameId, {
     refetchInterval: 1000 * 60, // 1 minute
-  });
-
-  const util = api.useUtils();
-
-  const deletePick = api.picks.deletePick.useMutation({
-    onSuccess: async () => {
-      await util.picks.invalidate();
-    },
   });
 
   const team =
@@ -107,6 +100,8 @@ export function PickCard(props: { pick: Pick; num: number }) {
   const now = new Date();
 
   const pickStatus = game.data ? isPickWinner(props.pick, game.data) : null;
+
+  const gameLocked = game.data ? isGameLocked(game.data.startDate) : true;
 
   return (
     <Card>
@@ -128,43 +123,20 @@ export function PickCard(props: { pick: Pick; num: number }) {
           )}
         </CardDescription>
         <CardAction>
-          {!game.data ? (
-            <Skeleton className="h-8 w-8" />
-          ) : (
+          {game.data ? (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
                     {now < game.data.startDate ? (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={gameLocked(game.data.startDate)}
-                            className="text-destructive"
-                          >
-                            <Trash2 />
+                      <>
+                        <AddPickDialog pick={props.pick} week={props.week}>
+                          <Button variant="ghost" size="icon" disabled={gameLocked}>
+                            <Pencil />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently delete your pick.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive hover:bg-destructive/90"
-                              onClick={() => deletePick.mutate(props.pick.id)}
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        </AddPickDialog>
+                        <DeleteButton pickId={props.pick.id} disabled={gameLocked} />
+                      </>
                     ) : game.data.completed ? (
                       pickStatus === PickResult.WIN ? (
                         <Check className="text-primary-foreground" />
@@ -179,7 +151,7 @@ export function PickCard(props: { pick: Pick; num: number }) {
                   </div>
                 </TooltipTrigger>
                 {now < game.data.startDate
-                  ? gameLocked(game.data.startDate) && (
+                  ? gameLocked && (
                       <TooltipContent side="left" className="bg-accent">
                         <p className="text-accent-foreground text-sm">Pick is locked</p>
                       </TooltipContent>
@@ -191,6 +163,8 @@ export function PickCard(props: { pick: Pick; num: number }) {
                     )}
               </Tooltip>
             </TooltipProvider>
+          ) : (
+            <Skeleton className="h-8 w-8" />
           )}
         </CardAction>
       </CardHeader>
@@ -211,7 +185,42 @@ export function PickCard(props: { pick: Pick; num: number }) {
           <Skeleton className="h-6 w-full" />
         )}
       </CardContent>
-      {/*<CardFooter>current score</CardFooter>*/}
+      {/* TODO: <CardFooter>current score</CardFooter>*/}
     </Card>
+  );
+}
+
+function DeleteButton(props: { pickId: number; disabled: boolean }) {
+  const util = api.useUtils();
+
+  const deletePick = api.picks.deletePick.useMutation({
+    onSuccess: async () => {
+      await util.picks.invalidate();
+    },
+  });
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" disabled={props.disabled} className="text-destructive">
+          <Trash2 />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription>This will permanently delete your pick.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive hover:bg-destructive/90"
+            onClick={() => deletePick.mutate(props.pickId)}
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

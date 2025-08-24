@@ -7,6 +7,7 @@ import type { operations } from "~/server/cfb-api/schema";
 import type { RouterOutputs } from "~/utils/api";
 
 export type Week = RouterOutputs["cfb"]["calendar"][number];
+export type Game = RouterOutputs["cfb"]["games"][number];
 
 async function getGamesForYear(year: number) {
   const cached = await RunCache.get(`cfb-games-${year}`);
@@ -49,10 +50,14 @@ export async function getGameById(id: number, skipCache = false) {
 
   const game = res.data[0];
 
+  if (!game) {
+    return null;
+  }
+
   await RunCache.set({
     key: `cfb-game-${id}`,
     value: JSON.stringify(game),
-    ttl: 1000 * 60 * 5, // 5 min
+    ttl: game.completed ? undefined : 1000 * 60 * 5, // 5 min
   });
 
   return game;

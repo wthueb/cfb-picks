@@ -33,23 +33,20 @@ export type AddPickDialogHandle = {
 
 export function AddPickDialog(
   props: React.PropsWithChildren<{
-    week: Week | null;
-    canDouble: boolean;
+    week: Week;
     ref?: React.Ref<AddPickDialogHandle>;
   }>,
 ) {
   useImperativeHandle(props.ref, () => ({ clear }));
 
-  const games = api.cfb.games.useQuery(
-    {
-      year: props.week?.season,
-      week: props.week?.week,
-      seasonType: props.week?.seasonType,
-    },
-    {
-      enabled: !!props.week,
-    },
-  );
+  const games = api.cfb.games.useQuery({
+    year: props.week.season,
+    week: props.week.week,
+    seasonType: props.week.seasonType,
+  });
+
+  const picks = api.picks.teamPicks.useQuery({ season: props.week.season, week: props.week.week });
+  const canDouble = picks.data ? !picks.data.some((pick) => pick.double) : false;
 
   const utils = api.useUtils();
 
@@ -90,7 +87,7 @@ export function AddPickDialog(
   };
 
   const addPick = () => {
-    if (!props.week || !game) return;
+    if (!game) return;
 
     if (!odds) {
       console.error("Odds are required.");
@@ -178,82 +175,68 @@ export function AddPickDialog(
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
-      {props.week && (
-        <DialogContent>
-          <DialogHeader className="text-center">
-            <DialogTitle>
-              Add Pick for Week {props.week.week} (
-              {props.week.seasonType === "regular" ? "Regular Season" : "Playoffs"})
-            </DialogTitle>
-            <DialogDescription>
-              Select a game (that hasn&rsquo;t started) and enter your pick.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex min-w-0 flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label>Game</Label>
-              <GameCombobox games={games.data ?? []} onChange={setGame} />
-            </div>
-            {game ? (
-              <div className="flex flex-wrap justify-evenly gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label>Pick Type</Label>
-                  <Select
-                    items={pickTypeSelectItems}
-                    defaultValue={pickType}
-                    onChange={setPickType}
-                    className="w-[130px]"
-                  />
-                </div>
-                {pickType === "SPREAD" || pickType === "MONEYLINE" ? (
-                  <>
-                    <div className="flex flex-1 flex-col gap-2">
-                      <Label>Team</Label>
-                      <Select
-                        items={[game.homeTeam, game.awayTeam]}
-                        defaultValue={game.homeTeam}
-                        onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
-                        className="w-full"
-                      />
-                    </div>
-                    {pickType === "SPREAD" && (
-                      <div className="flex flex-col gap-2">
-                        <Label>Spread</Label>
-                        <Input
-                          type="number"
-                          placeholder="+/- number"
-                          step={0.5}
-                          onChange={(e) => setSpread(parseFloat(e.target.value))}
-                          className="w-[130px]"
-                        />
-                      </div>
-                    )}
-                  </>
-                ) : isTeamTotalPickType(pickType) ? (
-                  <>
-                    <div className="flex flex-1 flex-col gap-2">
-                      <Label>Team</Label>
-                      <Select
-                        items={[game.homeTeam, game.awayTeam]}
-                        defaultValue={game.homeTeam}
-                        onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
-                        className="w-full"
-                      />
-                    </div>
+      <DialogContent>
+        <DialogHeader className="text-center">
+          <DialogTitle>
+            Add Pick for Week {props.week.week} (
+            {props.week.seasonType === "regular" ? "Regular Season" : "Playoffs"})
+          </DialogTitle>
+          <DialogDescription>
+            Select a game (that hasn&rsquo;t started) and enter your pick.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label>Game</Label>
+            <GameCombobox games={games.data ?? []} onChange={setGame} />
+          </div>
+          {game ? (
+            <div className="flex flex-wrap justify-evenly gap-4">
+              <div className="flex flex-col gap-2">
+                <Label>Pick Type</Label>
+                <Select
+                  items={pickTypeSelectItems}
+                  defaultValue={pickType}
+                  onChange={setPickType}
+                  className="w-[130px]"
+                />
+              </div>
+              {pickType === "SPREAD" || pickType === "MONEYLINE" ? (
+                <>
+                  <div className="flex flex-1 flex-col gap-2">
+                    <Label>Team</Label>
+                    <Select
+                      items={[game.homeTeam, game.awayTeam]}
+                      defaultValue={game.homeTeam}
+                      onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
+                      className="w-full"
+                    />
+                  </div>
+                  {pickType === "SPREAD" && (
                     <div className="flex flex-col gap-2">
-                      <Label>Total</Label>
+                      <Label>Spread</Label>
                       <Input
                         type="number"
-                        placeholder="number"
-                        min={0}
+                        placeholder="+/- number"
                         step={0.5}
-                        onChange={(e) => setTotal(parseFloat(e.target.value))}
+                        onChange={(e) => setSpread(parseFloat(e.target.value))}
                         className="w-[130px]"
                       />
                     </div>
-                  </>
-                ) : (
+                  )}
+                </>
+              ) : isTeamTotalPickType(pickType) ? (
+                <>
                   <div className="flex flex-1 flex-col gap-2">
+                    <Label>Team</Label>
+                    <Select
+                      items={[game.homeTeam, game.awayTeam]}
+                      defaultValue={game.homeTeam}
+                      onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
                     <Label>Total</Label>
                     <Input
                       type="number"
@@ -261,66 +244,74 @@ export function AddPickDialog(
                       min={0}
                       step={0.5}
                       onChange={(e) => setTotal(parseFloat(e.target.value))}
-                      className="w-full"
+                      className="w-[130px]"
                     />
                   </div>
-                )}
-              </div>
-            ) : (
-              <Skeleton className="h-16.5 w-full" />
-            )}
-            <div className="flex flex-wrap items-center justify-evenly gap-4">
-              <div className="flex gap-2">
-                <Label>Duration</Label>
-                <Select items={durations} defaultValue="FULL" onChange={setDuration} />
-              </div>
-              <div className="flex gap-2">
-                <Label htmlFor="odds">Odds</Label>
-                <Input
-                  id="odds"
-                  type="number"
-                  placeholder="+/- number"
-                  step={10}
-                  onChange={(e) => setOdds(parseFloat(e.target.value))}
-                  className="w-[130px]"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Label htmlFor="double">Double</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Switch
-                          id="double"
-                          disabled={!props.canDouble}
-                          onCheckedChange={setDouble}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    {!props.canDouble && (
-                      <TooltipContent side="top" className="bg-accent">
-                        <p className="text-accent-foreground text-sm">
-                          Already made a double pick this week.
-                        </p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+                </>
+              ) : (
+                <div className="flex flex-1 flex-col gap-2">
+                  <Label>Total</Label>
+                  <Input
+                    type="number"
+                    placeholder="number"
+                    min={0}
+                    step={0.5}
+                    onChange={(e) => setTotal(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <Skeleton className="h-16.5 w-full" />
+          )}
+          <div className="flex flex-wrap items-center justify-evenly gap-4">
+            <div className="flex gap-2">
+              <Label>Duration</Label>
+              <Select items={durations} defaultValue="FULL" onChange={setDuration} />
+            </div>
+            <div className="flex gap-2">
+              <Label htmlFor="odds">Odds</Label>
+              <Input
+                id="odds"
+                type="number"
+                placeholder="+/- number"
+                step={10}
+                onChange={(e) => setOdds(parseFloat(e.target.value))}
+                className="w-[130px]"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Label htmlFor="double">Double</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Switch id="double" disabled={!canDouble} onCheckedChange={setDouble} />
+                    </div>
+                  </TooltipTrigger>
+                  {!canDouble && (
+                    <TooltipContent side="top" className="bg-accent">
+                      <p className="text-accent-foreground text-sm">
+                        Already made a double pick this week
+                      </p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            {/* TODO: disable button */}
-            <Button type="submit" onClick={addPick}>
-              Save Pick
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      )}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          {/* TODO: disable button */}
+          <Button type="submit" onClick={addPick}>
+            Save Pick
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

@@ -104,11 +104,7 @@ export default function Home() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>
-                  <AddPickDialog
-                    week={week}
-                    canDouble={!picks.data?.some((p) => p.double)}
-                    ref={dialogRef}
-                  >
+                  <AddPickDialog week={week} ref={dialogRef}>
                     <Button
                       disabled={picks.data && picks.data.length >= 5}
                       onClick={dialogRef.current?.clear}
@@ -120,7 +116,7 @@ export default function Home() {
               </TooltipTrigger>
               {picks.data && picks.data.length >= 5 && (
                 <TooltipContent side="left" className="bg-accent">
-                  <p className="text-accent-foreground text-sm">Max 5 picks per week.</p>
+                  <p className="text-accent-foreground text-sm">Max 5 picks per week</p>
                 </TooltipContent>
               )}
             </Tooltip>

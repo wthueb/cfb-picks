@@ -1,3 +1,4 @@
+import { useSession } from "next-auth/react";
 import { useMemo, useRef, useState } from "react";
 import { AddPickDialog, type AddPickDialogHandle } from "~/components/add-pick-dialog";
 import { PickCard } from "~/components/pick-card";
@@ -11,8 +12,8 @@ import { withSession } from "~/server/auth";
 import { api } from "~/utils/api";
 
 export default function Home() {
-  const [week, setWeek] = useState<Week | null>(null);
-  const [currentWeek, setCurrentWeek] = useState<Week | null>(null);
+  const [week, setWeek] = useState<Week>();
+  const [currentWeek, setCurrentWeek] = useState<Week>();
 
   const calendar = api.cfb.calendar.useQuery(
     {},
@@ -44,23 +45,26 @@ export default function Home() {
     [calendar.data],
   );
 
+  const session = useSession();
+
   const picks = api.picks.teamPicks.useQuery(
     {
+      teamId: session.data?.user.teamId ?? -1,
       season: week?.season,
       week: week?.week,
     },
     {
-      enabled: !!week,
+      enabled: !!session.data && !!week,
     },
   );
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">
       <div className="sticky top-2 flex w-full items-center gap-4">
-        {weeksBySeasonType ? (
+        {weeksBySeasonType && currentWeek ? (
           <Select
             items={weeksBySeasonType}
-            defaultValue={`${currentWeek!.seasonType === "regular" ? "Regular Season" : "Playoffs"}-Week ${currentWeek!.week}`}
+            defaultValue={`${currentWeek.seasonType === "regular" ? "Regular Season" : "Playoffs"}-Week ${currentWeek.week}`}
             onChange={(v) => {
               const [seasonType, display] = v.split("-") as [
                 keyof typeof weeksBySeasonType,

@@ -1,3 +1,4 @@
+import { useSession } from "next-auth/react";
 import { useEffect, useImperativeHandle, useState } from "react";
 import type { Week } from "~/server/api/routers/cfb";
 import type { Pick } from "~/server/api/routers/picks";
@@ -47,7 +48,12 @@ export function AddPickDialog(
     seasonType: props.week.seasonType,
   });
 
-  const picks = api.picks.teamPicks.useQuery({ season: props.week.season, week: props.week.week });
+  const session = useSession();
+
+  const picks = api.picks.teamPicks.useQuery(
+    { teamId: session.data?.user.teamId ?? -1, season: props.week.season, week: props.week.week },
+    { enabled: !!session.data },
+  );
   const canDouble = picks.data
     ? !picks.data.filter((p) => p.id !== props.pick?.id).some((pick) => pick.double)
     : false;

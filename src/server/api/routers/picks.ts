@@ -61,19 +61,13 @@ export const picksRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const teamId = input.teamId ?? ctx.session.user.teamId;
-
-      if (teamId === null) {
-        return [];
-      }
-
       const res = await ctx.db
         .select()
         .from(picks)
         .innerJoin(teams, eq(picks.teamId, teams.id))
         .where(
           and(
-            eq(teams.id, teamId),
+            input.teamId ? eq(teams.id, input.teamId) : undefined,
             input ? eq(picks.season, input.season) : undefined,
             input?.week ? eq(picks.week, input.week) : undefined,
           ),

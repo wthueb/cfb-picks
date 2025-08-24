@@ -14,8 +14,8 @@ declare module "next-auth" {
 
   interface User extends InferSelectModel<typeof users> {
     id: string;
-    teamId: number | null;
-    team: InferSelectModel<typeof teams> | null;
+    teamId: number;
+    team: InferSelectModel<typeof teams>;
   }
 }
 
@@ -33,7 +33,9 @@ async function populateTeam(user: BaseAdapterUser) {
 
   const team = await db.select().from(teams).where(eq(teams.id, user.teamId)).get();
 
-  return { ...user, team: team ?? null };
+  if (!team) throw new Error(`User ${user.id} has invalid teamId ${user.teamId}`);
+
+  return { ...user, team: team };
 }
 
 const customAdapter: Adapter = {

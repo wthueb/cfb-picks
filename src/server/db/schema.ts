@@ -65,7 +65,10 @@ export const users = createTable("user", (d) => ({
   email: d.text({ length: 255 }).notNull(),
   emailVerified: d.integer({ mode: "timestamp" }),
   image: d.text({ length: 255 }),
-  teamId: d.integer({ mode: "number" }).references(() => teams.id),
+  teamId: d
+    .integer({ mode: "number" })
+    .notNull()
+    .references(() => teams.id),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({

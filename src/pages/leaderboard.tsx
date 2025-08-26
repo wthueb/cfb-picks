@@ -1,3 +1,4 @@
+import { Skeleton } from "~/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -61,7 +62,7 @@ export default function Leaderboard() {
           </TableFooter>
         </Table>
       ) : (
-        <span>Loading...</span>
+        <Skeleton className="h-56 w-full" />
       )}
     </div>
   );

@@ -19,8 +19,9 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import type { Game, Week } from "~/server/api/routers/cfb";
-import type { Pick } from "~/server/api/routers/picks";
+import { getPickResult, PickResult } from "~/lib/picks";
+import type { Week } from "~/server/api/routers/cfb";
+import type { CFBPick } from "~/server/api/routers/picks";
 import { isTeamTotalPickType } from "~/server/db/schema";
 import { api } from "~/utils/api";
 import { isGameLocked } from "~/utils/dates";
@@ -28,64 +29,7 @@ import { AddPickDialog } from "./add-pick-dialog";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
-enum PickResult {
-  WIN = "WIN",
-  LOSS = "LOSS",
-  PUSH = "PUSH",
-}
-
-function isPickWinner(pick: Pick, game: Game): PickResult | null {
-  if (!game.completed) return null;
-  if (game.id === 401767135 && pick.duration === "FULL") return PickResult.PUSH;
-
-  const homeLineScores = game.homeLineScores ?? [0, 0, 0, 0];
-  const awayLineScores = game.awayLineScores ?? [0, 0, 0, 0];
-
-  const homeScore =
-    pick.duration === "1Q"
-      ? homeLineScores[0]!
-      : pick.duration === "1H"
-        ? homeLineScores[0]! + homeLineScores[1]!
-        : (game.homePoints ?? 0);
-
-  const awayScore =
-    pick.duration === "1Q"
-      ? awayLineScores[0]!
-      : pick.duration === "1H"
-        ? awayLineScores[0]! + awayLineScores[1]!
-        : (game.awayPoints ?? 0);
-
-  if (pick.pickType === "SPREAD") {
-    const teamScore = game.homeId === pick.cfbTeamId ? homeScore : awayScore;
-    const opponentScore = game.homeId === pick.cfbTeamId ? awayScore : homeScore;
-
-    if (teamScore + pick.spread === opponentScore) return PickResult.PUSH;
-    return teamScore + pick.spread > opponentScore ? PickResult.WIN : PickResult.LOSS;
-  }
-
-  if (pick.pickType === "MONEYLINE") {
-    const teamScore = game.homeId === pick.cfbTeamId ? homeScore : awayScore;
-    const opponentScore = game.homeId === pick.cfbTeamId ? awayScore : homeScore;
-
-    return teamScore > opponentScore ? PickResult.WIN : PickResult.LOSS;
-  }
-
-  const total =
-    "cfbTeamId" in pick
-      ? game.homeId === pick.cfbTeamId
-        ? homeScore
-        : awayScore
-      : homeScore + awayScore;
-
-  if (total === pick.total) return PickResult.PUSH;
-
-  if (pick.pickType.endsWith("OVER")) return total > pick.total ? PickResult.WIN : PickResult.LOSS;
-  if (pick.pickType.endsWith("UNDER")) return total < pick.total ? PickResult.WIN : PickResult.LOSS;
-
-  throw new Error("Invalid pick type");
-}
-
-export function PickCard(props: { pick: Pick; num: number; week: Week }) {
+export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
   const game = api.cfb.gameById.useQuery(props.pick.gameId, {
     refetchInterval: 1000 * 60, // 1 minute
   });
@@ -99,7 +43,7 @@ export function PickCard(props: { pick: Pick; num: number; week: Week }) {
 
   const now = new Date();
 
-  const pickStatus = game.data ? isPickWinner(props.pick, game.data) : null;
+  const pickStatus = game.data ? getPickResult(props.pick, game.data) : null;
 
   const gameLocked = game.data ? isGameLocked(game.data.startDate) : true;
 

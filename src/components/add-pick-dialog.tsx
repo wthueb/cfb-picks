@@ -1,7 +1,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useImperativeHandle, useState } from "react";
 import type { Week } from "~/server/api/routers/cfb";
-import type { Pick } from "~/server/api/routers/picks";
+import type { CFBPick } from "~/server/api/routers/picks";
 import {
   durations,
   isTeamTotalPickType,
@@ -34,7 +34,7 @@ export type AddPickDialogHandle = {
 };
 
 export function AddPickDialog(props: {
-  pick?: Pick;
+  pick?: CFBPick;
   week: Week;
   ref?: React.Ref<AddPickDialogHandle>;
   children: React.ReactNode;

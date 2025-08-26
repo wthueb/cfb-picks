@@ -7,7 +7,7 @@ import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import type { Week } from "~/server/api/routers/cfb";
-import type { Pick } from "~/server/api/routers/picks";
+import type { CFBPick } from "~/server/api/routers/picks";
 import { withSession } from "~/server/auth";
 import { api } from "~/utils/api";
 
@@ -115,7 +115,7 @@ function AddPickButton(props: { week: Week; disabled: boolean }) {
   );
 }
 
-function PickList(props: { picks: Pick[]; week: Week }) {
+function PickList(props: { picks: CFBPick[]; week: Week }) {
   return (
     <div className="w-full">
       {props.picks.length === 0 ? (

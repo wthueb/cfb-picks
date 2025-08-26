@@ -43,7 +43,7 @@ export const picks = createTable("pick", (d) => ({
 }));
 
 export const picksRelations = relations(picks, ({ one }) => ({
-  user: one(teams, { fields: [picks.teamId], references: [teams.id] }),
+  team: one(teams, { fields: [picks.teamId], references: [teams.id] }),
 }));
 
 export const teams = createTable("team", (d) => ({
@@ -53,6 +53,7 @@ export const teams = createTable("team", (d) => ({
 
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
+  picks: many(picks),
 }));
 
 export const users = createTable("user", (d) => ({

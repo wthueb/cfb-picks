@@ -1,6 +1,7 @@
 import { and, eq, type InferInsertModel } from "drizzle-orm";
 import z from "zod";
 import { env } from "~/env";
+import { getPotential, scorePick } from "~/lib/picks";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import {
   durations,
@@ -44,12 +45,58 @@ const ZodPick = z.intersection(
   ]),
 );
 
-export type Pick = z.infer<typeof ZodPick> & { id: number };
+export type CFBPick = z.infer<typeof ZodPick> & { id: number };
 
 export const picksRouter = createTRPCRouter({
+  leaderboard: protectedProcedure.query(async ({ ctx }) => {
+    const res = await ctx.db.query.teams.findMany({
+      with: {
+        users: { columns: { id: true, name: true } },
+        picks: true,
+      },
+    });
+
+    return await Promise.all(
+      res
+        .filter((t) => env.NODE_ENV !== "production" || t.id !== 1)
+        .map(async (team) => {
+          const picks = await Promise.all(
+            team.picks.map(async (pick) => {
+              const potential = getPotential(pick as CFBPick);
+
+              const game = await getGameById(pick.gameId);
+              if (!game) return { ...pick, potential, result: null };
+
+              return {
+                ...pick,
+                potential,
+                result: game ? scorePick(pick as CFBPick, game) : null,
+              };
+            }),
+          );
+
+          return {
+            ...team,
+            picks,
+            totalPicks: picks.length,
+            wins: picks.filter((p) => p.result !== null && p.result > 0).length,
+            losses: picks.filter((p) => p.result !== null && p.result < 0).length,
+            potential: picks.reduce((acc, p) => acc + (p.potential ?? 0), 0),
+            winnings: picks.reduce((acc, p) => acc + (p.result ?? 0), 0),
+          };
+        }),
+    );
+  }),
+
   teams: protectedProcedure.query(async ({ ctx }) => {
-    const res = await ctx.db.select().from(teams).orderBy(teams.name);
-    return res;
+    const res = await ctx.db.query.teams.findMany({
+      with: {
+        users: { columns: { id: true, name: true } },
+        picks: true,
+      },
+    });
+
+    return res.filter((t) => env.NODE_ENV !== "production" || t.id !== 1);
   }),
 
   teamPicks: protectedProcedure
@@ -73,7 +120,7 @@ export const picksRouter = createTRPCRouter({
           ),
         );
 
-      return res.map((r) => r.pick as Pick);
+      return res.map((r) => r.pick as CFBPick);
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {

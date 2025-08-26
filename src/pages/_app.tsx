@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import Head from "next/head";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
+import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { cn } from "~/lib/utils";
 import "~/styles/globals.css";
@@ -19,9 +20,15 @@ function Nav() {
 
   return (
     <nav className="bg-card text-card-foreground m-2 flex h-10 items-center justify-between gap-4 rounded-md border-1 px-4">
-      <Link href="/" className="text-primary-foreground text-2xl font-semibold">
-        CFB Picks
-      </Link>
+      <div className="flex h-full items-center gap-4">
+        <Link href="/" className="text-primary-foreground text-2xl font-semibold">
+          CFB Picks
+        </Link>
+        <Separator orientation="vertical" />
+        <div className="text-sm">
+          <Link href="/leaderboard">Leaderboard</Link>
+        </div>
+      </div>
       <div>
         {session.status === "loading" ? (
           <Skeleton className="h-8 w-[8ch]" />

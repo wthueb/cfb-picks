@@ -40,11 +40,11 @@ function StatCard(props: { team: RouterOutputs["picks"]["stats"][number] }) {
         </div>
         <div>
           <div className="flex justify-between gap-2">
-            <p>Winnings (wager amt):</p>
+            <p>Overall (wager amt):</p>
             <p>{+props.team.winningsByWagerAmount.toFixed(2)}</p>
           </div>
           <div className="flex justify-between gap-2">
-            <p>Winnings (1u bet):</p>
+            <p>Overall (1u bet):</p>
             <p>{+props.team.winnings.toFixed(2)}</p>
           </div>
           <div className="flex justify-between gap-2">

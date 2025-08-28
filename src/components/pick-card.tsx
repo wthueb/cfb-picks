@@ -28,7 +28,7 @@ import { isTeamTotalPickType } from "~/server/db/schema";
 import { api } from "~/utils/api";
 import { AddPickDialog } from "./add-pick-dialog";
 import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
   const game = api.cfb.gameById.useQuery(props.pick.gameId, {
@@ -185,30 +185,26 @@ function DeleteButton(props: { pickId: number }) {
 
 function Locked() {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Lock />
-        </TooltipTrigger>
-      </Tooltip>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Lock />
+      </TooltipTrigger>
       <TooltipContent side="left" className="bg-accent">
         <p className="text-accent-foreground text-sm">Pick is locked</p>
       </TooltipContent>
-    </TooltipProvider>
+    </Tooltip>
   );
 }
 
 function InProgress() {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <CircleDashed />
-        </TooltipTrigger>
-      </Tooltip>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <CircleDashed />
+      </TooltipTrigger>
       <TooltipContent side="left" className="bg-accent">
         <p className="text-accent-foreground text-sm">Game in progress</p>
       </TooltipContent>
-    </TooltipProvider>
+    </Tooltip>
   );
 }

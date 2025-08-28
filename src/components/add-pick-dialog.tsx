@@ -26,7 +26,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Skeleton } from "./ui/skeleton";
 import { Switch } from "./ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export type AddPickDialogHandle = {
   clear: () => void;
@@ -301,27 +301,25 @@ export function AddPickDialog(props: {
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="double">Double</Label>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Switch
-                        id="double"
-                        disabled={!canDouble}
-                        defaultChecked={double}
-                        onCheckedChange={setDouble}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  {!canDouble && (
-                    <TooltipContent side="top" className="bg-accent">
-                      <p className="text-accent-foreground text-sm">
-                        Already made a double pick this week
-                      </p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Switch
+                      id="double"
+                      disabled={!canDouble}
+                      defaultChecked={double}
+                      onCheckedChange={setDouble}
+                    />
+                  </div>
+                </TooltipTrigger>
+                {!canDouble && (
+                  <TooltipContent side="top" className="bg-accent">
+                    <p className="text-accent-foreground text-sm">
+                      Already made a double pick this week
+                    </p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
             </div>
           </div>
         </div>

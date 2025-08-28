@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { AddPickDialog, type AddPickDialogHandle } from "~/components/add-pick-dialog";
 import { PickList } from "~/components/pick-list";
 import { Button } from "~/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { WeekSelect } from "~/components/week-select";
 import type { Week } from "~/server/api/routers/cfb";
 import { withSession } from "~/server/auth";
@@ -35,24 +35,22 @@ function AddPickButton(props: { week: Week; disabled: boolean }) {
   const dialogRef = useRef<AddPickDialogHandle>(null);
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div>
-            <AddPickDialog week={props.week} ref={dialogRef}>
-              <Button disabled={props.disabled} onClick={dialogRef.current?.clear}>
-                Add Pick
-              </Button>
-            </AddPickDialog>
-          </div>
-        </TooltipTrigger>
-        {props.disabled && (
-          <TooltipContent side="left" className="bg-accent">
-            <p className="text-accent-foreground text-sm">Max 5 picks per week</p>
-          </TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div>
+          <AddPickDialog week={props.week} ref={dialogRef}>
+            <Button disabled={props.disabled} onClick={dialogRef.current?.clear}>
+              Add Pick
+            </Button>
+          </AddPickDialog>
+        </div>
+      </TooltipTrigger>
+      {props.disabled && (
+        <TooltipContent side="left" className="bg-accent">
+          <p className="text-accent-foreground text-sm">Max 5 picks per week</p>
+        </TooltipContent>
+      )}
+    </Tooltip>
   );
 }
 

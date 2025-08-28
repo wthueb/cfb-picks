@@ -1,4 +1,4 @@
-import { Check, CircleDashed, Minus, Pencil, Trash2, X } from "lucide-react";
+import { Check, CircleDashed, Lock, Minus, Pencil, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertDialog,
@@ -58,6 +58,30 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
     [game.data],
   );
 
+  enum ActionType {
+    EditDelete,
+    Locked,
+    InProgress,
+    Win,
+    Loss,
+    Push,
+    None,
+  }
+
+  const actionType = !game.data
+    ? ActionType.None
+    : !gameLocked
+      ? ActionType.EditDelete
+      : !game.data.completed
+        ? now < game.data.startDate
+          ? ActionType.Locked
+          : ActionType.InProgress
+        : pickStatus === PickResult.Win
+          ? ActionType.Win
+          : pickStatus === PickResult.Loss
+            ? ActionType.Loss
+            : ActionType.Push;
+
   return (
     <Card>
       <CardHeader>
@@ -78,48 +102,27 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
           )}
         </CardDescription>
         <CardAction>
-          {game.data ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    {now < game.data.startDate ? (
-                      <>
-                        <AddPickDialog pick={props.pick} week={props.week}>
-                          <Button variant="ghost" size="icon" disabled={gameLocked}>
-                            <Pencil />
-                          </Button>
-                        </AddPickDialog>
-                        <DeleteButton pickId={props.pick.id} disabled={gameLocked} />
-                      </>
-                    ) : game.data.completed ? (
-                      pickStatus === PickResult.WIN ? (
-                        <Check className="text-primary-foreground" />
-                      ) : pickStatus === PickResult.LOSS ? (
-                        <X className="text-destructive" />
-                      ) : (
-                        <Minus />
-                      )
-                    ) : (
-                      <CircleDashed />
-                    )}
-                  </div>
-                </TooltipTrigger>
-                {now < game.data.startDate
-                  ? gameLocked && (
-                      <TooltipContent side="left" className="bg-accent">
-                        <p className="text-accent-foreground text-sm">Pick is locked</p>
-                      </TooltipContent>
-                    )
-                  : !game.data.completed && (
-                      <TooltipContent side="left" className="bg-accent">
-                        <p className="text-accent-foreground text-sm">Game in progress</p>
-                      </TooltipContent>
-                    )}
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
+          {actionType === ActionType.None ? (
             <Skeleton className="h-8 w-8" />
+          ) : actionType === ActionType.EditDelete ? (
+            <>
+              <AddPickDialog pick={props.pick} week={props.week}>
+                <Button variant="ghost" size="icon">
+                  <Pencil />
+                </Button>
+              </AddPickDialog>
+              <DeleteButton pickId={props.pick.id} />
+            </>
+          ) : actionType === ActionType.Locked ? (
+            <Locked />
+          ) : actionType === ActionType.InProgress ? (
+            <InProgress />
+          ) : actionType === ActionType.Win ? (
+            <Check className="text-primary-foreground" />
+          ) : actionType === ActionType.Loss ? (
+            <X className="text-destructive" />
+          ) : (
+            <Minus />
           )}
         </CardAction>
       </CardHeader>
@@ -145,7 +148,7 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
   );
 }
 
-function DeleteButton(props: { pickId: number; disabled: boolean }) {
+function DeleteButton(props: { pickId: number }) {
   const util = api.useUtils();
 
   const deletePick = api.picks.deletePick.useMutation({
@@ -157,7 +160,7 @@ function DeleteButton(props: { pickId: number; disabled: boolean }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" disabled={props.disabled} className="text-destructive">
+        <Button variant="ghost" size="icon" className="text-destructive">
           <Trash2 />
         </Button>
       </AlertDialogTrigger>
@@ -177,5 +180,35 @@ function DeleteButton(props: { pickId: number; disabled: boolean }) {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+function Locked() {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Lock />
+        </TooltipTrigger>
+      </Tooltip>
+      <TooltipContent side="left" className="bg-accent">
+        <p className="text-accent-foreground text-sm">Pick is locked</p>
+      </TooltipContent>
+    </TooltipProvider>
+  );
+}
+
+function InProgress() {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <CircleDashed />
+        </TooltipTrigger>
+      </Tooltip>
+      <TooltipContent side="left" className="bg-accent">
+        <p className="text-accent-foreground text-sm">Game in progress</p>
+      </TooltipContent>
+    </TooltipProvider>
   );
 }

@@ -2,14 +2,14 @@ import type { Game } from "~/server/api/routers/cfb";
 import type { CFBPick } from "~/server/api/routers/picks";
 
 export enum PickResult {
-  WIN = "WIN",
-  LOSS = "LOSS",
-  PUSH = "PUSH",
+  Win = "Win",
+  Loss = "Loss",
+  Push = "Push",
 }
 
 export function getPickResult(pick: CFBPick, game: Game): PickResult | null {
   if (!game.completed) return null;
-  if (game.id === 401767135 && pick.duration === "FULL") return PickResult.PUSH;
+  if (game.id === 401767135 && pick.duration === "FULL") return PickResult.Push;
 
   const homeLineScores = game.homeLineScores ?? [0, 0, 0, 0];
   const awayLineScores = game.awayLineScores ?? [0, 0, 0, 0];
@@ -32,15 +32,15 @@ export function getPickResult(pick: CFBPick, game: Game): PickResult | null {
     const teamScore = game.homeId === pick.cfbTeamId ? homeScore : awayScore;
     const opponentScore = game.homeId === pick.cfbTeamId ? awayScore : homeScore;
 
-    if (teamScore + pick.spread === opponentScore) return PickResult.PUSH;
-    return teamScore + pick.spread > opponentScore ? PickResult.WIN : PickResult.LOSS;
+    if (teamScore + pick.spread === opponentScore) return PickResult.Push;
+    return teamScore + pick.spread > opponentScore ? PickResult.Win : PickResult.Loss;
   }
 
   if (pick.pickType === "MONEYLINE") {
     const teamScore = game.homeId === pick.cfbTeamId ? homeScore : awayScore;
     const opponentScore = game.homeId === pick.cfbTeamId ? awayScore : homeScore;
 
-    return teamScore > opponentScore ? PickResult.WIN : PickResult.LOSS;
+    return teamScore > opponentScore ? PickResult.Win : PickResult.Loss;
   }
 
   const total =
@@ -50,10 +50,10 @@ export function getPickResult(pick: CFBPick, game: Game): PickResult | null {
         : awayScore
       : homeScore + awayScore;
 
-  if (total === pick.total) return PickResult.PUSH;
+  if (total === pick.total) return PickResult.Push;
 
-  if (pick.pickType.endsWith("OVER")) return total > pick.total ? PickResult.WIN : PickResult.LOSS;
-  if (pick.pickType.endsWith("UNDER")) return total < pick.total ? PickResult.WIN : PickResult.LOSS;
+  if (pick.pickType.endsWith("OVER")) return total > pick.total ? PickResult.Win : PickResult.Loss;
+  if (pick.pickType.endsWith("UNDER")) return total < pick.total ? PickResult.Win : PickResult.Loss;
 
   throw new Error("Invalid pick type");
 }
@@ -69,11 +69,11 @@ export function scorePick(pick: CFBPick, game: Game) {
   const double = pick.double ? 2 : 1;
 
   switch (result) {
-    case PickResult.WIN:
+    case PickResult.Win:
       return toFractionalOdds(pick.odds) * double;
-    case PickResult.LOSS:
+    case PickResult.Loss:
       return -1 * double;
-    case PickResult.PUSH:
+    case PickResult.Push:
       return 0;
   }
 }
@@ -90,11 +90,11 @@ export function scorePickByWagerAmount(pick: CFBPick, game: Game) {
   const double = pick.double ? 2 : 1;
 
   switch (result) {
-    case PickResult.WIN:
+    case PickResult.Win:
       return double;
-    case PickResult.LOSS:
+    case PickResult.Loss:
       return pick.odds > 0 ? -1 * double : (pick.odds / 100) * double;
-    case PickResult.PUSH:
+    case PickResult.Push:
       return 0;
   }
 }

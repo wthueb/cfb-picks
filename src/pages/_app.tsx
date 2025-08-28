@@ -21,7 +21,7 @@ function Nav() {
   return (
     <nav className="bg-card text-card-foreground m-2 flex h-10 items-center justify-between gap-4 rounded-md border-1 px-4">
       <div className="flex h-full items-center gap-4 text-sm font-medium">
-        <Link href="/" className="text-primary-foreground text-2xl font-semibold">
+        <Link href="/" className="text-primary-foreground text-xl font-semibold">
           CFB Picks
         </Link>
         <Separator orientation="vertical" />
@@ -75,7 +75,7 @@ const CFBPicks: AppType<{ session: Session | null }> = ({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <SessionProvider session={session}>
-        <div className={cn(inter.className, "flex min-h-screen w-screen min-w-[400px] flex-col")}>
+        <div className={cn(inter.className, "flex min-h-screen w-screen min-w-[390px] flex-col")}>
           <Nav />
           <main className="flex-1">
             <Component {...pageProps} />

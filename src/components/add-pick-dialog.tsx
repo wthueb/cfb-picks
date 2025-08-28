@@ -283,11 +283,11 @@ export function AddPickDialog(props: {
             <Skeleton className="h-16.5 w-full" />
           )}
           <div className="flex flex-wrap items-center justify-evenly gap-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <Label>Duration</Label>
               <Select items={durations} defaultValue={duration} onChange={setDuration} />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="odds">Odds</Label>
               <Input
                 id="odds"
@@ -299,7 +299,7 @@ export function AddPickDialog(props: {
                 className="w-[130px]"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="double">Double</Label>
               <TooltipProvider>
                 <Tooltip>

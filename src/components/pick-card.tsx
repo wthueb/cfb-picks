@@ -20,12 +20,12 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
+import { isGameLocked } from "~/lib/dates";
 import { getPickResult, PickResult } from "~/lib/picks";
 import type { Week } from "~/server/api/routers/cfb";
 import type { CFBPick } from "~/server/api/routers/picks";
 import { isTeamTotalPickType } from "~/server/db/schema";
 import { api } from "~/utils/api";
-import { isGameLocked } from "~/utils/dates";
 import { AddPickDialog } from "./add-pick-dialog";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";

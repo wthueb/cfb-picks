@@ -1,50 +1,22 @@
 import { useSession } from "next-auth/react";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { AddPickDialog, type AddPickDialogHandle } from "~/components/add-pick-dialog";
-import { PickCard } from "~/components/pick-card";
-import { Select } from "~/components/select";
+import { PickList } from "~/components/pick-list";
 import { Button } from "~/components/ui/button";
-import { Skeleton } from "~/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { WeekSelect } from "~/components/week-select";
 import type { Week } from "~/server/api/routers/cfb";
-import type { CFBPick } from "~/server/api/routers/picks";
 import { withSession } from "~/server/auth";
 import { api } from "~/utils/api";
 
 export default function Home() {
   const [week, setWeek] = useState<Week>();
-  const [currentWeek, setCurrentWeek] = useState<Week>();
 
-  const calendar = api.cfb.calendar.useQuery(undefined, {
-    select: (data) => {
-      const current = data.find((week) => week.endDate >= new Date()) ?? data[data.length - 1];
-
-      if (current && currentWeek !== current) {
-        setWeek(current);
-        setCurrentWeek(current);
-      }
-
-      return data;
-    },
-  });
-
-  const weeksBySeasonType = useMemo(
-    () =>
-      calendar.data?.reduce(
-        (acc, week) => {
-          const group = week.seasonType === "regular" ? "Regular Season" : "Playoffs";
-          acc[group] ??= [];
-          acc[group].push(`Week ${week.week}`);
-          return acc;
-        },
-        {} as Record<"Regular Season" | "Playoffs", `Week ${number}`[]>,
-      ),
-    [calendar.data],
-  );
+  const calendar = api.cfb.calendar.useQuery();
 
   const session = useSession();
 
-  const picks = api.picks.teamPicks.useQuery(
+  const picks = api.picks.selfPicks.useQuery(
     {
       teamId: session.data?.user.teamId ?? -1,
       week: week?.week,
@@ -57,28 +29,12 @@ export default function Home() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">
       <div className="sticky top-2 flex w-full items-center gap-4">
-        {weeksBySeasonType && currentWeek ? (
-          <Select
-            items={weeksBySeasonType}
-            defaultValue={`${currentWeek.seasonType === "regular" ? "Regular Season" : "Playoffs"}-Week ${currentWeek.week}`}
-            onChange={(v) => {
-              const [seasonType, display] = v.split("-") as [
-                keyof typeof weeksBySeasonType,
-                `Week ${number}`,
-              ];
-              const weekNum = parseInt(display.replace("Week ", ""));
-              const selectedWeek = calendar.data!.find(
-                (w) =>
-                  w.seasonType === (seasonType === "Regular Season" ? "regular" : "postseason") &&
-                  w.week === weekNum,
-              )!;
-              setWeek(selectedWeek);
-            }}
-            className="bg-accent text-accent-foreground flex-1"
-          />
-        ) : (
-          <Skeleton className="h-10 flex-1 rounded" />
-        )}
+        <WeekSelect
+          weeks={calendar.data}
+          defaultType="current"
+          onChange={setWeek}
+          className="bg-accent text-accent-foreground flex-1"
+        />
         {week && <AddPickButton week={week} disabled={!picks.data || picks.data.length >= 5} />}
       </div>
       {week && picks.data && <PickList picks={picks.data} week={week} />}
@@ -108,24 +64,6 @@ function AddPickButton(props: { week: Week; disabled: boolean }) {
         )}
       </Tooltip>
     </TooltipProvider>
-  );
-}
-
-function PickList(props: { picks: CFBPick[]; week: Week }) {
-  return (
-    <div className="w-full">
-      {props.picks.length === 0 ? (
-        <p className="text-center">No picks found for this week.</p>
-      ) : (
-        <ul className="flex flex-col gap-4">
-          {props.picks.map((pick, i) => (
-            <li key={pick.id}>
-              <PickCard pick={pick} num={i} week={props.week} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   );
 }
 

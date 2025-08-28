@@ -10,10 +10,10 @@ import {
   CommandList,
 } from "~/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { isGameLocked } from "~/lib/dates";
 import { cn } from "~/lib/utils";
 import type { Game } from "~/server/api/routers/cfb";
 import type { RouterOutputs } from "~/utils/api";
-import { isGameLocked } from "~/utils/dates";
 
 export function GameCombobox(props: {
   games: RouterOutputs["cfb"]["games"];

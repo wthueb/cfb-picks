@@ -1,16 +1,10 @@
 import { and, eq, type InferInsertModel } from "drizzle-orm";
 import z from "zod";
 import { env } from "~/env";
-import { getPotential, scorePick } from "~/lib/picks";
+import { isGameLocked } from "~/lib/dates";
+import { getPotential, scorePick, scorePickByWagerAmount } from "~/lib/picks";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import {
-  durations,
-  overUnderPickTypes,
-  picks,
-  teams,
-  teamTotalPickTypes,
-} from "~/server/db/schema";
-import { isGameLocked } from "~/utils/dates";
+import { durations, overUnderPickTypes, picks, teamTotalPickTypes } from "~/server/db/schema";
 import { getGameById } from "./cfb";
 
 const ZodPick = z.intersection(
@@ -47,7 +41,7 @@ const ZodPick = z.intersection(
 export type CFBPick = z.infer<typeof ZodPick> & { id: number };
 
 export const picksRouter = createTRPCRouter({
-  leaderboard: protectedProcedure.query(async ({ ctx }) => {
+  stats: protectedProcedure.query(async ({ ctx }) => {
     const res = await ctx.db.query.teams.findMany({
       with: {
         users: { columns: { id: true, name: true } },
@@ -57,36 +51,37 @@ export const picksRouter = createTRPCRouter({
       },
     });
 
-    return await Promise.all(
-      res
-        .filter((t) => env.NODE_ENV !== "production" || t.id !== 1)
-        .map(async (team) => {
-          const picks = await Promise.all(
-            team.picks.map(async (pick) => {
-              const potential = getPotential(pick as CFBPick);
+    const teams = [];
 
-              const game = await getGameById(pick.gameId);
-              if (!game) return { ...pick, potential, result: null };
+    for (const team of res) {
+      if (env.NODE_ENV === "production" && team.id === 1) continue;
 
-              return {
-                ...pick,
-                potential,
-                result: game ? scorePick(pick as CFBPick, game) : null,
-              };
-            }),
-          );
+      const picks = [];
+      for (const pick of team.picks as CFBPick[]) {
+        const game = await getGameById(pick.gameId);
+        if (!game || !game.completed) continue;
 
-          return {
-            ...team,
-            picks,
-            totalPicks: picks.length,
-            wins: picks.filter((p) => p.result !== null && p.result > 0).length,
-            losses: picks.filter((p) => p.result !== null && p.result < 0).length,
-            potential: picks.reduce((acc, p) => acc + (p.potential ?? 0), 0),
-            winnings: picks.reduce((acc, p) => acc + (p.result ?? 0), 0),
-          };
-        }),
-    );
+        picks.push({
+          ...pick,
+          potential: getPotential(pick),
+          result: scorePick(pick, game),
+          resultByWagerAmount: scorePickByWagerAmount(pick, game),
+        });
+      }
+
+      teams.push({
+        ...team,
+        picks,
+        totalPicks: picks.length,
+        wins: picks.filter((p) => p.result !== null && p.result > 0).length,
+        losses: picks.filter((p) => p.result !== null && p.result < 0).length,
+        potential: picks.reduce((acc, p) => acc + (p.potential ?? 0), 0),
+        winnings: picks.reduce((acc, p) => acc + (p.result ?? 0), 0),
+        winningsByWagerAmount: picks.reduce((acc, p) => acc + (p.resultByWagerAmount ?? 0), 0),
+      });
+    }
+
+    return teams.sort((a, b) => b.winnings - a.winnings);
   }),
 
   teams: protectedProcedure.query(async ({ ctx }) => {
@@ -99,30 +94,48 @@ export const picksRouter = createTRPCRouter({
       },
     });
 
-    return res.filter((t) => env.NODE_ENV !== "production" || t.id !== 1);
+    const teams = [];
+
+    for (const team of res) {
+      if (env.NODE_ENV === "production" && team.id === 1) continue;
+
+      const picks = [];
+
+      for (const pick of team.picks as CFBPick[]) {
+        const game = await getGameById(pick.gameId);
+        if (!game) continue;
+
+        if (!isGameLocked(game.startDate)) continue;
+
+        picks.push(pick);
+      }
+
+      teams.push({
+        ...team,
+        picks,
+      });
+    }
+
+    return teams;
   }),
 
-  teamPicks: protectedProcedure
+  selfPicks: protectedProcedure
     .input(
       z.object({
-        teamId: z.number().optional(),
         week: z.number().min(1).max(52).optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
-      const res = await ctx.db
-        .select()
-        .from(picks)
-        .innerJoin(teams, eq(picks.teamId, teams.id))
-        .where(
+      const res = await ctx.db.query.picks.findMany({
+        where: (pick, { and, eq }) =>
           and(
-            eq(picks.season, env.SEASON),
-            input.teamId ? eq(teams.id, input.teamId) : undefined,
-            input?.week ? eq(picks.week, input.week) : undefined,
+            eq(pick.teamId, ctx.session.user.teamId),
+            eq(pick.season, env.SEASON),
+            input?.week ? eq(pick.week, input.week) : undefined,
           ),
-        );
+      });
 
-      return res.map((r) => r.pick as CFBPick);
+      return res as CFBPick[];
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {

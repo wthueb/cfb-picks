@@ -105,7 +105,6 @@ export const cfbRouter = createTRPCRouter({
     .input(
       z.object({
         week: z.optional(z.number().min(1).max(52)),
-        seasonType: z.optional(z.enum(["regular", "postseason"])),
       }),
     )
     .query(async ({ input }) => {
@@ -114,7 +113,6 @@ export const cfbRouter = createTRPCRouter({
         .filter(
           (game) =>
             (!input.week || game.week === input.week) &&
-            (!input.seasonType || game.seasonType === input.seasonType) &&
             (game.homeClassification === "fbs" ||
               game.awayClassification === "fbs" ||
               game.homeClassification === "fcs" ||
@@ -156,9 +154,10 @@ export const cfbRouter = createTRPCRouter({
   calendar: protectedProcedure.query(async () => {
     const data = await getCalendarForYear(env.SEASON);
 
-    const normalWeeks = data.filter(
-      (week) => week.seasonType === "regular" || week.seasonType === "postseason",
-    ) as (Omit<(typeof data)[number], "seasonType"> & { seasonType: "regular" | "postseason" })[];
+    const normalWeeks = data.filter((week) => week.seasonType === "regular") as (Omit<
+      (typeof data)[number],
+      "seasonType"
+    > & { seasonType: "regular" })[];
 
     return normalWeeks.map((week) => ({
       ...week,

@@ -82,3 +82,19 @@ export function getPotential(pick: CFBPick) {
   const double = pick.double ? 2 : 1;
   return toFractionalOdds(pick.odds) * double;
 }
+
+export function scorePickByWagerAmount(pick: CFBPick, game: Game) {
+  const result = getPickResult(pick, game);
+  if (result === null) return null;
+
+  const double = pick.double ? 2 : 1;
+
+  switch (result) {
+    case PickResult.WIN:
+      return double;
+    case PickResult.LOSS:
+      return pick.odds > 0 ? -1 * double : (pick.odds / 100) * double;
+    case PickResult.PUSH:
+      return 0;
+  }
+}

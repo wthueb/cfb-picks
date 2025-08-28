@@ -20,14 +20,13 @@ function Nav() {
 
   return (
     <nav className="bg-card text-card-foreground m-2 flex h-10 items-center justify-between gap-4 rounded-md border-1 px-4">
-      <div className="flex h-full items-center gap-4">
+      <div className="flex h-full items-center gap-4 text-sm font-medium">
         <Link href="/" className="text-primary-foreground text-2xl font-semibold">
           CFB Picks
         </Link>
         <Separator orientation="vertical" />
-        <div className="text-sm">
-          <Link href="/leaderboard">Leaderboard</Link>
-        </div>
+        <Link href="/stats">Stats</Link>
+        <Link href="/teams">Teams</Link>
       </div>
       <div>
         {session.status === "loading" ? (

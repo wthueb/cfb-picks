@@ -48,7 +48,7 @@ export function AddPickDialog(props: {
 
   const session = useSession();
 
-  const picks = api.picks.teamPicks.useQuery(
+  const picks = api.picks.selfPicks.useQuery(
     { teamId: session.data?.user.teamId ?? -1, week: props.week.week },
     { enabled: !!session.data },
   );

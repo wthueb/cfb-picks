@@ -1,82 +1,60 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Week } from "~/server/api/routers/cfb";
-import { api } from "~/utils/api";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
+import { type RouterOutputs } from "~/utils/api";
+import { Select } from "./select";
+import { Skeleton } from "./ui/skeleton";
 
-const seasonTypeNames: Record<Week["seasonType"], string> = {
-  regular: "Regular Season",
-  postseason: "Playoffs",
-};
+export function WeekSelect(props: {
+  weeks?: RouterOutputs["cfb"]["calendar"];
+  defaultType: "first" | "last" | "current";
+  onChange: (week: Week) => void;
+  className?: string;
+}) {
+  const defaultValue = useMemo(() => {
+    if (!props.weeks || props.weeks.length === 0) return;
 
-export function WeekSelect(props: { onChange: (week: Week) => void; className?: string }) {
-  const calendar = api.cfb.calendar.useQuery(undefined, {
-    select: (data) => {
-      const current = data.find((week) => week.endDate >= now) ?? data[data.length - 1];
+    const now = new Date();
 
-      if (current) {
-        setValue(current.startDate.toISOString());
-      }
+    let defaultWeek: Week;
 
-      return data;
-    },
-  });
+    switch (props.defaultType) {
+      case "first":
+        defaultWeek = props.weeks[0]!;
+        break;
+      case "last":
+        defaultWeek = props.weeks[props.weeks.length - 1]!;
+        break;
+      case "current":
+        defaultWeek =
+          props.weeks.find((week) => week.endDate >= now)! ?? props.weeks[props.weeks.length - 1]!;
+        break;
+    }
 
-  const bySeasonType = useMemo(() => {
-    return calendar.data?.reduce(
-      (acc, week) => {
-        acc[week.seasonType] ??= [];
-        acc[week.seasonType].push(week);
-        return acc;
-      },
-      {} as Record<Week["seasonType"], Week[]>,
-    );
-  }, [calendar.data]);
+    return defaultWeek;
+  }, [props.weeks, props.defaultType]);
 
-  const [value, setValue] = useState("");
-  const [selectedWeek, setSelectedWeek] = useState<Week | null>(null);
+  const onChangeRef = useRef(props.onChange);
 
   useEffect(() => {
-    if (!calendar.data || !value) return;
-    const week = calendar.data.find((week) => week.startDate.toISOString() === value);
-    if (week) props.onChange(week);
-    setSelectedWeek(week ?? null);
-  }, [calendar.data, value, props]);
+    onChangeRef.current = props.onChange;
+  }, [props.onChange]);
 
-  const now = new Date();
+  useEffect(() => {
+    if (defaultValue) onChangeRef.current(defaultValue);
+  }, [defaultValue]);
 
-  return (
-    <Select value={value} onValueChange={setValue} disabled={!calendar.data}>
-      <SelectTrigger className={props.className}>
-        <SelectValue placeholder="Loading...">
-          {selectedWeek
-            ? `Week ${selectedWeek.week} (${seasonTypeNames[selectedWeek.seasonType]})`
-            : "Select a week"}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {bySeasonType &&
-          Object.entries(bySeasonType).map(([seasonType, weeks]) => (
-            <SelectGroup key={seasonType}>
-              <SelectLabel>
-                {seasonTypeNames[seasonType as keyof typeof seasonTypeNames]}
-              </SelectLabel>
-              {weeks.map((week) => (
-                <SelectItem key={week.startDate.toISOString()} value={week.startDate.toISOString()}>
-                  Week {week.week}
-                  {week.startDate <= now && week.endDate >= now ? " (current)" : ""}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ))}
-      </SelectContent>
-    </Select>
+  return props.weeks && defaultValue ? (
+    <Select
+      items={props.weeks.map((w) => ({ value: w.week.toString(), display: `Week ${w.week}` }))}
+      defaultValue={defaultValue.week.toString()}
+      onChange={(v) => {
+        const weekNum = parseInt(v);
+        const selectedWeek = props.weeks!.find((w) => w.week === weekNum)!;
+        props.onChange(selectedWeek);
+      }}
+      className={props.className}
+    />
+  ) : (
+    <Skeleton className="h-9 w-full" />
   );
 }

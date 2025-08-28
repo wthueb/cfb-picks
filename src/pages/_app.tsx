@@ -72,9 +72,10 @@ const CFBPicks: AppType<{ session: Session | null }> = ({
     <>
       <Head>
         <title>CFB Picks</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <SessionProvider session={session}>
-        <div className={cn(inter.className, "flex min-h-screen w-screen min-w-[360px] flex-col")}>
+        <div className={cn(inter.className, "flex min-h-screen w-screen min-w-[400px] flex-col")}>
           <Nav />
           <main className="flex-1">
             <Component {...pageProps} />

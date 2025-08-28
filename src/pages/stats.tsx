@@ -23,7 +23,7 @@ function StatCard(props: { team: RouterOutputs["picks"]["stats"][number] }) {
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent className="flex justify-between gap-4 text-sm">
+      <CardContent className="flex justify-between gap-4 text-sm [@media(min-width:500px)]:text-base">
         <div>
           <div className="flex justify-between gap-2">
             <p>Total Picks:</p>

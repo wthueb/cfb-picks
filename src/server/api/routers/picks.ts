@@ -207,6 +207,7 @@ export const picksRouter = createTRPCRouter({
       total: "total" in input ? input.total : null,
       spread: "spread" in input ? input.spread : null,
       cfbTeamId: "cfbTeamId" in input ? input.cfbTeamId : null,
+      createdAt: new Date(),
     };
 
     const res = await ctx.db

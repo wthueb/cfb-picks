@@ -107,12 +107,14 @@ export const picksRouter = createTRPCRouter({
 
         if (!isGameLocked(game.startDate)) continue;
 
-        picks.push(pick);
+        picks.push({ pick, game });
       }
 
       teams.push({
         ...team,
-        picks,
+        picks: picks
+          .sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime())
+          .map(({ pick }) => pick),
       });
     }
 
@@ -135,7 +137,19 @@ export const picksRouter = createTRPCRouter({
           ),
       });
 
-      return res as CFBPick[];
+      const picksWithGames = await Promise.all(
+        res.map(async (pick) => {
+          const game = await getGameById(pick.gameId);
+          return { pick, game };
+        }),
+      );
+
+      return picksWithGames
+        .sort((a, b) => {
+          if (!a.game || !b.game) return 0;
+          return a.game.startDate.getTime() - b.game.startDate.getTime();
+        })
+        .map(({ pick }) => pick) as CFBPick[];
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {

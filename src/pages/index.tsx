@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react";
 import { useRef, useState } from "react";
 import { AddPickDialog, type AddPickDialogHandle } from "~/components/add-pick-dialog";
 import { PickList } from "~/components/pick-list";
@@ -14,17 +13,7 @@ export default function Home() {
 
   const calendar = api.cfb.calendar.useQuery();
 
-  const session = useSession();
-
-  const picks = api.picks.selfPicks.useQuery(
-    {
-      teamId: session.data?.user.teamId ?? -1,
-      week: week?.week,
-    },
-    {
-      enabled: !!session.data && !!week,
-    },
-  );
+  const picks = api.picks.selfPicks.useQuery({ week: week?.week }, { enabled: !!week });
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">

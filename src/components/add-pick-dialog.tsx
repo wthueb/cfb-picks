@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react";
 import { useEffect, useImperativeHandle, useState } from "react";
 import type { Week } from "~/server/api/routers/cfb";
 import type { CFBPick } from "~/server/api/routers/picks";
@@ -41,17 +40,9 @@ export function AddPickDialog(props: {
 }) {
   useImperativeHandle(props.ref, () => ({ clear }));
 
-  const games = api.cfb.games.useQuery({
-    week: props.week.week,
-    seasonType: props.week.seasonType,
-  });
+  const games = api.cfb.games.useQuery({ week: props.week.week });
 
-  const session = useSession();
-
-  const picks = api.picks.selfPicks.useQuery(
-    { teamId: session.data?.user.teamId ?? -1, week: props.week.week },
-    { enabled: !!session.data },
-  );
+  const picks = api.picks.selfPicks.useQuery({ week: props.week.week });
   const canDouble = picks.data
     ? !picks.data.filter((p) => p.id !== props.pick?.id).some((pick) => pick.double)
     : false;

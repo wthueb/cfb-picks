@@ -11,7 +11,7 @@ import {
 import { withSession } from "~/server/auth";
 import { api, type RouterOutputs } from "~/utils/api";
 
-function LeaderboardCard(props: { team: RouterOutputs["picks"]["stats"][number] }) {
+function StatCard(props: { team: RouterOutputs["picks"]["stats"][number] }) {
   return (
     <Card className="gap-4">
       <CardHeader>
@@ -68,7 +68,7 @@ export default function Stats() {
         <ul className="flex w-full flex-col gap-4">
           {stats.data.map((team) => (
             <li key={team.id}>
-              <LeaderboardCard team={team} />
+              <StatCard team={team} />
             </li>
           ))}
         </ul>

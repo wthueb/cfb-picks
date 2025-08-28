@@ -2,6 +2,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq, type InferSelectModel } from "drizzle-orm";
 import { type DefaultSession, type NextAuthOptions } from "next-auth";
 import type { Adapter, AdapterSession, AdapterUser } from "next-auth/adapters";
+import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import { env } from "~/env";
 import { db } from "~/server/db";
@@ -89,14 +90,8 @@ const customAdapter: Adapter = {
   },
 };
 
-export const authConfig: NextAuthOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
-  ],
+const authConfig: NextAuthOptions = {
+  providers: [],
   adapter: customAdapter,
   callbacks: {
     async signIn({ user }) {
@@ -129,3 +124,31 @@ export const authConfig: NextAuthOptions = {
     },
   },
 };
+
+if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+  authConfig.providers.push(
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
+  );
+}
+
+if (env.SMTP_HOST && env.SMTP_PORT && env.EMAIL_FROM) {
+  authConfig.providers.push(
+    EmailProvider({
+      server: {
+        host: env.SMTP_HOST,
+        port: Number(env.SMTP_PORT),
+        auth: {
+          user: env.SMTP_USER,
+          pass: env.SMTP_PASSWORD,
+        },
+      },
+      from: env.EMAIL_FROM,
+    }),
+  );
+}
+
+export { authConfig };

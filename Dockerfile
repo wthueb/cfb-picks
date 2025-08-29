@@ -1,17 +1,19 @@
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat openssl
+FROM node:22-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+FROM base AS deps
+COPY package.json pnpm-lock.yaml .
+RUN pnpm install --frozen-lockfile
 
-FROM node:20-alpine AS builder
-WORKDIR /app
+FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # drizzle needs a valid DB URL at build time, doesn't have to exist
-RUN NEXT_TELEMETRY_DISABLED=1 SKIP_ENV_VALIDATION=1 DATABASE_URL=file:./fake-db-just-for-build.sqlite npm run build
+RUN NEXT_TELEMETRY_DISABLED=1 SKIP_ENV_VALIDATION=1 DATABASE_URL=file:./fake-db-just-for-build.sqlite pnpm build
 
 FROM gcr.io/distroless/nodejs20-debian12 AS runner
 WORKDIR /app

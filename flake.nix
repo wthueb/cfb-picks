@@ -10,6 +10,7 @@
       devShells.aarch64-darwin.default = pkgs.mkShell {
         packages = with pkgs; [
           nodejs
+          pnpm
         ];
       };
     };

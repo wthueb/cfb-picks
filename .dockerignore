@@ -1,11 +1,12 @@
 .direnv
 .dockerignore
-.env
+.env*
 .envrc
 .git
 .github
 .gitignore
 .next
+.turbo
 Dockerfile
 README.md
 compose.yaml

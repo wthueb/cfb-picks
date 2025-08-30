@@ -1,0 +1,26 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": ["NODE_ENV", "DATABASE_URL"]
+    },
+    "generate": {
+      "cache": false,
+      "interactive": true
+    },
+    "migrate": {
+      "cache": false,
+      "interactive": true
+    },
+    "push": {
+      "cache": false,
+      "interactive": true
+    },
+    "studio": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

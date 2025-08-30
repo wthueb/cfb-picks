@@ -1,21 +1,26 @@
 services:
-  cfb-picks:
-    image: cfb-picks
+  web:
+    container_name: web
+    image: wthueb/cfb-picks
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./apps/web/Dockerfile
     platform: linux/amd64
-    working_dir: /app
+    restart: unless-stopped
     environment:
-      - AUTH_SECRET=${AUTH_SECRET}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - DATABASE_URL=file:/config/db.sqlite
       - CFB_API_KEY=${CFB_API_KEY}
       - SEASON=${SEASON}
+      - AUTH_SECRET=${AUTH_SECRET}
       - NEXTAUTH_URL=http://localhost:3000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
     volumes:
       - .:/config
     ports:
       - 3000:3000
-

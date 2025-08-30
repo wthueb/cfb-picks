@@ -15,21 +15,18 @@ export default function Home() {
   const [week, setWeek] = useState<Week>();
   const [currentWeek, setCurrentWeek] = useState<Week>();
 
-  const calendar = api.cfb.calendar.useQuery(
-    {},
-    {
-      select: (data) => {
-        const current = data.find((week) => week.endDate >= new Date()) ?? data[data.length - 1];
+  const calendar = api.cfb.calendar.useQuery(undefined, {
+    select: (data) => {
+      const current = data.find((week) => week.endDate >= new Date()) ?? data[data.length - 1];
 
-        if (current && currentWeek !== current) {
-          setWeek(current);
-          setCurrentWeek(current);
-        }
+      if (current && currentWeek !== current) {
+        setWeek(current);
+        setCurrentWeek(current);
+      }
 
-        return data;
-      },
+      return data;
     },
-  );
+  });
 
   const weeksBySeasonType = useMemo(
     () =>
@@ -50,7 +47,6 @@ export default function Home() {
   const picks = api.picks.teamPicks.useQuery(
     {
       teamId: session.data?.user.teamId ?? -1,
-      season: week?.season,
       week: week?.week,
     },
     {

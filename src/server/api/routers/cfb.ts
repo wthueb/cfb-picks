@@ -29,9 +29,7 @@ function parseGame(game: GetGamesResponse[number]): Game {
 async function getGamesForYear(year: number) {
   const cached = await RunCache.get(`cfb-games-${year}`);
 
-  if (cached) {
-    return (JSON.parse(cached as string) as GetGamesResponse).map(parseGame);
-  }
+  if (cached) return (JSON.parse(cached as string) as GetGamesResponse).map(parseGame);
 
   const res = await getGames({ query: { year } });
 
@@ -43,36 +41,19 @@ async function getGamesForYear(year: number) {
   await RunCache.set({
     key: `cfb-games-${year}`,
     value: JSON.stringify(res.data),
-    ttl: 1000 * 60 * 60, // 1 hr
+    ttl: 1000 * 60 * 5, // 5 min
   });
 
   return res.data.map(parseGame);
 }
 
-export async function getGameById(id: number, skipCache = false) {
-  const cached = await RunCache.get(`cfb-game-${id}`);
+export async function getGameById(id: number) {
+  const res = await getGamesForYear(env.SEASON);
 
-  if (!skipCache && cached) {
-    return parseGame(JSON.parse(cached as string) as GetGamesResponse[number]);
-  }
-
-  const res = await getGames({ query: { id } });
-
-  if (!res.data) {
-    console.error(res.error);
-    throw new Error("Error fetching CFB game by ID");
-  }
-
-  const game = res.data[0];
+  const game = res.find((g) => g.id === id);
   if (!game) return null;
 
-  await RunCache.set({
-    key: `cfb-game-${id}`,
-    value: JSON.stringify(game),
-    ttl: game.completed ? undefined : 1000 * 60 * 5, // 5 min
-  });
-
-  return parseGame(game);
+  return game;
 }
 
 async function getLinesForYear(year: number) {
@@ -123,13 +104,12 @@ export const cfbRouter = createTRPCRouter({
   games: protectedProcedure
     .input(
       z.object({
-        year: z.number().min(2000).max(new Date().getFullYear()).optional().default(env.SEASON),
         week: z.optional(z.number().min(1).max(52)),
         seasonType: z.optional(z.enum(["regular", "postseason"])),
       }),
     )
     .query(async ({ input }) => {
-      const gamesForYear = await getGamesForYear(input.year);
+      const gamesForYear = await getGamesForYear(env.SEASON);
       return gamesForYear
         .filter(
           (game) =>
@@ -154,12 +134,11 @@ export const cfbRouter = createTRPCRouter({
   lines: protectedProcedure
     .input(
       z.object({
-        year: z.number().min(2000).max(new Date().getFullYear()),
         week: z.optional(z.number().min(1).max(52)),
       }),
     )
     .query(async ({ input }) => {
-      const linesForYear = await getLinesForYear(input.year);
+      const linesForYear = await getLinesForYear(env.SEASON);
 
       return linesForYear
         .filter(
@@ -174,23 +153,17 @@ export const cfbRouter = createTRPCRouter({
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
     }),
 
-  calendar: protectedProcedure
-    .input(
-      z.object({
-        year: z.number().min(2000).max(new Date().getFullYear()).optional().default(env.SEASON),
-      }),
-    )
-    .query(async ({ input }) => {
-      const data = await getCalendarForYear(input.year);
+  calendar: protectedProcedure.query(async () => {
+    const data = await getCalendarForYear(env.SEASON);
 
-      const normalWeeks = data.filter(
-        (week) => week.seasonType === "regular" || week.seasonType === "postseason",
-      ) as (Omit<(typeof data)[number], "seasonType"> & { seasonType: "regular" | "postseason" })[];
+    const normalWeeks = data.filter(
+      (week) => week.seasonType === "regular" || week.seasonType === "postseason",
+    ) as (Omit<(typeof data)[number], "seasonType"> & { seasonType: "regular" | "postseason" })[];
 
-      return normalWeeks.map((week) => ({
-        ...week,
-        startDate: new Date(week.startDate),
-        endDate: new Date(week.endDate),
-      }));
-    }),
+    return normalWeeks.map((week) => ({
+      ...week,
+      startDate: new Date(week.startDate),
+      endDate: new Date(week.endDate),
+    }));
+  }),
 });

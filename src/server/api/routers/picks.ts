@@ -16,7 +16,6 @@ import { getGameById } from "./cfb";
 const ZodPick = z.intersection(
   z.object({
     id: z.number().optional(),
-    season: z.number().min(2000).max(new Date().getFullYear()),
     week: z.number().min(1).max(52),
     gameId: z.number(),
     duration: z.enum(durations),
@@ -52,7 +51,9 @@ export const picksRouter = createTRPCRouter({
     const res = await ctx.db.query.teams.findMany({
       with: {
         users: { columns: { id: true, name: true } },
-        picks: true,
+        picks: {
+          where: (pick, { eq }) => eq(pick.season, env.SEASON),
+        },
       },
     });
 
@@ -92,7 +93,9 @@ export const picksRouter = createTRPCRouter({
     const res = await ctx.db.query.teams.findMany({
       with: {
         users: { columns: { id: true, name: true } },
-        picks: true,
+        picks: {
+          where: (pick, { eq }) => eq(pick.season, env.SEASON),
+        },
       },
     });
 
@@ -103,7 +106,6 @@ export const picksRouter = createTRPCRouter({
     .input(
       z.object({
         teamId: z.number().optional(),
-        season: z.number().min(2000).max(new Date().getFullYear()).optional().default(env.SEASON),
         week: z.number().min(1).max(52).optional(),
       }),
     )
@@ -114,8 +116,8 @@ export const picksRouter = createTRPCRouter({
         .innerJoin(teams, eq(picks.teamId, teams.id))
         .where(
           and(
+            eq(picks.season, env.SEASON),
             input.teamId ? eq(teams.id, input.teamId) : undefined,
-            input ? eq(picks.season, input.season) : undefined,
             input?.week ? eq(picks.week, input.week) : undefined,
           ),
         );
@@ -134,7 +136,7 @@ export const picksRouter = createTRPCRouter({
       .where(
         and(
           eq(picks.teamId, ctx.session.user.teamId),
-          eq(picks.season, input.season),
+          eq(picks.season, env.SEASON),
           eq(picks.week, input.week),
         ),
       );
@@ -151,7 +153,7 @@ export const picksRouter = createTRPCRouter({
     if (!input.id) {
       const newPick: InferInsertModel<typeof picks> = {
         teamId: ctx.session.user.teamId,
-        season: input.season,
+        season: env.SEASON,
         week: input.week,
         gameId: input.gameId,
         pickType: input.pickType,
@@ -175,14 +177,14 @@ export const picksRouter = createTRPCRouter({
     const pick = existingPicks.find((p) => p.id === input.id);
     if (!pick) throw new Error("Pick not found or not authorized to edit");
 
-    const game = await getGameById(pick.gameId, true);
+    const game = await getGameById(pick.gameId);
     if (!game) throw new Error("Game not found for the pick");
 
     if (isGameLocked(new Date(game.startDate)))
       throw new Error("Cannot edit a pick for a game that has already started");
 
     const updatedPick: Omit<InferInsertModel<typeof picks>, "id" | "teamId"> = {
-      season: input.season,
+      season: env.SEASON,
       week: input.week,
       gameId: input.gameId,
       pickType: input.pickType,
@@ -208,9 +210,8 @@ export const picksRouter = createTRPCRouter({
   }),
 
   deletePick: protectedProcedure.input(z.number().int()).mutation(async ({ input, ctx }) => {
-    if (!ctx.session.user.teamId) {
+    if (!ctx.session.user.teamId)
       throw new Error("User must be assigned to a team to delete picks");
-    }
 
     const pick = await ctx.db
       .select()
@@ -218,19 +219,13 @@ export const picksRouter = createTRPCRouter({
       .where(and(eq(picks.id, input), eq(picks.teamId, ctx.session.user.teamId)))
       .get();
 
-    if (!pick) {
-      throw new Error("Pick not found or not authorized to delete");
-    }
+    if (!pick) throw new Error("Pick not found or not authorized to delete");
 
-    const game = await getGameById(pick.gameId, true);
+    const game = await getGameById(pick.gameId);
+    if (!game) throw new Error("Game not found for the pick");
 
-    if (!game) {
-      throw new Error("Game not found for the pick");
-    }
-
-    if (isGameLocked(new Date(game.startDate))) {
+    if (isGameLocked(new Date(game.startDate)))
       throw new Error("Cannot delete a pick for a game that has already started");
-    }
 
     const res = await ctx.db
       .delete(picks)

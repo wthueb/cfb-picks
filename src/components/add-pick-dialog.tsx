@@ -42,7 +42,6 @@ export function AddPickDialog(props: {
   useImperativeHandle(props.ref, () => ({ clear }));
 
   const games = api.cfb.games.useQuery({
-    year: props.week.season,
     week: props.week.week,
     seasonType: props.week.seasonType,
   });
@@ -50,7 +49,7 @@ export function AddPickDialog(props: {
   const session = useSession();
 
   const picks = api.picks.teamPicks.useQuery(
-    { teamId: session.data?.user.teamId ?? -1, season: props.week.season, week: props.week.week },
+    { teamId: session.data?.user.teamId ?? -1, week: props.week.week },
     { enabled: !!session.data },
   );
   const canDouble = picks.data
@@ -127,7 +126,6 @@ export function AddPickDialog(props: {
       }
       makePick.mutate({
         id: props.pick?.id,
-        season: props.week.season,
         week: props.week.week,
         gameId: game.id,
         pickType,
@@ -144,7 +142,6 @@ export function AddPickDialog(props: {
       }
       makePick.mutate({
         id: props.pick?.id,
-        season: props.week.season,
         week: props.week.week,
         gameId: game.id,
         pickType,
@@ -164,7 +161,6 @@ export function AddPickDialog(props: {
       }
       makePick.mutate({
         id: props.pick?.id,
-        season: props.week.season,
         week: props.week.week,
         gameId: game.id,
         pickType,
@@ -181,7 +177,6 @@ export function AddPickDialog(props: {
       }
       makePick.mutate({
         id: props.pick?.id,
-        season: props.week.season,
         week: props.week.week,
         gameId: game.id,
         pickType,

@@ -1,4 +1,5 @@
 import { Check, CircleDashed, Minus, Pencil, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,11 +42,21 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
         : game.data?.awayTeam
       : undefined;
 
-  const now = new Date();
+  const [now, setNow] = useState(() => new Date());
 
-  const pickStatus = game.data ? getPickResult(props.pick, game.data) : null;
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 5 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const gameLocked = game.data ? isGameLocked(game.data.startDate) : true;
+  const pickStatus = useMemo(
+    () => (game.data ? getPickResult(props.pick, game.data) : null),
+    [game.data, props.pick],
+  );
+  const gameLocked = useMemo(
+    () => (game.data ? isGameLocked(game.data.startDate) : true),
+    [game.data],
+  );
 
   return (
     <Card>

@@ -17,20 +17,17 @@ const seasonTypeNames: Record<Week["seasonType"], string> = {
 };
 
 export function WeekSelect(props: { onChange: (week: Week) => void; className?: string }) {
-  const calendar = api.cfb.calendar.useQuery(
-    {},
-    {
-      select: (data) => {
-        const current = data.find((week) => week.endDate >= now) ?? data[data.length - 1];
+  const calendar = api.cfb.calendar.useQuery(undefined, {
+    select: (data) => {
+      const current = data.find((week) => week.endDate >= now) ?? data[data.length - 1];
 
-        if (current) {
-          setValue(current.startDate.toISOString());
-        }
+      if (current) {
+        setValue(current.startDate.toISOString());
+      }
 
-        return data;
-      },
+      return data;
     },
-  );
+  });
 
   const bySeasonType = useMemo(() => {
     return calendar.data?.reduce(

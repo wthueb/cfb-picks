@@ -1,12 +1,10 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import z from "zod";
 
+import { env as dbEnv } from "@cfb-picks/db/env";
+
 export const env = createEnv({
   server: {
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
-    PORT: z.coerce.number().default(3000),
-
-    DATABASE_URL: z.url(),
     CFB_API_KEY: z.string(),
     SEASON: z.coerce.number().int(),
 
@@ -26,7 +24,14 @@ export const env = createEnv({
 
   client: {},
 
-  experimental__runtimeEnv: {},
+  shared: {
+    NODE_ENV: z.enum(["development", "production"]).default("development"),
+  },
+
+  experimental__runtimeEnv: {
+    // eslint-disable-next-line no-restricted-properties
+    NODE_ENV: process.env.NODE_ENV,
+  },
 
   // eslint-disable-next-line no-restricted-properties
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
@@ -84,4 +89,6 @@ export const env = createEnv({
 
       return env;
     }),
+
+  extends: [dbEnv],
 });

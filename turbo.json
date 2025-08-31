@@ -36,5 +36,8 @@
       "cache": false,
       "interactive": true
     }
-  }
+  },
+  "globalEnv": [
+    "SKIP_ENV_VALIDATION"
+  ]
 }

@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"],
-      "env": ["NODE_ENV", "PORT", "SKIP_ENV_VALIDATION"]
+      "env": ["NODE_ENV", "PORT"]
     },
     "dev": {
       "persistent": true

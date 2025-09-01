@@ -19,6 +19,7 @@
     "@cfb-picks/eslint-config": "workspace:*",
     "@cfb-picks/prettier-config": "workspace:*",
     "@cfb-picks/tsconfig": "workspace:*",
+    "@types/async-lock": "^1.4.2",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
@@ -26,6 +27,7 @@
   "prettier": "@cfb-picks/prettier-config",
   "dependencies": {
     "@t3-oss/env-core": "^0.13.8",
+    "async-lock": "^1.4.1",
     "cfbd": "^5.10.0",
     "redis": "^5.8.2"
   }

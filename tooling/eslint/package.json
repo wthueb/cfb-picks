@@ -26,6 +26,7 @@
   "devDependencies": {
     "@cfb-picks/prettier-config": "workspace:*",
     "@cfb-picks/tsconfig": "workspace:*",
+    "@types/eslint-plugin-jsx-a11y": "~6.10.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

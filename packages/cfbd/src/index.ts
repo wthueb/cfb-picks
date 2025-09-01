@@ -1,8 +1,11 @@
 import type { GetCalendarResponse, GetGamesResponse, GetLinesResponse } from "cfbd";
+import AsyncLock from "async-lock";
 import { client, getCalendar, getGames, getLines } from "cfbd";
 
 import { client as cache } from "./cache";
 import { env } from "./env";
+
+const lock = new AsyncLock();
 
 export type Game = Omit<GetGamesResponse[number], "startDate"> & {
   startDate: Date;
@@ -19,25 +22,27 @@ function parseGame(game: GetGamesResponse[number]): Game {
 }
 
 export async function getGamesForYear(year: number) {
-  const cached = await cache.get(`cfb-games-${year}`);
+  return await lock.acquire("getGamesForYear", async () => {
+    const cached = await cache.get(`cfb-games-${year}`);
 
-  if (cached) return (JSON.parse(cached) as GetGamesResponse).map(parseGame);
+    if (cached) return (JSON.parse(cached) as GetGamesResponse).map(parseGame);
 
-  const res = await getGames({ query: { year } });
+    const res = await getGames({ query: { year } });
 
-  if (!res.data) {
-    console.error(res.error);
-    throw new Error("Error fetching CFB games");
-  }
+    if (!res.data) {
+      console.error(res.error);
+      throw new Error("Error fetching CFB games");
+    }
 
-  await cache.set(`cfb-games-${year}`, JSON.stringify(res.data), {
-    expiration: {
-      type: "EX",
-      value: 60 * 5, // 5 min
-    },
+    await cache.set(`cfb-games-${year}`, JSON.stringify(res.data), {
+      expiration: {
+        type: "EX",
+        value: 60 * 5, // 5 min
+      },
+    });
+
+    return res.data.map(parseGame);
   });
-
-  return res.data.map(parseGame);
 }
 
 export async function getGameById(id: number) {
@@ -50,47 +55,51 @@ export async function getGameById(id: number) {
 }
 
 export async function getLinesForYear(year: number) {
-  const cached = await cache.get(`cfb-lines-${year}`);
+  return await lock.acquire("getLinesForYear", async () => {
+    const cached = await cache.get(`cfb-lines-${year}`);
 
-  if (cached) {
-    return JSON.parse(cached) as GetLinesResponse;
-  }
+    if (cached) {
+      return JSON.parse(cached) as GetLinesResponse;
+    }
 
-  const res = await getLines({ query: { year } });
+    const res = await getLines({ query: { year } });
 
-  if (!res.data) {
-    console.error(res.error);
-    throw new Error("Error fetching CFB lines");
-  }
+    if (!res.data) {
+      console.error(res.error);
+      throw new Error("Error fetching CFB lines");
+    }
 
-  await cache.set(`cfb-lines-${year}`, JSON.stringify(res.data), {
-    expiration: {
-      type: "EX",
-      value: 60 * 30, // 30 min
-    },
+    await cache.set(`cfb-lines-${year}`, JSON.stringify(res.data), {
+      expiration: {
+        type: "EX",
+        value: 60 * 30, // 30 min
+      },
+    });
+
+    return res.data;
   });
-
-  return res.data;
 }
 
 export async function getCalendarForYear(year: number) {
-  const cached = await cache.get(`cfb-calendar-${year}`);
+  return await lock.acquire("getCalendarForYear", async () => {
+    const cached = await cache.get(`cfb-calendar-${year}`);
 
-  if (cached) return JSON.parse(cached) as GetCalendarResponse;
+    if (cached) return JSON.parse(cached) as GetCalendarResponse;
 
-  const res = await getCalendar({ query: { year } });
+    const res = await getCalendar({ query: { year } });
 
-  if (!res.data) {
-    console.error(res.error);
-    throw new Error("Error fetching CFB calendar");
-  }
+    if (!res.data) {
+      console.error(res.error);
+      throw new Error("Error fetching CFB calendar");
+    }
 
-  await cache.set(`cfb-calendar-${year}`, JSON.stringify(res.data), {
-    expiration: {
-      type: "EX",
-      value: 60 * 60 * 6, // 6 hr
-    },
+    await cache.set(`cfb-calendar-${year}`, JSON.stringify(res.data), {
+      expiration: {
+        type: "EX",
+        value: 60 * 60 * 6, // 6 hr
+      },
+    });
+
+    return res.data;
   });
-
-  return res.data;
 }

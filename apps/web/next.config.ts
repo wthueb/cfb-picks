@@ -1,13 +1,14 @@
+import type { NextConfig } from "next";
+
 import "./src/env";
 
-/** @type {import("next").NextConfig} */
-const config = {
+const config: NextConfig = {
   reactStrictMode: true,
   i18n: {
     locales: ["en"],
     defaultLocale: "en",
   },
-  transpilePackages: ["@cfb-picks/db"],
+  transpilePackages: ["@cfb-picks/db", "@cfb-picks/cfbd"],
   output: "standalone",
 };
 

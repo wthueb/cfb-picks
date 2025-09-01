@@ -3,8 +3,13 @@ import z from "zod";
 
 export const env = createEnv({
   server: {
+    REDIS_URL: z.url().default("redis://localhost:6379"),
+    CFB_API_KEY: z.string(),
+    SEASON: z.coerce.number().min(2000),
+  },
+
+  shared: {
     NODE_ENV: z.enum(["development", "production"]).default("development"),
-    DATABASE_URL: z.url(),
   },
 
   runtimeEnv: process.env,

@@ -1,0 +1,32 @@
+{
+  "name": "@cfb-picks/cfbd",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "devDependencies": {
+    "@cfb-picks/eslint-config": "workspace:*",
+    "@cfb-picks/prettier-config": "workspace:*",
+    "@cfb-picks/tsconfig": "workspace:*",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@cfb-picks/prettier-config",
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.8",
+    "cfbd": "^5.10.0",
+    "redis": "^5.8.2"
+  }
+}

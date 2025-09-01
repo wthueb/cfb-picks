@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 
-import type { Game } from "~/server/api/routers/cfb";
+import type { Game } from "@cfb-picks/cfbd";
+
 import type { RouterOutputs } from "~/utils/api";
 import { Button } from "~/components/ui/button";
 import {

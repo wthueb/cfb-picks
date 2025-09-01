@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.10.0",
+    "@cfb-picks/cfbd": "workspace:*",
     "@cfb-picks/db": "workspace:*",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -31,7 +32,6 @@
     "@trpc/next": "catalog:",
     "@trpc/react-query": "catalog:",
     "@trpc/server": "catalog:",
-    "cfbd": "^5.9.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -42,7 +42,6 @@
     "nodemailer": "^6.10.1",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
-    "run-cache": "^1.6.1",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
     "zod": "catalog:"

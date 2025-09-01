@@ -1,4 +1,5 @@
-import type { Game } from "~/server/api/routers/cfb";
+import type { Game } from "@cfb-picks/cfbd";
+
 import type { CFBPick } from "~/server/api/routers/picks";
 
 export enum PickResult {

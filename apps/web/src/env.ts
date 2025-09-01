@@ -1,11 +1,11 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import z from "zod";
 
+import { env as cfbdEnv } from "@cfb-picks/cfbd/env";
 import { env as dbEnv } from "@cfb-picks/db/env";
 
 export const env = createEnv({
   server: {
-    CFB_API_KEY: z.string(),
     SEASON: z.coerce.number().int(),
 
     NEXTAUTH_URL: z.url(),
@@ -41,6 +41,7 @@ export const env = createEnv({
   createFinalSchema: (shape, isServer) =>
     z.object(shape).transform((env, ctx) => {
       if (!isServer) return env;
+
       if (env.GOOGLE_CLIENT_ID && !env.GOOGLE_CLIENT_SECRET) {
         ctx.addIssue({
           code: "custom",
@@ -48,6 +49,7 @@ export const env = createEnv({
         });
         return z.NEVER;
       }
+
       if (env.GOOGLE_CLIENT_SECRET && !env.GOOGLE_CLIENT_ID) {
         ctx.addIssue({
           code: "custom",
@@ -90,5 +92,5 @@ export const env = createEnv({
       return env;
     }),
 
-  extends: [dbEnv],
+  extends: [dbEnv, cfbdEnv],
 });

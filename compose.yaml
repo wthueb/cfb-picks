@@ -20,7 +20,13 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - EMAIL_FROM=${EMAIL_FROM}
+      - REDIS_URL=redis://redis:6379
     volumes:
       - .:/config
     ports:
       - 3000:3000
+
+  redis:
+    container_name: redis
+    image: redis:8-alpine
+    restart: unless-stopped

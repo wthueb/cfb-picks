@@ -1,100 +1,12 @@
-import type { GetCalendarResponse, GetGamesResponse, GetLinesResponse } from "cfbd";
-import { client, getCalendar, getGames, getLines } from "cfbd";
-import { RunCache } from "run-cache";
 import z from "zod";
+
+import { getCalendarForYear, getGameById, getGamesForYear, getLinesForYear } from "@cfb-picks/cfbd";
 
 import type { RouterOutputs } from "~/utils/api";
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export type Week = RouterOutputs["cfb"]["calendar"][number];
-export type Game = Omit<GetGamesResponse[number], "startDate"> & {
-  startDate: Date;
-};
-
-client.setConfig({
-  headers: {
-    Authorization: `Bearer ${env.CFB_API_KEY}`,
-  },
-});
-
-function parseGame(game: GetGamesResponse[number]): Game {
-  return { ...game, startDate: new Date(game.startDate) };
-}
-
-async function getGamesForYear(year: number) {
-  const cached = await RunCache.get(`cfb-games-${year}`);
-
-  if (cached) return (JSON.parse(cached as string) as GetGamesResponse).map(parseGame);
-
-  const res = await getGames({ query: { year } });
-
-  if (!res.data) {
-    console.error(res.error);
-    throw new Error("Error fetching CFB games");
-  }
-
-  await RunCache.set({
-    key: `cfb-games-${year}`,
-    value: JSON.stringify(res.data),
-    ttl: 1000 * 60 * 5, // 5 min
-  });
-
-  return res.data.map(parseGame);
-}
-
-export async function getGameById(id: number) {
-  const res = await getGamesForYear(env.SEASON);
-
-  const game = res.find((g) => g.id === id);
-  if (!game) return null;
-
-  return game;
-}
-
-async function getLinesForYear(year: number) {
-  const cached = await RunCache.get(`cfb-lines-${year}`);
-
-  if (cached) {
-    return JSON.parse(cached as string) as GetLinesResponse;
-  }
-
-  const res = await getLines({ query: { year } });
-
-  if (!res.data) {
-    console.error(res.error);
-    throw new Error("Error fetching CFB lines");
-  }
-
-  await RunCache.set({
-    key: `cfb-lines-${year}`,
-    value: JSON.stringify(res.data),
-    ttl: 1000 * 60 * 30, // 30 min
-  });
-
-  return res.data;
-}
-
-async function getCalendarForYear(year: number) {
-  const cached = await RunCache.get(`cfb-calendar-${year}`);
-
-  if (cached) return JSON.parse(cached as string) as GetCalendarResponse;
-
-  const res = await getCalendar({ query: { year } });
-
-  if (!res.data) {
-    console.error(res.error);
-    throw new Error("Error fetching CFB calendar");
-  }
-
-  await RunCache.set({
-    key: `cfb-calendar-${year}`,
-    value: JSON.stringify(res.data),
-    ttl: 1000 * 60 * 60 * 6, // 6 hr
-  });
-
-  return res.data;
-}
 
 export const cfbRouter = createTRPCRouter({
   games: protectedProcedure

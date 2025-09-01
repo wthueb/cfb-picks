@@ -2,13 +2,13 @@ import type { InferInsertModel } from "drizzle-orm";
 import { and, eq } from "drizzle-orm";
 import z from "zod";
 
+import { getGameById } from "@cfb-picks/cfbd";
 import { durations, overUnderPickTypes, picks, teamTotalPickTypes } from "@cfb-picks/db/schema";
 
 import { env } from "~/env";
 import { isGameLocked } from "~/lib/dates";
 import { getPotential, scorePick, scorePickByWagerAmount } from "~/lib/picks";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { getGameById } from "./cfb";
 
 const ZodPick = z.intersection(
   z.object({

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, CircleDashed, Lock, Minus, Pencil, Trash2, X } from "lucide-react";
 
+import type { CFBPick } from "@cfb-picks/db/schema";
 import { isTeamTotalPickType } from "@cfb-picks/db/schema";
 
 import type { Week } from "~/server/api/routers/cfb";
-import type { CFBPick } from "~/server/api/routers/picks";
 import {
   AlertDialog,
   AlertDialogAction,

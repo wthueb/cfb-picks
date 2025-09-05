@@ -1,10 +1,9 @@
 import { useEffect, useImperativeHandle, useState } from "react";
 
-import type { Duration, PickType } from "@cfb-picks/db/schema";
+import type { CFBPick, Duration, PickType } from "@cfb-picks/db/schema";
 import { durations, isTeamTotalPickType, pickTypes } from "@cfb-picks/db/schema";
 
 import type { Week } from "~/server/api/routers/cfb";
-import type { CFBPick } from "~/server/api/routers/picks";
 import { api } from "~/utils/api";
 import { GameCombobox } from "./game-combobox";
 import { Select } from "./select";

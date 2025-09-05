@@ -11,7 +11,7 @@
         packages = with pkgs; [
           nodejs
           pnpm
-          #turbo
+          turbo
         ];
       };
     };

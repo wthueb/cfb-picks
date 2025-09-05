@@ -1,5 +1,6 @@
+import type { CFBPick } from "@cfb-picks/db/schema";
+
 import type { Week } from "~/server/api/routers/cfb";
-import type { CFBPick } from "~/server/api/routers/picks";
 import { PickCard } from "./pick-card";
 
 export function PickList(props: { picks: CFBPick[]; week: Week }) {

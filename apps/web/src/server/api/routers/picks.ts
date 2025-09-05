@@ -2,6 +2,7 @@ import type { InferInsertModel } from "drizzle-orm";
 import { and, eq } from "drizzle-orm";
 import z from "zod";
 
+import type { CFBPick } from "@cfb-picks/db/schema";
 import { getGameById } from "@cfb-picks/cfbd";
 import { durations, overUnderPickTypes, picks, teamTotalPickTypes } from "@cfb-picks/db/schema";
 
@@ -39,9 +40,9 @@ const ZodPick = z.intersection(
       cfbTeamId: z.number(),
     }),
   ]),
-);
-
-export type CFBPick = z.infer<typeof ZodPick> & { id: number };
+) satisfies z.ZodType<
+  Omit<CFBPick, "id" | "teamId" | "season" | "createdAt"> & { id?: number | undefined }
+>;
 
 export const picksRouter = createTRPCRouter({
   stats: protectedProcedure.query(async ({ ctx }) => {

@@ -23,6 +23,37 @@ export function isTeamTotalPickType(pickType: PickType): pickType is TeamTotalPi
   return teamTotalPickTypes.includes(pickType as TeamTotalPickType);
 }
 
+export type CFBPick = {
+  id: number;
+  teamId: number;
+  season: number;
+  week: number;
+  gameId: number;
+  duration: Duration;
+  odds: number;
+  double: boolean;
+  createdAt: Date;
+} & (
+  | {
+      pickType: OverUnderPickType;
+      total: number;
+    }
+  | {
+      pickType: TeamTotalPickType;
+      cfbTeamId: number;
+      total: number;
+    }
+  | {
+      pickType: "SPREAD";
+      cfbTeamId: number;
+      spread: number;
+    }
+  | {
+      pickType: "MONEYLINE";
+      cfbTeamId: number;
+    }
+);
+
 export const picks = createTable("pick", (d) => ({
   id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   teamId: d

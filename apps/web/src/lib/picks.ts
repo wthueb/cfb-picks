@@ -1,6 +1,5 @@
 import type { Game } from "@cfb-picks/cfbd";
-
-import type { CFBPick } from "~/server/api/routers/picks";
+import type { CFBPick } from "@cfb-picks/db/schema";
 
 export enum PickResult {
   Win = "Win",

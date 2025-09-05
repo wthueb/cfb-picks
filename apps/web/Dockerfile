@@ -17,7 +17,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prefer-offline 
 COPY --from=builder /app/out/full/ .
 RUN SKIP_ENV_VALIDATION=1 DATABASE_URL=file:./fake-db-just-for-build.sqlite turbo build --env-mode loose
 
-FROM gcr.io/distroless/nodejs20-debian12 AS runner
+FROM gcr.io/distroless/nodejs22-debian12 AS runner
 WORKDIR /app
 COPY --from=installer /app/apps/web/.next/standalone ./
 COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static

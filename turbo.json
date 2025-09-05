@@ -38,6 +38,7 @@
     }
   },
   "globalEnv": [
-    "SKIP_ENV_VALIDATION"
+    "SKIP_ENV_VALIDATION",
+    "DATABASE_URL"
   ]
 }

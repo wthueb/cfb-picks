@@ -2,11 +2,13 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./base.json",
   "compilerOptions": {
-    /** Emit types for internal packages to speed up editor performance. */
+    /** Emit types and JavaScript for internal packages */
     "declaration": true,
     "declarationMap": true,
-    "emitDeclarationOnly": true,
+    "emitDeclarationOnly": false,
     "noEmit": false,
-    "outDir": "${configDir}/dist"
+    "outDir": "${configDir}/dist",
+    "module": "ES2022",
+    "target": "ES2022"
   }
 }

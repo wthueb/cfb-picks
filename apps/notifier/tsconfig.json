@@ -3,6 +3,11 @@
   "include": ["emails", "src"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "noEmit": false,
+    "outDir": "./dist",
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "Bundler"
   }
 }

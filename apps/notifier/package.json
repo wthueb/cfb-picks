@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "pnpm with-env tsc",
+    "build:prod": "SKIP_ENV_VALIDATION=1 tsc",
     "clean": "git clean -xdf node_modules",
     "dev": "pnpm with-env email dev -p 3001",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
+    "start": "node dist/src/index.js",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
   },

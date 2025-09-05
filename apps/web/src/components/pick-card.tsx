@@ -3,6 +3,8 @@ import { Check, CircleDashed, Lock, Minus, Pencil, Trash2, X } from "lucide-reac
 
 import type { CFBPick } from "@cfb-picks/db/schema";
 import { isTeamTotalPickType } from "@cfb-picks/db/schema";
+import { isGameLocked } from "@cfb-picks/lib/dates";
+import { getPickResult, PickResult } from "@cfb-picks/lib/picks";
 
 import type { Week } from "~/server/api/routers/cfb";
 import {
@@ -25,8 +27,6 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { isGameLocked } from "~/lib/dates";
-import { getPickResult, PickResult } from "~/lib/picks";
 import { api } from "~/utils/api";
 import { AddPickDialog } from "./add-pick-dialog";
 import { Button } from "./ui/button";

@@ -1,0 +1,8 @@
+{
+  "extends": "@cfb-picks/tsconfig/base.json",
+  "include": ["emails", "src"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}

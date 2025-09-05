@@ -22,6 +22,20 @@
       "when": 1756063723912,
       "tag": "0002_kind_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1757042979093,
+      "tag": "0003_unique_tattoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1757050088092,
+      "tag": "0004_wealthy_prima",
+      "breakpoints": true
     }
   ]
 }

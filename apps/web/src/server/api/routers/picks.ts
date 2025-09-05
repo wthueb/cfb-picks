@@ -5,10 +5,10 @@ import z from "zod";
 import type { CFBPick } from "@cfb-picks/db/schema";
 import { getGameById } from "@cfb-picks/cfbd";
 import { durations, overUnderPickTypes, picks, teamTotalPickTypes } from "@cfb-picks/db/schema";
+import { isGameLocked } from "@cfb-picks/lib/dates";
+import { getPotential, scorePick, scorePickByWagerAmount } from "@cfb-picks/lib/picks";
 
 import { env } from "~/env";
-import { isGameLocked } from "~/lib/dates";
-import { getPotential, scorePick, scorePickByWagerAmount } from "~/lib/picks";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const ZodPick = z.intersection(

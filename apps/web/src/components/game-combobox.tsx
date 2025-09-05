@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 
 import type { Game } from "@cfb-picks/cfbd";
+import { isGameLocked } from "@cfb-picks/lib/dates";
 
 import type { RouterOutputs } from "~/utils/api";
 import { Button } from "~/components/ui/button";
@@ -14,7 +15,6 @@ import {
   CommandList,
 } from "~/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { isGameLocked } from "~/lib/dates";
 import { cn } from "~/lib/utils";
 
 export function GameCombobox(props: {

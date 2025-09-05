@@ -1,0 +1,32 @@
+{
+  "name": "@cfb-picks/lib",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./dates": "./src/dates.ts",
+    "./picks": "./src/picks.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@cfb-picks/cfbd": "workspace:*",
+    "@cfb-picks/db": "workspace:*",
+    "date-fns-tz": "^3.2.0"
+  },
+  "devDependencies": {
+    "@cfb-picks/eslint-config": "workspace:*",
+    "@cfb-picks/prettier-config": "workspace:*",
+    "@cfb-picks/tsconfig": "workspace:*",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@cfb-picks/prettier-config"
+}

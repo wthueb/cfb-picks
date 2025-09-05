@@ -70,11 +70,15 @@ export const picks = createTable("pick", (d) => ({
   total: d.real(),
   spread: d.real(),
   cfbTeamId: d.integer({ mode: "number" }),
-  createdAt: d.integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
+  createdAt: d
+    .integer({ mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
 }));
 
-export const picksRelations = relations(picks, ({ one }) => ({
+export const picksRelations = relations(picks, ({ one, many }) => ({
   team: one(teams, { fields: [picks.teamId], references: [teams.id] }),
+  notifications: many(pickNotifications),
 }));
 
 export const teams = createTable("team", (d) => ({
@@ -101,11 +105,34 @@ export const users = createTable("user", (d) => ({
     .integer({ mode: "number" })
     .notNull()
     .references(() => teams.id),
+  sendNotifications: d.integer({ mode: "boolean" }).notNull().default(false),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   accounts: many(accounts),
   team: one(teams, { fields: [users.teamId], references: [teams.id] }),
+  notifications: many(pickNotifications),
+}));
+
+export const pickNotifications = createTable("pick_notification", (d) => ({
+  id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+  pickId: d
+    .integer({ mode: "number" })
+    .notNull()
+    .references(() => picks.id),
+  userId: d
+    .text({ length: 255 })
+    .notNull()
+    .references(() => users.id),
+  createdAt: d
+    .integer({ mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+}));
+
+export const pickNotificationsRelations = relations(pickNotifications, ({ one }) => ({
+  pick: one(picks, { fields: [pickNotifications.pickId], references: [picks.id] }),
+  user: one(users, { fields: [pickNotifications.userId], references: [users.id] }),
 }));
 
 export const accounts = createTable(

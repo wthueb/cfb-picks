@@ -1,0 +1,46 @@
+{
+  "name": "@cfb-picks/notifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm with-env tsc",
+    "clean": "git clean -xdf node_modules",
+    "dev": "pnpm with-env email dev -p 3001",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env --"
+  },
+  "dependencies": {
+    "@cfb-picks/cfbd": "workspace:*",
+    "@cfb-picks/db": "workspace:*",
+    "@cfb-picks/lib": "workspace:*",
+    "@react-email/components": "0.5.1",
+    "@t3-oss/env-core": "^0.13.8",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "nodemailer": "^6.10.1",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "redis": "^5.8.2",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cfb-picks/eslint-config": "workspace:*",
+    "@cfb-picks/prettier-config": "workspace:*",
+    "@cfb-picks/tsconfig": "workspace:*",
+    "@react-email/preview-server": "^4.2.8",
+    "@types/node": "^24.2.1",
+    "@types/nodemailer": "^7.0.1",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "dotenv-cli": "^10.0.0",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "react-email": "^4.2.8",
+    "tsx": "^4.20.5",
+    "typescript": "catalog:"
+  },
+  "prettier": "@cfb-picks/prettier-config"
+}

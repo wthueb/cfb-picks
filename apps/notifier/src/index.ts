@@ -29,16 +29,18 @@ const transporter = nodemailer.createTransport({
 await transporter.verify();
 
 while (true) {
-  const picks = await db.query.picks.findMany({
-    with: {
-      notifications: {
-        with: {
-          user: true,
+  const picks = await db.query.picks
+    .findMany({
+      with: {
+        notifications: {
+          with: {
+            user: true,
+          },
         },
+        team: true,
       },
-      team: true,
-    },
-  });
+    })
+    .then((picks) => picks.filter((pick) => env.NODE_ENV !== "production" || pick.teamId !== 1));
 
   const picksWithGame = (await Promise.all(
     picks.map(async (pick) => ({

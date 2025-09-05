@@ -1,7 +1,7 @@
 services:
   web:
     container_name: web
-    image: wthueb/cfb-picks
+    image: wthueb/cfb-picks-web
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
@@ -25,6 +25,27 @@ services:
       - .:/config
     ports:
       - 3000:3000
+
+  notifier:
+    container_name: notifier
+    image: wthueb/cfb-picks-notifier
+    build:
+      context: .
+      dockerfile: ./apps/notifier/Dockerfile
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=file:/config/db.sqlite
+      - CFB_API_KEY=${CFB_API_KEY}
+      - SEASON=${SEASON}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - .:/config
 
   redis:
     container_name: redis

@@ -2,8 +2,8 @@ import type { GetCalendarResponse, GetGamesResponse, GetLinesResponse } from "cf
 import AsyncLock from "async-lock";
 import { client, getCalendar, getGames, getLines } from "cfbd";
 
-import { client as cache } from "./cache";
-import { env } from "./env";
+import { client as cache } from "./cache.js";
+import { env } from "./env.js";
 
 const lock = new AsyncLock();
 

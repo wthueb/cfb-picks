@@ -8,6 +8,20 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dockerfile: ./apps/web/Dockerfile
+            image: |
+              wthueb/cfb-picks-web
+              ghcr.io/wthueb/cfb-picks-web
+          - dockerfile: ./apps/notifier/Dockerfile
+            image: |
+              wthueb/cfb-picks-notifier
+              ghcr.io/wthueb/cfb-picks-notifier
+
     permissions:
       packages: write
       contents: read
@@ -42,22 +56,17 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            wthueb/cfb-picks
-            ghcr.io/wthueb/cfb-picks
+          images: ${{ matrix.image }}
 
       - name: Build and push
         id: push
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./apps/web/Dockerfile
+          file: ${{ matrix.dockerfile }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
           push: true
-          tags: |
-            wthueb/cfb-picks:latest
-            ghcr.io/wthueb/cfb-picks:latest
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-

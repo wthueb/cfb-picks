@@ -1,5 +1,6 @@
 {
-  "extends": "@cfb-picks/tsconfig/base.json",
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@cfb-picks/tsconfig/internal-package.json",
   "include": ["emails", "src"],
   "exclude": ["node_modules"],
   "compilerOptions": {

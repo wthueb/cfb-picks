@@ -6,19 +6,19 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     },
     "./env": {
       "types": "./dist/env.d.ts",
-      "default": "./src/env.ts"
+      "default": "./dist/env.js"
     },
     "./client": {
       "types": "./dist/client.d.ts",
-      "default": "./src/client.ts"
+      "default": "./dist/client.js"
     },
     "./schema": {
       "types": "./dist/schema.d.ts",
-      "default": "./src/schema.ts"
+      "default": "./dist/schema.js"
     }
   },
   "scripts": {

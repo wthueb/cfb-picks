@@ -4,8 +4,14 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    "./dates": "./src/dates.ts",
-    "./picks": "./src/picks.ts"
+    "./dates": {
+      "types": "./dist/dates.d.ts",
+      "default": "./dist/dates.js"
+    },
+    "./picks": {
+      "types": "./dist/picks.d.ts", 
+      "default": "./dist/picks.js"
+    }
   },
   "scripts": {
     "build": "tsc",

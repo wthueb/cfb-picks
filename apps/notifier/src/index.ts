@@ -9,8 +9,8 @@ import { db } from "@cfb-picks/db/client";
 import { pickNotifications } from "@cfb-picks/db/schema";
 import { isGameLocked } from "@cfb-picks/lib/dates";
 
-import NotificationEmail from "../emails/notification";
-import { env } from "./env";
+import NotificationEmail from "../emails/notification.js";
+import { env } from "./env.js";
 
 if (!env.SMTP_HOST || !env.SMTP_PORT) {
   throw new Error("SMTP is not configured");

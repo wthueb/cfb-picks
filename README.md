@@ -2,4 +2,4 @@
 
 ### TODO
 
-- backend for emailing when picks lock
+- make docker images smaller

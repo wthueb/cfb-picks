@@ -85,7 +85,7 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
             : ActionType.Push;
 
   return (
-    <Card>
+    <Card data-id={props.pick.id}>
       <CardHeader>
         <CardTitle className="text-primary-foreground">Pick {props.num + 1}</CardTitle>
         <CardDescription>

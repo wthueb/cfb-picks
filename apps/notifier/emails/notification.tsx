@@ -70,20 +70,18 @@ export default function NotificationEmail(props: {
             }}
           />
         </Head>
-        <Body className="mx-8">
+        <Body className="mx-4">
           <h1 className="text-center text-lg font-bold">Picks have been locked in</h1>
-          <div className="flex flex-col gap-2">
-            {picksByGame.map(({ game, picks }) => (
-              <div className="rounded-md border-solid px-4" key={game.id}>
-                <h3 className="text-base font-bold">
-                  {game.awayTeam} @ {game.homeTeam} - {game.startDate.toLocaleString()}
-                </h3>
-                {picks.map((pick) => (
-                  <PickDisplay pick={pick} key={pick.id} />
-                ))}
-              </div>
-            ))}
-          </div>
+          {picksByGame.map(({ game, picks }) => (
+            <div className="my-4 rounded-md border-solid px-4" key={game.id}>
+              <h3 className="text-base font-bold">
+                {game.awayTeam} @ {game.homeTeam} - {game.startDate.toLocaleString()}
+              </h3>
+              {picks.map((pick) => (
+                <PickDisplay pick={pick} key={pick.id} />
+              ))}
+            </div>
+          ))}
         </Body>
       </Html>
     </Tailwind>

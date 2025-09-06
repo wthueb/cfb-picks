@@ -12,26 +12,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - dockerfile: ./apps/web/Dockerfile
-            image: |
-              wthueb/cfb-picks-web
-              ghcr.io/wthueb/cfb-picks-web
-          - dockerfile: ./apps/notifier/Dockerfile
-            image: |
-              wthueb/cfb-picks-notifier
-              ghcr.io/wthueb/cfb-picks-notifier
+        app: [web, notifier]
+        platform: [linux/amd64, linux/arm64]
 
     permissions:
       packages: write
       contents: read
       attestations: write
       id-token: write
+
     steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -56,17 +53,109 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ matrix.image }}
+          images: |
+            wthueb/cfb-picks-${{ matrix.app }}
+            ghcr.io/${{ github.repository_owner }}/cfb-picks-${{ matrix.app }}
 
-      - name: Build and push
-        id: push
+      - name: Build and push by digest
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: ./apps/${{ matrix.app }}/Dockerfile
+          platforms: ${{ matrix.platform }}
+          tags: |
+            wthueb/cfb-picks-${{ matrix.app }}
+            ghcr.io/${{ github.repository_owner }}/cfb-picks-${{ matrix.app }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Export digest
+        run: |
+            mkdir -p ${{ runner.temp }}/digests
+            digest="${{ steps.build.outputs.digest }}"
+            touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.app }}-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-latest
+    needs: docker
+
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web, notifier]
+
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.app }}-*
+          merge-multiple: true
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker meta
+        id: meta-dh
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            wthueb/cfb-picks-${{ matrix.app }}
+          tags: |
+            type=ref,event=branch
+
+      - name: Create Docker Hub manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'wthueb/cfb-picks-${{ matrix.app }}@sha256:%s ' *)
+
+      - name: Docker meta
+        id: meta-ghcr
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/cfb-picks-${{ matrix.app }}
+          tags: |
+            type=ref,event=branch
+
+      - name: Create GHCR manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ github.repository_owner }}/cfb-picks-${{ matrix.app }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect wthueb/cfb-picks-${{ matrix.app }}:${{ steps.meta-dh.outputs.version }}
+          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/cfb-picks-${{ matrix.app }}:${{ steps.meta-ghcr.outputs.version }}

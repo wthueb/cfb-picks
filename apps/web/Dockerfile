@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:22-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV TURBO_TELEMETRY_DISABLED=1
@@ -19,9 +19,11 @@ RUN SKIP_ENV_VALIDATION=1 DATABASE_URL=file:./fake-db-just-for-build.sqlite turb
 
 FROM gcr.io/distroless/nodejs22-debian12 AS runner
 WORKDIR /app
-COPY --from=installer /app/apps/web/.next/standalone ./
-COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=installer /app/apps/web/public ./apps/web/public
+COPY --from=installer /app/apps/web/.next/standalone /app
+COPY --from=installer /app/apps/web/.next/static /app/apps/web/.next/static
+COPY --from=installer /app/apps/web/public /app/apps/web/public
+# next standalone build doesn't copy @libsql/linux-arm64-gnu when building a linux/arm64 image for some reason
+COPY --from=installer /app/node_modules/@libsql /app/node_modules/@libsql
 
 ENV NODE_ENV=production
 EXPOSE 3000

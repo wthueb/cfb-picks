@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import type { Week } from "~/server/api/routers/cfb";
@@ -23,8 +23,10 @@ export default function Picks() {
     (w) => teams.data?.flatMap((t) => t.picks.map((p) => p.week)).includes(w.week) ?? false,
   );
 
+  const teamSet = useRef(false);
+
   useEffect(() => {
-    if (!teams.data) return;
+    if (!teams.data || teamSet.current) return;
 
     const teamIdString = searchParams.get("teamId");
     if (teamIdString) {
@@ -34,6 +36,8 @@ export default function Picks() {
     } else {
       setTeam(teams.data[0]);
     }
+
+    teamSet.current = true;
   }, [searchParams, teams.data]);
 
   return (

@@ -5,7 +5,6 @@ services:
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
-    platform: linux/amd64
     restart: unless-stopped
     environment:
       - DATABASE_URL=file:/config/db.sqlite
@@ -32,7 +31,6 @@ services:
     build:
       context: .
       dockerfile: ./apps/notifier/Dockerfile
-    platform: linux/amd64
     restart: unless-stopped
     environment:
       - DATABASE_URL=file:/config/db.sqlite

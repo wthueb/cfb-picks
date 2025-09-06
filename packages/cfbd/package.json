@@ -19,7 +19,7 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@cfb-picks/eslint-config": "workspace:*",
@@ -34,7 +34,7 @@
   "dependencies": {
     "@t3-oss/env-core": "^0.13.8",
     "async-lock": "^1.4.1",
-    "cfbd": "^5.10.0",
+    "cfbd": "^5.11.4",
     "redis": "^5.8.2"
   }
 }

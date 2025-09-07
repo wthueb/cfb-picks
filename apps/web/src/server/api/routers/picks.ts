@@ -1,4 +1,4 @@
-import type { InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { and, eq } from "drizzle-orm";
 import z from "zod";
 
@@ -44,6 +44,10 @@ const ZodPick = z.intersection(
   Omit<CFBPick, "id" | "teamId" | "season" | "createdAt"> & { id?: number | undefined }
 >;
 
+function asTypedPick(pick: InferSelectModel<typeof picks>): CFBPick {
+  return Object.fromEntries(Object.entries(pick).filter(([_, v]) => v !== null)) as CFBPick;
+}
+
 export const picksRouter = createTRPCRouter({
   stats: protectedProcedure.query(async ({ ctx }) => {
     const res = await ctx.db.query.teams.findMany({
@@ -61,7 +65,8 @@ export const picksRouter = createTRPCRouter({
       if (env.NODE_ENV === "production" && team.id === 1) continue;
 
       const picks = [];
-      for (const pick of team.picks as CFBPick[]) {
+
+      for (const pick of team.picks.map((p) => asTypedPick(p))) {
         const game = await getGameById(pick.gameId);
         if (!game || !game.completed) continue;
 
@@ -105,7 +110,7 @@ export const picksRouter = createTRPCRouter({
 
       const picks = [];
 
-      for (const pick of team.picks as CFBPick[]) {
+      for (const pick of team.picks.map((p) => asTypedPick(p))) {
         const game = await getGameById(pick.gameId);
         if (!game) continue;
 
@@ -153,7 +158,7 @@ export const picksRouter = createTRPCRouter({
           if (!a.game || !b.game) return 0;
           return a.game.startDate.getTime() - b.game.startDate.getTime();
         })
-        .map(({ pick }) => pick) as CFBPick[];
+        .map(({ pick }) => asTypedPick(pick));
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {

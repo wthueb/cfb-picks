@@ -113,6 +113,7 @@ export function AddPickDialog(props: {
       }
       makePick.mutate({
         id: props.pick?.id,
+        teamId: props.pick?.teamId,
         week: props.week.week,
         gameId: game.id,
         pickType,
@@ -129,6 +130,7 @@ export function AddPickDialog(props: {
       }
       makePick.mutate({
         id: props.pick?.id,
+        teamId: props.pick?.teamId,
         week: props.week.week,
         gameId: game.id,
         pickType,
@@ -148,6 +150,7 @@ export function AddPickDialog(props: {
       }
       makePick.mutate({
         id: props.pick?.id,
+        teamId: props.pick?.teamId,
         week: props.week.week,
         gameId: game.id,
         pickType,
@@ -164,6 +167,7 @@ export function AddPickDialog(props: {
       }
       makePick.mutate({
         id: props.pick?.id,
+        teamId: props.pick?.teamId,
         week: props.week.week,
         gameId: game.id,
         pickType,
@@ -229,7 +233,9 @@ export function AddPickDialog(props: {
                         placeholder="+/- number"
                         step={0.5}
                         defaultValue={spread}
-                        onChange={(e) => setSpread(parseFloat(e.target.value))}
+                        onChange={(e) =>
+                          setSpread(!e.target.value ? undefined : parseFloat(e.target.value))
+                        }
                         className="w-[130px]"
                       />
                     </div>
@@ -254,7 +260,9 @@ export function AddPickDialog(props: {
                       min={0}
                       step={0.5}
                       defaultValue={total}
-                      onChange={(e) => setTotal(parseFloat(e.target.value))}
+                      onChange={(e) =>
+                        setTotal(!e.target.value ? undefined : parseFloat(e.target.value))
+                      }
                       className="w-[130px]"
                     />
                   </div>
@@ -268,7 +276,9 @@ export function AddPickDialog(props: {
                     min={0}
                     step={0.5}
                     defaultValue={total}
-                    onChange={(e) => setTotal(parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      setTotal(!e.target.value ? undefined : parseFloat(e.target.value))
+                    }
                     className="w-full"
                   />
                 </div>
@@ -290,7 +300,7 @@ export function AddPickDialog(props: {
                 placeholder="+/- number"
                 step={10}
                 defaultValue={odds}
-                onChange={(e) => setOdds(parseFloat(e.target.value))}
+                onChange={(e) => setOdds(!e.target.value ? undefined : parseFloat(e.target.value))}
                 className="w-[130px]"
               />
             </div>

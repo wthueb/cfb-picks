@@ -11,16 +11,15 @@ import { getPotential, scorePick, scorePickByWagerAmount } from "@cfb-picks/lib/
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
-const ZodPick = z.intersection(
+const ZodPickNew = z.intersection(
   z.object({
-    id: z.number().optional(),
     week: z.number().min(1).max(52),
     gameId: z.number(),
     duration: z.enum(durations),
     odds: z.number(),
     double: z.boolean(),
   }),
-  z.union([
+  z.discriminatedUnion("pickType", [
     z.object({
       pickType: z.enum(overUnderPickTypes),
       total: z.number(),
@@ -40,9 +39,14 @@ const ZodPick = z.intersection(
       cfbTeamId: z.number(),
     }),
   ]),
-) satisfies z.ZodType<
-  Omit<CFBPick, "id" | "teamId" | "season" | "createdAt"> & { id?: number | undefined }
->;
+) satisfies z.ZodType<Omit<CFBPick, "id" | "teamId" | "season" | "createdAt">>;
+
+const ZodPickExisting = z.intersection(
+  z.object({ id: z.number(), teamId: z.number() }),
+  ZodPickNew,
+) satisfies z.ZodType<Omit<CFBPick, "season" | "createdAt">>;
+
+const ZodPick = z.union([ZodPickExisting, ZodPickNew]);
 
 function asTypedPick(pick: InferSelectModel<typeof picks>): CFBPick {
   return Object.fromEntries(Object.entries(pick).filter(([_, v]) => v !== null)) as CFBPick;
@@ -114,7 +118,7 @@ export const picksRouter = createTRPCRouter({
         const game = await getGameById(pick.gameId);
         if (!game) continue;
 
-        if (!isGameLocked(game.startDate)) continue;
+        if (!ctx.session.user.isAdmin && !isGameLocked(game.startDate)) continue;
 
         picks.push({ pick, game });
       }
@@ -162,33 +166,35 @@ export const picksRouter = createTRPCRouter({
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {
-    if (!ctx.session.user.teamId) {
-      throw new Error("User must be assigned to a team to make picks");
-    }
+    const teamId = "teamId" in input ? input.teamId : ctx.session.user.teamId;
 
     const existingPicks = await ctx.db
       .select()
       .from(picks)
       .where(
-        and(
-          eq(picks.teamId, ctx.session.user.teamId),
-          eq(picks.season, env.SEASON),
-          eq(picks.week, input.week),
-        ),
+        and(eq(picks.teamId, teamId), eq(picks.season, env.SEASON), eq(picks.week, input.week)),
       );
 
-    if (!input.id && existingPicks.length > 5) {
+    const id = "id" in input ? input.id : null;
+
+    if (!id && existingPicks.length > 5) {
       throw new Error("Already have 5 picks for this week");
     }
 
-    if (input.double && existingPicks.filter((p) => p.id !== input.id).some((p) => p.double)) {
+    if (input.double && existingPicks.filter((p) => p.id !== id).some((p) => p.double)) {
       console.error("Existing picks:", existingPicks);
       throw new Error("Cannot have more than one double pick per week");
     }
 
-    if (!input.id) {
+    const game = await getGameById(input.gameId);
+    if (!game) throw new Error(`Game not found for gameId ${input.gameId}`);
+
+    if (!ctx.session.user.isAdmin && isGameLocked(new Date(game.startDate)))
+      throw new Error("Cannot edit a pick for a game that has already started");
+
+    if (!id) {
       const newPick: InferInsertModel<typeof picks> = {
-        teamId: ctx.session.user.teamId,
+        teamId,
         season: env.SEASON,
         week: input.week,
         gameId: input.gameId,
@@ -210,16 +216,11 @@ export const picksRouter = createTRPCRouter({
       return res[0];
     }
 
-    const pick = existingPicks.find((p) => p.id === input.id);
+    const pick = existingPicks.find((p) => p.id === id);
     if (!pick) throw new Error("Pick not found or not authorized to edit");
 
-    const game = await getGameById(pick.gameId);
-    if (!game) throw new Error("Game not found for the pick");
-
-    if (isGameLocked(new Date(game.startDate)))
-      throw new Error("Cannot edit a pick for a game that has already started");
-
-    const updatedPick: Omit<InferInsertModel<typeof picks>, "id" | "teamId"> = {
+    const updatedPick: InferInsertModel<typeof picks> = {
+      teamId,
       season: env.SEASON,
       week: input.week,
       gameId: input.gameId,
@@ -233,11 +234,7 @@ export const picksRouter = createTRPCRouter({
       createdAt: new Date(),
     };
 
-    const res = await ctx.db
-      .update(picks)
-      .set(updatedPick)
-      .where(and(eq(picks.id, input.id), eq(picks.teamId, ctx.session.user.teamId)))
-      .returning();
+    const res = await ctx.db.update(picks).set(updatedPick).where(eq(picks.id, id)).returning();
 
     if (res.length !== 1) {
       throw new Error("Pick not found or not authorized to edit");
@@ -247,16 +244,10 @@ export const picksRouter = createTRPCRouter({
   }),
 
   deletePick: protectedProcedure.input(z.number().int()).mutation(async ({ input, ctx }) => {
-    if (!ctx.session.user.teamId)
-      throw new Error("User must be assigned to a team to delete picks");
+    const pick = await ctx.db.select().from(picks).where(eq(picks.id, input)).get();
 
-    const pick = await ctx.db
-      .select()
-      .from(picks)
-      .where(and(eq(picks.id, input), eq(picks.teamId, ctx.session.user.teamId)))
-      .get();
-
-    if (!pick) throw new Error("Pick not found or not authorized to delete");
+    if (!pick || (!ctx.session.user.isAdmin && pick.teamId !== ctx.session.user.teamId))
+      throw new Error("Pick not found or not authorized to delete");
 
     const game = await getGameById(pick.gameId);
     if (!game) throw new Error("Game not found for the pick");
@@ -264,9 +255,7 @@ export const picksRouter = createTRPCRouter({
     if (isGameLocked(new Date(game.startDate)))
       throw new Error("Cannot delete a pick for a game that has already started");
 
-    const res = await ctx.db
-      .delete(picks)
-      .where(and(eq(picks.id, input), eq(picks.teamId, ctx.session.user.teamId)));
+    const res = await ctx.db.delete(picks).where(eq(picks.id, input));
 
     if (res.rowsAffected === 0) {
       throw new Error("Pick not found or not authorized to delete");

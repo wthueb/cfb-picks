@@ -1,0 +1,1 @@
+ALTER TABLE `cfb-picks_user` ADD `isAdmin` integer DEFAULT false NOT NULL;

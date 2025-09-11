@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import type { Week } from "~/server/api/routers/cfb";
-import type { RouterOutputs } from "~/utils/api";
 import { PickList } from "~/components/pick-list";
 import { Select } from "~/components/select";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -13,7 +12,7 @@ import { api } from "~/utils/api";
 export default function Picks() {
   const searchParams = useSearchParams();
 
-  const [team, setTeam] = useState<RouterOutputs["picks"]["teams"][number]>();
+  const [teamId, setTeamId] = useState<number>();
   const [week, setWeek] = useState<Week>();
 
   const teams = api.picks.teams.useQuery();
@@ -23,22 +22,23 @@ export default function Picks() {
     (w) => teams.data?.flatMap((t) => t.picks.map((p) => p.week)).includes(w.week) ?? false,
   );
 
-  const teamSet = useRef(false);
+  const teamIdSet = useRef(false);
 
   useEffect(() => {
-    if (!teams.data || teamSet.current) return;
+    if (!teams.data || teamIdSet.current) return;
 
-    const teamIdString = searchParams.get("teamId");
-    if (teamIdString) {
-      const teamId = parseInt(teamIdString);
-      const team = teams.data.find((t) => t.id === teamId);
-      setTeam(team);
+    const teamIdParam = searchParams.get("teamId");
+    if (teamIdParam) {
+      const id = parseInt(teamIdParam);
+      setTeamId(id);
     } else {
-      setTeam(teams.data[0]);
+      setTeamId(teams.data[0]?.id);
     }
 
-    teamSet.current = true;
-  }, [searchParams, teams.data]);
+    teamIdSet.current = true;
+  }, [teams.data, searchParams]);
+
+  const team = teams.data?.find((t) => t.id === teamId);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">
@@ -49,17 +49,16 @@ export default function Picks() {
           onChange={setWeek}
           className="bg-accent text-accent-foreground flex-1"
         />
-        {teams.data && team ? (
+        {teams.data && teamId ? (
           <Select
             items={teams.data.map((t) => ({
               value: t.id.toString(),
               display: t.name,
             }))}
-            defaultValue={team.id.toString()}
+            defaultValue={teamId.toString()}
             onChange={(v) => {
               const teamId = parseInt(v);
-              const team = teams.data.find((t) => t.id === teamId);
-              setTeam(team);
+              setTeamId(teamId);
             }}
             className="bg-accent text-accent-foreground flex-1"
           />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 import type { Game } from "@cfb-picks/cfbd";
 import { isGameLocked } from "@cfb-picks/lib/dates";
@@ -31,6 +32,8 @@ export function GameCombobox(props: {
     }
   }, [props.defaultValue]);
 
+  const session = useSession();
+
   const games = props.games.map((game) => ({
     ...game,
     label: `${game.awayTeam} @ ${game.homeTeam}`,
@@ -56,7 +59,7 @@ export function GameCombobox(props: {
                 <CommandItem
                   key={game.id}
                   value={game.label}
-                  disabled={isGameLocked(game.startDate)}
+                  disabled={!session.data?.user.isAdmin && isGameLocked(game.startDate)}
                   onSelect={() => {
                     if (game.id.toString() !== value) {
                       props.onChange(game);

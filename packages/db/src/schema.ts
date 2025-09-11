@@ -106,6 +106,7 @@ export const users = createTable("user", (d) => ({
     .notNull()
     .references(() => teams.id),
   sendNotifications: d.integer({ mode: "boolean" }).notNull().default(false),
+  isAdmin: d.integer({ mode: "boolean" }).notNull().default(false),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({

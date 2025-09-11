@@ -1,6 +1,5 @@
 import type { InferSelectModel } from "drizzle-orm";
-import type { DefaultSession, NextAuthOptions } from "next-auth";
-import type { Adapter, AdapterSession, AdapterUser } from "next-auth/adapters";
+import type { NextAuthOptions } from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import EmailProvider from "next-auth/providers/email";
@@ -11,88 +10,37 @@ import { accounts, sessions, teams, users, verificationTokens } from "@cfb-picks
 
 import { env } from "~/env";
 
-declare module "next-auth" {
-  interface Session extends DefaultSession {
-    user: User & DefaultSession["user"];
-  }
-
-  interface User extends InferSelectModel<typeof users> {
-    id: string;
-    teamId: number;
-    team: InferSelectModel<typeof teams>;
-  }
-}
-
-const baseAdapter = DrizzleAdapter(db, {
-  usersTable: users,
-  accountsTable: accounts,
-  sessionsTable: sessions,
-  verificationTokensTable: verificationTokens,
-});
-
-type BaseAdapterUser = Exclude<AdapterUser, "team">;
-
-async function populateTeam(user: BaseAdapterUser) {
-  const team = await db.select().from(teams).where(eq(teams.id, user.teamId)).get();
-
-  if (!team) throw new Error(`User ${user.id} has invalid teamId ${user.teamId}`);
-
-  return { ...user, team: team };
-}
-
-const customAdapter: Adapter = {
-  ...baseAdapter,
-
-  async getUser(id) {
-    const user = (await baseAdapter.getUser?.(id)) as BaseAdapterUser | null;
-    if (!user) return null;
-
-    return await populateTeam(user);
-  },
-
-  async getUserByEmail(email) {
-    const user = (await baseAdapter.getUserByEmail?.(email)) as BaseAdapterUser | null;
-    if (!user) return null;
-
-    return await populateTeam(user);
-  },
-
-  async getUserByAccount(account) {
-    const user = (await baseAdapter.getUserByAccount?.(account)) as BaseAdapterUser | null;
-    if (!user) return null;
-
-    return await populateTeam(user);
-  },
-
-  async updateUser(partialUser) {
-    const user = (await baseAdapter.updateUser?.(partialUser)) as BaseAdapterUser;
-
-    return await populateTeam(user);
-  },
-
-  async deleteUser(userId) {
-    const user = (await baseAdapter.deleteUser?.(userId)) as BaseAdapterUser | null;
-    if (!user) return null;
-
-    return await populateTeam(user);
-  },
-
-  async getSessionAndUser(sessionToken) {
-    const res = (await baseAdapter.getSessionAndUser?.(sessionToken)) as {
-      session: Exclude<AdapterSession, "user"> & DefaultSession["user"];
-      user: BaseAdapterUser;
-    } | null;
-    if (!res) return null;
-
-    const { session, user } = res;
-
-    return { session, user: await populateTeam(user) };
-  },
+type SessionUser = {
+  id: string;
+  teamId: number;
+  team: InferSelectModel<typeof teams>;
+  isAdmin: boolean;
 };
+
+declare module "next-auth/adapters" {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface AdapterUser extends InferSelectModel<typeof users> {}
+}
+
+declare module "@auth/core/adapters" {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface AdapterUser extends InferSelectModel<typeof users> {}
+}
+
+declare module "next-auth" {
+  interface Session {
+    user: SessionUser;
+  }
+}
 
 const authConfig: NextAuthOptions = {
   providers: [],
-  adapter: customAdapter,
+  adapter: DrizzleAdapter(db, {
+    usersTable: users,
+    accountsTable: accounts,
+    sessionsTable: sessions,
+    verificationTokensTable: verificationTokens,
+  }),
   callbacks: {
     async signIn({ user }) {
       const dbUser = await db
@@ -111,14 +59,21 @@ const authConfig: NextAuthOptions = {
       return true;
     },
 
-    session({ session, user }) {
+    // if we wanted to have more to maintain but only have one db round trip, we could override
+    // all of the adapter methods and populate the team as part of the AdapterUser
+    // that's probably not worth the effort for this small of an app with a local db though
+    async session({ session, user }) {
+      const team = await db.select().from(teams).where(eq(teams.id, user.teamId)).get();
+      if (!team) throw new Error(`User ${user.id} has invalid teamId ${user.teamId}`);
+
       return {
         ...session,
         user: {
-          ...session.user,
+          // manually copy over properties so we don't expose anything unwanted
           id: user.id,
           teamId: user.teamId,
-          team: user.team,
+          team,
+          isAdmin: user.isAdmin,
         },
       };
     },

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, CircleDashed, Lock, Minus, Pencil, Trash2, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 import type { CFBPick } from "@cfb-picks/db/schema";
 import { isTeamTotalPickType } from "@cfb-picks/db/schema";
@@ -36,6 +37,8 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
   const game = api.cfb.gameById.useQuery(props.pick.gameId, {
     refetchInterval: 1000 * 60, // 1 minute
   });
+
+  const session = useSession();
 
   const team =
     "cfbTeamId" in props.pick
@@ -103,28 +106,22 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
             <Skeleton className="h-5 w-full" />
           )}
         </CardDescription>
-        <CardAction>
-          {actionType === ActionType.None ? (
-            <Skeleton className="h-8 w-8" />
-          ) : actionType === ActionType.EditDelete ? (
-            <>
+        <CardAction className="flex items-center gap-2">
+          {actionType === ActionType.None && <Skeleton className="h-8 w-8" />}
+          {actionType === ActionType.Locked && <Locked />}
+          {actionType === ActionType.InProgress && <InProgress />}
+          {actionType === ActionType.Win && <Check className="text-primary-foreground" />}
+          {actionType === ActionType.Loss && <X className="text-destructive" />}
+          {actionType === ActionType.Push && <Minus />}
+          {(actionType === ActionType.EditDelete || session.data?.user.isAdmin) && (
+            <div>
               <AddPickDialog pick={props.pick} week={props.week}>
                 <Button variant="ghost" size="icon">
                   <Pencil />
                 </Button>
               </AddPickDialog>
               <DeleteButton pickId={props.pick.id} />
-            </>
-          ) : actionType === ActionType.Locked ? (
-            <Locked />
-          ) : actionType === ActionType.InProgress ? (
-            <InProgress />
-          ) : actionType === ActionType.Win ? (
-            <Check className="text-primary-foreground" />
-          ) : actionType === ActionType.Loss ? (
-            <X className="text-destructive" />
-          ) : (
-            <Minus />
+            </div>
           )}
         </CardAction>
       </CardHeader>

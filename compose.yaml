@@ -24,6 +24,8 @@ services:
       - .:/config
     ports:
       - 3000:3000
+    depends_on:
+        - redis
 
   notifier:
     container_name: notifier
@@ -44,6 +46,8 @@ services:
       - REDIS_URL=redis://redis:6379
     volumes:
       - .:/config
+    depends_on:
+        - redis
 
   redis:
     container_name: redis

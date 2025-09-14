@@ -191,7 +191,7 @@ export const picksRouter = createTRPCRouter({
     if (!game) throw new Error(`Game not found for gameId ${input.gameId}`);
 
     if (!ctx.session.user.isAdmin && isGameLocked(new Date(game.startDate)))
-      throw new Error("Cannot edit a pick for a game that has already started");
+      throw new Error("Cannot make a pick for a game that has already started");
 
     if (!id) {
       const newPick: InferInsertModel<typeof picks> = {
@@ -253,7 +253,7 @@ export const picksRouter = createTRPCRouter({
     const game = await getGameById(pick.gameId);
     if (!game) throw new Error("Game not found for the pick");
 
-    if (isGameLocked(new Date(game.startDate)))
+    if (!ctx.session.user.isAdmin && isGameLocked(new Date(game.startDate)))
       throw new Error("Cannot delete a pick for a game that has already started");
 
     const res = await ctx.db.delete(picks).where(eq(picks.id, input));

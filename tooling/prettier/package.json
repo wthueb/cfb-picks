@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@cfb-picks/tsconfig": "workspace:*",
-    "@types/node": "^24.3.1",
+    "@types/node": "^24.3.3",
     "typescript": "catalog:"
   },
   "prettier": "@cfb-picks/prettier-config"

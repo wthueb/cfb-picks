@@ -35,9 +35,9 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.14",
+    "@libsql/client": "^0.15.15",
     "@t3-oss/env-core": "^0.13.8",
-    "drizzle-orm": "^0.44.4",
+    "drizzle-orm": "^0.44.5",
     "drizzle-zod": "^0.8.3",
     "zod": "catalog:"
   },

@@ -52,7 +52,7 @@ function asTypedPick(pick: InferSelectModel<typeof picks>): CFBPick {
   return Object.fromEntries(Object.entries(pick).filter(([_, v]) => v !== null)) as CFBPick;
 }
 
-export type PickWithGame = CFBPick & { game: Awaited<ReturnType<typeof getGameById>> | null };
+export type PickWithGame = CFBPick & { game: NonNullable<Awaited<ReturnType<typeof getGameById>>> };
 
 export const picksRouter = createTRPCRouter({
   stats: protectedProcedure.query(async ({ ctx }) => {
@@ -74,7 +74,10 @@ export const picksRouter = createTRPCRouter({
 
       for (const pick of team.picks.map((p) => asTypedPick(p))) {
         const game = await getGameById(pick.gameId);
-        if (!game || !game.completed) continue;
+
+        if (!game) throw new Error(`Game not found for gameId ${pick.gameId}`);
+
+        if (!game.completed) continue;
 
         picks.push({
           ...pick,
@@ -118,11 +121,11 @@ export const picksRouter = createTRPCRouter({
 
       for (const pick of team.picks.map((p) => asTypedPick(p))) {
         const game = await getGameById(pick.gameId);
-        if (!game) continue;
+        if (!game) throw new Error(`Game not found for gameId ${pick.gameId}`);
 
         if (!ctx.session.user.isAdmin && !isGameLocked(game.startDate)) continue;
 
-        picks.push({ ...pick, game });
+        picks.push({ ...pick, game } satisfies PickWithGame);
       }
 
       teams.push({
@@ -155,14 +158,12 @@ export const picksRouter = createTRPCRouter({
       const picksWithGames = await Promise.all(
         picks.map(async (pick) => {
           const game = await getGameById(pick.gameId);
-          return { ...pick, game };
+          if (!game) throw new Error(`Game not found for gameId ${pick.gameId}`);
+          return { ...pick, game } satisfies PickWithGame;
         }),
       );
 
-      return picksWithGames.sort((a, b) => {
-        if (!a.game || !b.game) return 0;
-        return a.game.startDate.getTime() - b.game.startDate.getTime();
-      });
+      return picksWithGames.sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime());
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {

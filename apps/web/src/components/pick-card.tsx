@@ -23,10 +23,10 @@ import {
   CardAction,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
 import { api } from "~/utils/api";
 import { AddPickDialog } from "./add-pick-dialog";
 import { Button } from "./ui/button";
@@ -35,11 +35,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 export function PickCard(props: { pick: PickWithGame; num: number }) {
   const session = useSession();
 
+  const { pick } = props;
+
   const team =
-    "cfbTeamId" in props.pick
-      ? props.pick.game?.homeId === props.pick.cfbTeamId
-        ? props.pick.game.homeTeam
-        : props.pick.game?.awayTeam
+    "cfbTeamId" in pick
+      ? pick.game.homeId === pick.cfbTeamId
+        ? pick.game.homeTeam
+        : pick.game.awayTeam
       : undefined;
 
   const [now, setNow] = useState(() => new Date());
@@ -49,14 +51,8 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
     return () => clearInterval(interval);
   }, []);
 
-  const pickStatus = useMemo(
-    () => (props.pick.game ? getPickResult(props.pick, props.pick.game) : null),
-    [props.pick],
-  );
-  const gameLocked = useMemo(
-    () => (props.pick.game ? isGameLocked(props.pick.game.startDate) : true),
-    [props.pick],
-  );
+  const pickStatus = useMemo(() => getPickResult(pick, pick.game), [pick]);
+  const gameLocked = useMemo(() => isGameLocked(pick.game.startDate), [pick]);
 
   enum ActionType {
     EditDelete,
@@ -65,44 +61,35 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
     Win,
     Loss,
     Push,
-    None,
   }
 
-  const actionType = !props.pick.game
-    ? ActionType.None
-    : !gameLocked
-      ? ActionType.EditDelete
-      : !props.pick.game.completed
-        ? now < props.pick.game.startDate
-          ? ActionType.Locked
-          : ActionType.InProgress
-        : pickStatus === PickResult.Win
-          ? ActionType.Win
-          : pickStatus === PickResult.Loss
-            ? ActionType.Loss
-            : ActionType.Push;
+  const actionType = !gameLocked
+    ? ActionType.EditDelete
+    : !pick.game.completed
+      ? now < pick.game.startDate
+        ? ActionType.Locked
+        : ActionType.InProgress
+      : pickStatus === PickResult.Win
+        ? ActionType.Win
+        : pickStatus === PickResult.Loss
+          ? ActionType.Loss
+          : ActionType.Push;
 
   return (
-    <Card data-id={props.pick.id}>
+    <Card data-id={pick.id} className="gap-3">
       <CardHeader>
         <CardTitle className="text-primary-foreground">Pick {props.num + 1}</CardTitle>
         <CardDescription>
-          {props.pick.game ? (
-            `${props.pick.game.awayTeam} @ ${props.pick.game.homeTeam} (${props.pick.game.startDate.toLocaleString(
-              "en-US",
-              {
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              },
-            )})`
-          ) : (
-            <Skeleton className="h-5 w-full" />
-          )}
+          {pick.game.awayTeam} @ {pick.game.homeTeam} (
+          {pick.game.startDate.toLocaleString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+          )
         </CardDescription>
         <CardAction className="flex items-center gap-2">
-          {actionType === ActionType.None && <Skeleton className="h-8 w-8" />}
           {actionType === ActionType.Locked && <Locked />}
           {actionType === ActionType.InProgress && <InProgress />}
           {actionType === ActionType.Win && <Check className="text-primary-foreground" />}
@@ -110,34 +97,39 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
           {actionType === ActionType.Push && <Minus />}
           {(actionType === ActionType.EditDelete || session.data?.user.isAdmin) && (
             <div>
-              <AddPickDialog pick={props.pick} week={props.pick.week}>
+              <AddPickDialog pick={pick} week={pick.week}>
                 <Button variant="ghost" size="icon">
                   <Pencil />
                 </Button>
               </AddPickDialog>
-              <DeleteButton pickId={props.pick.id} />
+              <DeleteButton pickId={pick.id} />
             </div>
           )}
         </CardAction>
       </CardHeader>
       <CardContent>
-        {props.pick.game ? (
-          <span>
-            {props.pick.pickType === "SPREAD"
-              ? `${team} ${props.pick.spread > 0 ? "+" : ""}${props.pick.spread}`
-              : props.pick.pickType === "MONEYLINE"
-                ? `${team} ML`
-                : isTeamTotalPickType(props.pick.pickType)
-                  ? `${team} Team Total ${props.pick.pickType.endsWith("OVER") ? "o" : "u"}${props.pick.total}`
-                  : `${props.pick.pickType === "OVER" ? "o" : "u"}${props.pick.total}`}
-            {props.pick.duration !== "FULL" && ` (${props.pick.duration}) `}
-            {` (${props.pick.odds > 0 ? "+" : ""}${props.pick.odds})${props.pick.double ? " (2u)" : ""}`}
-          </span>
-        ) : (
-          <Skeleton className="h-6 w-full" />
-        )}
+        <span>
+          {pick.pickType === "SPREAD"
+            ? `${team} ${pick.spread > 0 ? "+" : ""}${pick.spread}`
+            : pick.pickType === "MONEYLINE"
+              ? `${team} ML`
+              : isTeamTotalPickType(pick.pickType)
+                ? `${team} Team Total ${pick.pickType.endsWith("OVER") ? "o" : "u"}${pick.total}`
+                : `${pick.pickType === "OVER" ? "o" : "u"}${pick.total}`}
+          {pick.duration !== "FULL" && ` (${pick.duration}) `}
+          {` (${pick.odds > 0 ? "+" : ""}${pick.odds})${pick.double ? " (2u)" : ""}`}
+        </span>
       </CardContent>
-      {/* TODO: <CardFooter>current score</CardFooter>*/}
+      {/* we don't get live scores unless we use different endpoints */}
+      {pick.game.completed && (
+        <CardFooter className="text-muted-foreground text-sm">
+          {/* maybe show quarterly scores? formatting to be concise would be tricky */}
+          <span>
+            {pick.game.awayTeam} {pick.game.awayPoints} - {pick.game.homePoints}{" "}
+            {pick.game.homeTeam}
+          </span>
+        </CardFooter>
+      )}
     </Card>
   );
 }

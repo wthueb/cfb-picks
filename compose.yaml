@@ -53,5 +53,11 @@ services:
     container_name: redis
     image: redis:8-alpine
     restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1"]
+    volumes:
+      - redis-data:/data
     ports:
       - 6379:6379
+
+volumes:
+  redis-data:

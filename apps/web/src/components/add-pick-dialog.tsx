@@ -3,7 +3,6 @@ import { useEffect, useImperativeHandle, useState } from "react";
 import type { CFBPick, Duration, PickType } from "@cfb-picks/db/schema";
 import { durations, isTeamTotalPickType, pickTypes } from "@cfb-picks/db/schema";
 
-import type { Week } from "~/server/api/routers/cfb";
 import { api } from "~/utils/api";
 import { GameCombobox } from "./game-combobox";
 import { Select } from "./select";
@@ -30,15 +29,15 @@ export type AddPickDialogHandle = {
 
 export function AddPickDialog(props: {
   pick?: CFBPick;
-  week: Week;
+  week: number;
   ref?: React.Ref<AddPickDialogHandle>;
   children: React.ReactNode;
 }) {
   useImperativeHandle(props.ref, () => ({ clear }));
 
-  const games = api.cfb.games.useQuery({ week: props.week.week });
+  const games = api.cfb.games.useQuery({ week: props.week });
 
-  const picks = api.picks.selfPicks.useQuery({ week: props.week.week });
+  const picks = api.picks.selfPicks.useQuery({ week: props.week });
   const canDouble = picks.data
     ? !picks.data.filter((p) => p.id !== props.pick?.id).some((pick) => pick.double)
     : false;
@@ -114,7 +113,7 @@ export function AddPickDialog(props: {
       makePick.mutate({
         id: props.pick?.id,
         teamId: props.pick?.teamId,
-        week: props.week.week,
+        week: props.week,
         gameId: game.id,
         pickType,
         duration,
@@ -131,7 +130,7 @@ export function AddPickDialog(props: {
       makePick.mutate({
         id: props.pick?.id,
         teamId: props.pick?.teamId,
-        week: props.week.week,
+        week: props.week,
         gameId: game.id,
         pickType,
         duration,
@@ -151,7 +150,7 @@ export function AddPickDialog(props: {
       makePick.mutate({
         id: props.pick?.id,
         teamId: props.pick?.teamId,
-        week: props.week.week,
+        week: props.week,
         gameId: game.id,
         pickType,
         duration,
@@ -168,7 +167,7 @@ export function AddPickDialog(props: {
       makePick.mutate({
         id: props.pick?.id,
         teamId: props.pick?.teamId,
-        week: props.week.week,
+        week: props.week,
         gameId: game.id,
         pickType,
         duration,
@@ -192,7 +191,7 @@ export function AddPickDialog(props: {
       <DialogContent>
         <DialogHeader className="text-center">
           <DialogTitle>
-            {!props.pick ? "Add" : "Edit"} Pick for Week {props.week.week}
+            {!props.pick ? "Add" : "Edit"} Pick for Week {props.week}
           </DialogTitle>
           <DialogDescription>
             Select a game (that hasn&rsquo;t started) and enter your pick.

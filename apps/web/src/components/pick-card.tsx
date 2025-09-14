@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, CircleDashed, Lock, Minus, Pencil, Trash2, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 
-import type { CFBPick } from "@cfb-picks/db/schema";
 import { isTeamTotalPickType } from "@cfb-picks/db/schema";
 import { isGameLocked } from "@cfb-picks/lib/dates";
 import { getPickResult, PickResult } from "@cfb-picks/lib/picks";
 
-import type { Week } from "~/server/api/routers/cfb";
+import type { PickWithGame } from "~/server/api/routers/picks";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,18 +32,14 @@ import { AddPickDialog } from "./add-pick-dialog";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
-  const game = api.cfb.gameById.useQuery(props.pick.gameId, {
-    refetchInterval: 1000 * 60, // 1 minute
-  });
-
+export function PickCard(props: { pick: PickWithGame; num: number }) {
   const session = useSession();
 
   const team =
     "cfbTeamId" in props.pick
-      ? game.data?.homeId === props.pick.cfbTeamId
-        ? game.data.homeTeam
-        : game.data?.awayTeam
+      ? props.pick.game?.homeId === props.pick.cfbTeamId
+        ? props.pick.game.homeTeam
+        : props.pick.game?.awayTeam
       : undefined;
 
   const [now, setNow] = useState(() => new Date());
@@ -55,12 +50,12 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
   }, []);
 
   const pickStatus = useMemo(
-    () => (game.data ? getPickResult(props.pick, game.data) : null),
-    [game.data, props.pick],
+    () => (props.pick.game ? getPickResult(props.pick, props.pick.game) : null),
+    [props.pick],
   );
   const gameLocked = useMemo(
-    () => (game.data ? isGameLocked(game.data.startDate) : true),
-    [game.data],
+    () => (props.pick.game ? isGameLocked(props.pick.game.startDate) : true),
+    [props.pick],
   );
 
   enum ActionType {
@@ -73,12 +68,12 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
     None,
   }
 
-  const actionType = !game.data
+  const actionType = !props.pick.game
     ? ActionType.None
     : !gameLocked
       ? ActionType.EditDelete
-      : !game.data.completed
-        ? now < game.data.startDate
+      : !props.pick.game.completed
+        ? now < props.pick.game.startDate
           ? ActionType.Locked
           : ActionType.InProgress
         : pickStatus === PickResult.Win
@@ -92,8 +87,8 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
       <CardHeader>
         <CardTitle className="text-primary-foreground">Pick {props.num + 1}</CardTitle>
         <CardDescription>
-          {game.data ? (
-            `${game.data.awayTeam} @ ${game.data.homeTeam} (${game.data.startDate.toLocaleString(
+          {props.pick.game ? (
+            `${props.pick.game.awayTeam} @ ${props.pick.game.homeTeam} (${props.pick.game.startDate.toLocaleString(
               "en-US",
               {
                 month: "2-digit",
@@ -115,7 +110,7 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
           {actionType === ActionType.Push && <Minus />}
           {(actionType === ActionType.EditDelete || session.data?.user.isAdmin) && (
             <div>
-              <AddPickDialog pick={props.pick} week={props.week}>
+              <AddPickDialog pick={props.pick} week={props.pick.week}>
                 <Button variant="ghost" size="icon">
                   <Pencil />
                 </Button>
@@ -126,7 +121,7 @@ export function PickCard(props: { pick: CFBPick; num: number; week: Week }) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        {game.data ? (
+        {props.pick.game ? (
           <span>
             {props.pick.pickType === "SPREAD"
               ? `${team} ${props.pick.spread > 0 ? "+" : ""}${props.pick.spread}`

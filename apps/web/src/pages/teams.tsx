@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import type { Week } from "~/server/api/routers/cfb";
 import { PickList } from "~/components/pick-list";
 import { Select } from "~/components/select";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -13,9 +12,9 @@ export default function Picks() {
   const searchParams = useSearchParams();
 
   const [teamId, setTeamId] = useState<number>();
-  const [week, setWeek] = useState<Week>();
+  const [week, setWeek] = useState<number>();
 
-  const teams = api.picks.teams.useQuery();
+  const teams = api.picks.teams.useQuery(undefined, { refetchInterval: 1000 * 30 });
   const calendar = api.cfb.calendar.useQuery();
 
   const weeks = calendar.data?.filter(
@@ -46,7 +45,7 @@ export default function Picks() {
         <WeekSelect
           weeks={weeks}
           defaultType="last"
-          onChange={setWeek}
+          onChange={(w) => setWeek(w.week)}
           className="bg-accent text-accent-foreground flex-1"
         />
         {teams.data && teamId ? (
@@ -66,9 +65,7 @@ export default function Picks() {
           <Skeleton className="h-9 w-full" />
         )}
       </div>
-      {team && week && (
-        <PickList picks={team.picks.filter((p) => p.week === week.week)} week={week} />
-      )}
+      {team && week && <PickList picks={team.picks.filter((p) => p.week === week)} />}
     </div>
   );
 }

@@ -1,9 +1,7 @@
-import type { CFBPick } from "@cfb-picks/db/schema";
-
-import type { Week } from "~/server/api/routers/cfb";
+import type { PickWithGame } from "~/server/api/routers/picks";
 import { PickCard } from "./pick-card";
 
-export function PickList(props: { picks: CFBPick[]; week: Week }) {
+export function PickList(props: { picks: PickWithGame[] }) {
   return (
     <div className="w-full">
       {props.picks.length === 0 ? (
@@ -12,7 +10,7 @@ export function PickList(props: { picks: CFBPick[]; week: Week }) {
         <ul className="flex flex-col gap-4">
           {props.picks.map((pick, i) => (
             <li key={pick.id}>
-              <PickCard pick={pick} num={i} week={props.week} />
+              <PickCard pick={pick} num={i} />
             </li>
           ))}
         </ul>

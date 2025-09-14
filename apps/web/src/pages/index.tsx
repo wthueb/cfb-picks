@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 
 import type { AddPickDialogHandle } from "~/components/add-pick-dialog";
-import type { Week } from "~/server/api/routers/cfb";
 import { AddPickDialog } from "~/components/add-pick-dialog";
 import { PickList } from "~/components/pick-list";
 import { Button } from "~/components/ui/button";
@@ -11,11 +10,14 @@ import { withSession } from "~/server/auth";
 import { api } from "~/utils/api";
 
 export default function Home() {
-  const [week, setWeek] = useState<Week>();
+  const [week, setWeek] = useState<number>();
 
   const calendar = api.cfb.calendar.useQuery();
 
-  const picks = api.picks.selfPicks.useQuery({ week: week?.week }, { enabled: !!week });
+  const picks = api.picks.selfPicks.useQuery(
+    { week: week },
+    { enabled: !!week, refetchInterval: 1000 * 30 },
+  );
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">
@@ -23,17 +25,17 @@ export default function Home() {
         <WeekSelect
           weeks={calendar.data}
           defaultType="current"
-          onChange={setWeek}
+          onChange={(w) => setWeek(w.week)}
           className="bg-accent text-accent-foreground flex-1"
         />
         {week && <AddPickButton week={week} disabled={!picks.data || picks.data.length >= 5} />}
       </div>
-      {week && picks.data && <PickList picks={picks.data} week={week} />}
+      {week && picks.data && <PickList picks={picks.data} />}
     </div>
   );
 }
 
-function AddPickButton(props: { week: Week; disabled: boolean }) {
+function AddPickButton(props: { week: number; disabled: boolean }) {
   const dialogRef = useRef<AddPickDialogHandle>(null);
 
   return (

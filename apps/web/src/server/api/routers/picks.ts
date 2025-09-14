@@ -52,6 +52,8 @@ function asTypedPick(pick: InferSelectModel<typeof picks>): CFBPick {
   return Object.fromEntries(Object.entries(pick).filter(([_, v]) => v !== null)) as CFBPick;
 }
 
+export type PickWithGame = CFBPick & { game: Awaited<ReturnType<typeof getGameById>> | null };
+
 export const picksRouter = createTRPCRouter({
   stats: protectedProcedure.query(async ({ ctx }) => {
     const res = await ctx.db.query.teams.findMany({
@@ -120,14 +122,12 @@ export const picksRouter = createTRPCRouter({
 
         if (!ctx.session.user.isAdmin && !isGameLocked(game.startDate)) continue;
 
-        picks.push({ pick, game });
+        picks.push({ ...pick, game });
       }
 
       teams.push({
         ...team,
-        picks: picks
-          .sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime())
-          .map(({ pick }) => pick),
+        picks: picks.sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime()),
       });
     }
 
@@ -150,19 +150,19 @@ export const picksRouter = createTRPCRouter({
           ),
       });
 
+      const picks = res.map(asTypedPick);
+
       const picksWithGames = await Promise.all(
-        res.map(async (pick) => {
+        picks.map(async (pick) => {
           const game = await getGameById(pick.gameId);
-          return { pick, game };
+          return { ...pick, game };
         }),
       );
 
-      return picksWithGames
-        .sort((a, b) => {
-          if (!a.game || !b.game) return 0;
-          return a.game.startDate.getTime() - b.game.startDate.getTime();
-        })
-        .map(({ pick }) => asTypedPick(pick));
+      return picksWithGames.sort((a, b) => {
+        if (!a.game || !b.game) return 0;
+        return a.game.startDate.getTime() - b.game.startDate.getTime();
+      });
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {

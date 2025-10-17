@@ -1,4 +1,12 @@
-import { Body, Font, Head, Html, pixelBasedPreset, Tailwind } from "@react-email/components";
+import {
+  Body,
+  Font,
+  Head,
+  Html,
+  pixelBasedPreset,
+  Preview,
+  Tailwind,
+} from "@react-email/components";
 
 import type { Game } from "@cfb-picks/cfbd";
 import type { InferSelectModel } from "@cfb-picks/db";
@@ -51,6 +59,8 @@ export default function NotificationEmail(props: {
 
   picksByGame.sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime());
 
+  const numPicks = props.picks.length;
+
   return (
     <Tailwind
       config={{
@@ -58,6 +68,9 @@ export default function NotificationEmail(props: {
       }}
     >
       <Html lang="en">
+        <Preview>
+          {numPicks.toString()} pick{numPicks > 1 ? "s" : ""} have been locked in!
+        </Preview>
         <Head>
           <Font
             fontFamily="Inter"

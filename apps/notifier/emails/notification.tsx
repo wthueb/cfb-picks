@@ -69,7 +69,7 @@ export default function NotificationEmail(props: {
     >
       <Html lang="en">
         <Preview>
-          {numPicks.toString()} pick{numPicks > 1 ? "s" : ""} have been locked in!
+          {numPicks.toString()} {numPicks > 1 ? "picks have" : "pick has"} been locked in!
         </Preview>
         <Head>
           <Font

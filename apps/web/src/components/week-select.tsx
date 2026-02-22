@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Week } from "~/server/api/routers/cfb";
 import type { RouterOutputs } from "~/utils/api";
@@ -36,15 +36,27 @@ export function WeekSelect(props: {
     return defaultWeek;
   }, [props.weeks, props.defaultType]);
 
+  const [initialized, setInitialized] = useState(false);
   const onChangeRef = useRef(props.onChange);
 
   useEffect(() => {
     onChangeRef.current = props.onChange;
   }, [props.onChange]);
 
-  useEffect(() => {
-    if (defaultValue) onChangeRef.current(defaultValue);
-  }, [defaultValue]);
+  const handleSelectChange = (v: string) => {
+    if (!props.weeks) return;
+    const weekNum = parseInt(v);
+    const selectedWeek = props.weeks.find((w) => w.week === weekNum);
+    if (selectedWeek) {
+      props.onChange(selectedWeek);
+    }
+  };
+
+  // Initialize with default value on first render
+  if (defaultValue && !initialized) {
+    setInitialized(true);
+    onChangeRef.current(defaultValue);
+  }
 
   return props.weeks && defaultValue ? (
     <Select
@@ -53,14 +65,7 @@ export function WeekSelect(props: {
         display: `Week ${w.week}`,
       }))}
       defaultValue={defaultValue.week.toString()}
-      onChange={(v) => {
-        if (!props.weeks) return;
-        const weekNum = parseInt(v);
-        const selectedWeek = props.weeks.find((w) => w.week === weekNum);
-        if (selectedWeek) {
-          props.onChange(selectedWeek);
-        }
-      }}
+      onChange={handleSelectChange}
       className={props.className}
     />
   ) : (

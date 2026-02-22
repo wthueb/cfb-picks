@@ -1,8 +1,9 @@
-import { useEffect, useImperativeHandle, useState } from "react";
+import { useEffect, useImperativeHandle, useReducer, useState } from "react";
 
 import type { CFBPick, Duration, PickType } from "@cfb-picks/db/schema";
 import { durations, isTeamTotalPickType, pickTypes } from "@cfb-picks/db/schema";
 
+import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
 import { GameCombobox } from "./game-combobox";
 import { Select } from "./select";
@@ -27,12 +28,89 @@ export type AddPickDialogHandle = {
   clear: () => void;
 };
 
+type GameType = RouterOutputs["cfb"]["games"][number];
+
+type PickFormState = {
+  game?: GameType;
+  pickType: PickType;
+  duration: Duration;
+  odds?: number;
+  double: boolean;
+  team?: number;
+  total?: number;
+  spread?: number;
+};
+
+type PickFormAction =
+  | { type: "SET_GAME"; game?: PickFormState["game"] }
+  | { type: "SET_PICK_TYPE"; pickType: PickType }
+  | { type: "SET_DURATION"; duration: Duration }
+  | { type: "SET_ODDS"; odds?: number }
+  | { type: "SET_DOUBLE"; double: boolean }
+  | { type: "SET_TEAM"; team?: number }
+  | { type: "SET_TOTAL"; total?: number }
+  | { type: "SET_SPREAD"; spread?: number }
+  | { type: "LOAD_PICK"; pick: CFBPick; game?: PickFormState["game"] }
+  | { type: "RESET" };
+
+const initialState: PickFormState = {
+  pickType: "MONEYLINE",
+  duration: "FULL",
+  double: false,
+  game: undefined,
+  odds: undefined,
+  team: undefined,
+  total: undefined,
+  spread: undefined,
+};
+
+function pickFormReducer(state: PickFormState, action: PickFormAction): PickFormState {
+  switch (action.type) {
+    case "SET_GAME":
+      return { ...state, game: action.game };
+    case "SET_PICK_TYPE":
+      return { ...state, pickType: action.pickType };
+    case "SET_DURATION":
+      return { ...state, duration: action.duration };
+    case "SET_ODDS":
+      return { ...state, odds: action.odds };
+    case "SET_DOUBLE":
+      return { ...state, double: action.double };
+    case "SET_TEAM":
+      return { ...state, team: action.team };
+    case "SET_TOTAL":
+      return { ...state, total: action.total };
+    case "SET_SPREAD":
+      return { ...state, spread: action.spread };
+    case "LOAD_PICK":
+      return {
+        ...state,
+        game: action.game,
+        pickType: action.pick.pickType,
+        duration: action.pick.duration,
+        odds: action.pick.odds,
+        double: action.pick.double,
+        team: "cfbTeamId" in action.pick ? action.pick.cfbTeamId : undefined,
+        total: "total" in action.pick ? action.pick.total : undefined,
+        spread: "spread" in action.pick ? action.pick.spread : undefined,
+      };
+    case "RESET":
+      return initialState;
+    default:
+      return state;
+  }
+}
+
 export function AddPickDialog(props: {
   pick?: CFBPick;
   week: number;
   ref?: React.Ref<AddPickDialogHandle>;
   children: React.ReactNode;
 }) {
+  const [state, dispatch] = useReducer(pickFormReducer, initialState);
+
+  const clear = () => dispatch({ type: "RESET" });
+
   useImperativeHandle(props.ref, () => ({ clear }));
 
   const games = api.cfb.games.useQuery({ week: props.week });
@@ -54,59 +132,37 @@ export function AddPickDialog(props: {
 
   const [open, setOpen] = useState(false);
 
-  const [game, setGame] = useState<NonNullable<typeof games.data>[number]>();
-  const [pickType, setPickType] = useState<PickType>("MONEYLINE");
-  const [duration, setDuration] = useState<Duration>("FULL");
-  const [odds, setOdds] = useState<number>();
-  const [double, setDouble] = useState<boolean>(false);
-  const [team, setTeam] = useState<number>();
-  const [total, setTotal] = useState<number>();
-  const [spread, setSpread] = useState<number>();
-
   useEffect(() => {
-    if (props.pick) {
-      setGame(games.data?.find((g) => g.id === props.pick?.gameId));
-      setPickType(props.pick.pickType);
-      setDuration(props.pick.duration);
-      setOdds(props.pick.odds);
-      setDouble(props.pick.double);
-      setTeam("cfbTeamId" in props.pick ? props.pick.cfbTeamId : undefined);
-      setTotal("total" in props.pick ? props.pick.total : undefined);
-      setSpread("spread" in props.pick ? props.pick.spread : undefined);
+    if (props.pick && games.data) {
+      const game = games.data.find((g) => g.id === props.pick?.gameId);
+      dispatch({ type: "LOAD_PICK", pick: props.pick, game });
     }
   }, [games.data, props.pick]);
 
   useEffect(() => {
-    if (game && (team === undefined || (team && ![game.homeId, game.awayId].includes(team)))) {
-      setTeam(game.homeId);
+    if (
+      state.game &&
+      (state.team === undefined ||
+        (state.team && ![state.game.homeId, state.game.awayId].includes(state.team)))
+    ) {
+      dispatch({ type: "SET_TEAM", team: state.game.homeId });
     }
-  }, [game, team]);
-
-  const clear = () => {
-    setGame(undefined);
-    setPickType("SPREAD");
-    setDuration("FULL");
-    setOdds(undefined);
-    setDouble(false);
-    setTeam(undefined);
-    setTotal(undefined);
-    setSpread(undefined);
-  };
+  }, [state.game, state.team]);
 
   const addPick = () => {
-    if (!game) return;
+    if (!state.game) return;
 
-    if (!odds) {
+    if (!state.odds) {
       console.error("Odds are required.");
       return;
     }
 
-    if (pickType === "SPREAD") {
-      if (!spread) {
+    if (state.pickType === "SPREAD") {
+      if (!state.spread) {
         console.error("Spread is required for SPREAD pick type.");
         return;
       }
-      if (!team) {
+      if (!state.team) {
         console.error("Team is required for SPREAD pick type.");
         return;
       }
@@ -114,16 +170,16 @@ export function AddPickDialog(props: {
         id: props.pick?.id,
         teamId: props.pick?.teamId,
         week: props.week,
-        gameId: game.id,
-        pickType,
-        duration,
-        odds,
-        double,
-        cfbTeamId: team,
-        spread,
+        gameId: state.game.id,
+        pickType: state.pickType,
+        duration: state.duration,
+        odds: state.odds,
+        double: state.double,
+        cfbTeamId: state.team,
+        spread: state.spread,
       });
-    } else if (pickType === "MONEYLINE") {
-      if (!team) {
+    } else if (state.pickType === "MONEYLINE") {
+      if (!state.team) {
         console.error("Team is required for MONEYLINE pick type.");
         return;
       }
@@ -131,19 +187,19 @@ export function AddPickDialog(props: {
         id: props.pick?.id,
         teamId: props.pick?.teamId,
         week: props.week,
-        gameId: game.id,
-        pickType,
-        duration,
-        odds,
-        double,
-        cfbTeamId: team,
+        gameId: state.game.id,
+        pickType: state.pickType,
+        duration: state.duration,
+        odds: state.odds,
+        double: state.double,
+        cfbTeamId: state.team,
       });
-    } else if (isTeamTotalPickType(pickType)) {
-      if (!team) {
+    } else if (isTeamTotalPickType(state.pickType)) {
+      if (!state.team) {
         console.error("Team is required for team total pick type.");
         return;
       }
-      if (!total) {
+      if (!state.total) {
         console.error("Total is required for team total pick type.");
         return;
       }
@@ -151,16 +207,16 @@ export function AddPickDialog(props: {
         id: props.pick?.id,
         teamId: props.pick?.teamId,
         week: props.week,
-        gameId: game.id,
-        pickType,
-        duration,
-        odds,
-        double,
-        cfbTeamId: team,
-        total,
+        gameId: state.game.id,
+        pickType: state.pickType,
+        duration: state.duration,
+        odds: state.odds,
+        double: state.double,
+        cfbTeamId: state.team,
+        total: state.total,
       });
     } else {
-      if (!total) {
+      if (!state.total) {
         console.error("Total is required for over/under pick type.");
         return;
       }
@@ -168,12 +224,12 @@ export function AddPickDialog(props: {
         id: props.pick?.id,
         teamId: props.pick?.teamId,
         week: props.week,
-        gameId: game.id,
-        pickType,
-        duration,
-        odds,
-        double,
-        total,
+        gameId: state.game.id,
+        pickType: state.pickType,
+        duration: state.duration,
+        odds: state.odds,
+        double: state.double,
+        total: state.total,
       });
     }
   };
@@ -183,7 +239,8 @@ export function AddPickDialog(props: {
     display: type.replace(/_/g, " "),
   }));
 
-  const selectedTeamName = (team === game?.awayId ? game?.awayTeam : game?.homeTeam) ?? "";
+  const selectedTeamName =
+    (state.team === state.game?.awayId ? state.game?.awayTeam : state.game?.homeTeam) ?? "";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -200,54 +257,71 @@ export function AddPickDialog(props: {
         <div className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label>Game</Label>
-            <GameCombobox games={games.data ?? []} defaultValue={game} onChange={setGame} />
+            <GameCombobox
+              games={games.data ?? []}
+              defaultValue={state.game}
+              onChange={(game) => dispatch({ type: "SET_GAME", game })}
+            />
           </div>
-          {game ? (
+          {state.game ? (
             <div className="flex flex-wrap justify-evenly gap-4">
               <div className="flex flex-col gap-2">
                 <Label>Pick Type</Label>
                 <Select
                   items={pickTypeSelectItems}
-                  defaultValue={pickType}
-                  onChange={setPickType}
+                  defaultValue={state.pickType}
+                  onChange={(pickType) => dispatch({ type: "SET_PICK_TYPE", pickType })}
                   className="w-[130px]"
                 />
               </div>
-              {pickType === "SPREAD" || pickType === "MONEYLINE" ? (
+              {state.pickType === "SPREAD" || state.pickType === "MONEYLINE" ? (
                 <>
                   <div className="flex flex-1 flex-col gap-2">
                     <Label>Team</Label>
                     <Select
-                      items={[game.homeTeam, game.awayTeam]}
+                      items={[state.game.homeTeam, state.game.awayTeam]}
                       defaultValue={selectedTeamName}
-                      onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
+                      onChange={(t) =>
+                        dispatch({
+                          type: "SET_TEAM",
+                          team: t === state.game?.homeTeam ? state.game.homeId : state.game?.awayId,
+                        })
+                      }
                       className="w-full"
                     />
                   </div>
-                  {pickType === "SPREAD" && (
+                  {state.pickType === "SPREAD" && (
                     <div className="flex flex-col gap-2">
                       <Label>Spread</Label>
                       <Input
                         type="number"
                         placeholder="+/- number"
                         step={0.5}
-                        defaultValue={spread}
+                        defaultValue={state.spread}
                         onChange={(e) =>
-                          setSpread(!e.target.value ? undefined : parseFloat(e.target.value))
+                          dispatch({
+                            type: "SET_SPREAD",
+                            spread: !e.target.value ? undefined : parseFloat(e.target.value),
+                          })
                         }
                         className="w-[130px]"
                       />
                     </div>
                   )}
                 </>
-              ) : isTeamTotalPickType(pickType) ? (
+              ) : isTeamTotalPickType(state.pickType) ? (
                 <>
                   <div className="flex flex-1 flex-col gap-2">
                     <Label>Team</Label>
                     <Select
-                      items={[game.homeTeam, game.awayTeam]}
+                      items={[state.game.homeTeam, state.game.awayTeam]}
                       defaultValue={selectedTeamName}
-                      onChange={(t) => setTeam(t === game.homeTeam ? game.homeId : game.awayId)}
+                      onChange={(t) =>
+                        dispatch({
+                          type: "SET_TEAM",
+                          team: t === state.game?.homeTeam ? state.game.homeId : state.game?.awayId,
+                        })
+                      }
                       className="w-full"
                     />
                   </div>
@@ -258,9 +332,12 @@ export function AddPickDialog(props: {
                       placeholder="number"
                       min={0}
                       step={0.5}
-                      defaultValue={total}
+                      defaultValue={state.total}
                       onChange={(e) =>
-                        setTotal(!e.target.value ? undefined : parseFloat(e.target.value))
+                        dispatch({
+                          type: "SET_TOTAL",
+                          total: !e.target.value ? undefined : parseFloat(e.target.value),
+                        })
                       }
                       className="w-[130px]"
                     />
@@ -274,9 +351,12 @@ export function AddPickDialog(props: {
                     placeholder="number"
                     min={0}
                     step={0.5}
-                    defaultValue={total}
+                    defaultValue={state.total}
                     onChange={(e) =>
-                      setTotal(!e.target.value ? undefined : parseFloat(e.target.value))
+                      dispatch({
+                        type: "SET_TOTAL",
+                        total: !e.target.value ? undefined : parseFloat(e.target.value),
+                      })
                     }
                     className="w-full"
                   />
@@ -289,7 +369,11 @@ export function AddPickDialog(props: {
           <div className="flex flex-wrap items-center justify-evenly gap-4">
             <div className="flex flex-col gap-2">
               <Label>Duration</Label>
-              <Select items={durations} defaultValue={duration} onChange={setDuration} />
+              <Select
+                items={durations}
+                defaultValue={state.duration}
+                onChange={(duration) => dispatch({ type: "SET_DURATION", duration })}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="odds">Odds</Label>
@@ -298,8 +382,13 @@ export function AddPickDialog(props: {
                 type="number"
                 placeholder="+/- number"
                 step={10}
-                defaultValue={odds}
-                onChange={(e) => setOdds(!e.target.value ? undefined : parseFloat(e.target.value))}
+                defaultValue={state.odds}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_ODDS",
+                    odds: !e.target.value ? undefined : parseFloat(e.target.value),
+                  })
+                }
                 className="w-[130px]"
               />
             </div>
@@ -311,8 +400,8 @@ export function AddPickDialog(props: {
                     <Switch
                       id="double"
                       disabled={!canDouble}
-                      defaultChecked={double}
-                      onCheckedChange={setDouble}
+                      defaultChecked={state.double}
+                      onCheckedChange={(double) => dispatch({ type: "SET_DOUBLE", double })}
                     />
                   </div>
                 </TooltipTrigger>

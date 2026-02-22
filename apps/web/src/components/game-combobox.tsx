@@ -41,16 +41,24 @@ export function GameCombobox(props: {
 
   const selectedGame = props.games.find((game) => game.id.toString() === value) ?? null;
 
+  const comboboxId = "game-combobox-list";
+
   return (
     <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between">
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={comboboxId}
+          className="justify-between"
+        >
           {selectedGame ? `${selectedGame.awayTeam} @ ${selectedGame.homeTeam}` : "Select game..."}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0">
-        <Command>
+        <Command id={comboboxId}>
           <CommandInput placeholder="Search game..." />
           <CommandList>
             <CommandEmpty>No games found.</CommandEmpty>

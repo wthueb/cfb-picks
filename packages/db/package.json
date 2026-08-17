@@ -16,6 +16,10 @@
       "default": "./dist/client.js",
       "types": "./dist/client.d.ts"
     },
+    "./migrate": {
+      "default": "./dist/migrate.js",
+      "types": "./dist/migrate.d.ts"
+    },
     "./schema": {
       "default": "./dist/schema.js",
       "types": "./dist/schema.d.ts"

@@ -22,10 +22,13 @@ WORKDIR /app
 COPY --from=installer /app/apps/web/.next/standalone /app
 COPY --from=installer /app/apps/web/.next/static /app/apps/web/.next/static
 COPY --from=installer /app/apps/web/public /app/apps/web/public
+COPY --from=installer /app/packages/db/dist /app/packages/db/dist
+COPY --from=installer /app/packages/db/drizzle /app/packages/db/drizzle
+COPY --from=installer /app/node_modules/drizzle-orm /app/node_modules/drizzle-orm
 # next standalone build doesn't copy @libsql/linux-arm64-gnu when building a linux/arm64 image for some reason
 COPY --from=installer /app/node_modules/@libsql /app/node_modules/@libsql
 
 ENV NODE_ENV=production
 EXPOSE 3000
 
-CMD ["apps/web/server.js"]
+CMD ["packages/db/dist/start.js", "apps/web/server.js"]

@@ -29,4 +29,4 @@ COPY --from=builder /app/packages ./packages
 
 ENV NODE_ENV=production
 
-CMD ["apps/notifier/dist/src/index.js"]
+CMD ["packages/db/dist/start.js", "apps/notifier/dist/src/index.js"]

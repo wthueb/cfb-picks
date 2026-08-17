@@ -37,7 +37,16 @@ export default function Picks() {
     teamIdSet.current = true;
   }, [teams.data, searchParams]);
 
+  const hasPicks = teams.data?.some((team) => team.picks.length > 0);
   const team = teams.data?.find((t) => t.id === teamId);
+
+  if (hasPicks === false) {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-2">
+        <p className="text-center">No picks made yet.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">

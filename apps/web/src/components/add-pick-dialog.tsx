@@ -54,7 +54,7 @@ type PickFormAction =
   | { type: "RESET" };
 
 const initialState: PickFormState = {
-  pickType: "MONEYLINE",
+  pickType: "SPREAD",
   duration: "FULL",
   double: false,
   game: undefined,
@@ -234,10 +234,12 @@ export function AddPickDialog(props: {
     }
   };
 
-  const pickTypeSelectItems = pickTypes.map((type) => ({
-    value: type,
-    display: type.replace(/_/g, " "),
-  }));
+  const pickTypeSelectItems = pickTypes
+    .filter((type) => type !== "MONEYLINE" || props.pick?.pickType === "MONEYLINE")
+    .map((type) => ({
+      value: type,
+      display: type.replace(/_/g, " "),
+    }));
 
   const selectedTeamName =
     (state.team === state.game?.awayId ? state.game?.awayTeam : state.game?.homeTeam) ?? "";

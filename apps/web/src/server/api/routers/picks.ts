@@ -178,6 +178,10 @@ export const picksRouter = createTRPCRouter({
 
     const id = "id" in input ? input.id : null;
 
+    if (!id && input.pickType === "MONEYLINE") {
+      throw new Error("Moneyline picks can no longer be created");
+    }
+
     if (!id && existingPicks.length > 5) {
       throw new Error("Already have 5 picks for this week");
     }

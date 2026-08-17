@@ -37,8 +37,5 @@
       "interactive": true
     }
   },
-  "globalEnv": [
-    "SKIP_ENV_VALIDATION",
-    "DATABASE_URL"
-  ]
+  "globalEnv": ["SKIP_ENV_VALIDATION", "DATABASE_URL"]
 }

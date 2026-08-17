@@ -25,13 +25,14 @@
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
               nodejs
-              pnpm
+              pnpm_10
               turbo
             ];
           };
           treefmt = {
             projectRootFile = "flake.nix";
 
+            programs.actionlint.enable = true;
             programs.nixfmt.enable = true;
             programs.prettier.enable = true;
           };

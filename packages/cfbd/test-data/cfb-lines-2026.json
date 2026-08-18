@@ -4,7 +4,574 @@
     "season": 2026,
     "seasonType": "regular",
     "week": 1,
-    "startDate": "2026-08-29T16:00:00.000Z",
+    "startDate": "2026-06-13T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 31,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 20,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000002,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 1,
+    "startDate": "2026-06-13T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 35,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 28,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000003,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 1,
+    "startDate": "2026-06-14T00:00:00.000Z",
+    "homeTeam": "Localhost A&M",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 24,
+    "awayTeam": "Cache Institute",
+    "awayConference": "Sample League",
+    "awayClassification": "fbs",
+    "awayScore": 20,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -2.5,
+        "formattedSpread": "Localhost A&M -2.5",
+        "spreadOpen": -1.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -135,
+        "awayMoneyline": 115
+      }
+    ]
+  },
+  {
+    "id": 900000004,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 2,
+    "startDate": "2026-06-20T16:00:00.000Z",
+    "homeTeam": "Offline University",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 24,
+    "awayTeam": "No Network State",
+    "awayConference": "Sample League",
+    "awayClassification": "fbs",
+    "awayScore": 27,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -2.5,
+        "formattedSpread": "Offline University -2.5",
+        "spreadOpen": -1.5,
+        "overUnder": 55.5,
+        "overUnderOpen": 54.5,
+        "homeMoneyline": -135,
+        "awayMoneyline": 115
+      }
+    ]
+  },
+  {
+    "id": 900000005,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 2,
+    "startDate": "2026-06-20T23:30:00.000Z",
+    "homeTeam": "Hot Reload College",
+    "homeConference": "Sample League",
+    "homeClassification": "fcs",
+    "homeScore": 20,
+    "awayTeam": "Type Safety State",
+    "awayConference": "Sample League",
+    "awayClassification": "fbs",
+    "awayScore": 17,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -2.5,
+        "formattedSpread": "Hot Reload College -2.5",
+        "spreadOpen": -1.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -135,
+        "awayMoneyline": 115
+      }
+    ]
+  },
+  {
+    "id": 900000006,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 3,
+    "startDate": "2026-06-27T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 31,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 20,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000007,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 3,
+    "startDate": "2026-06-27T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 35,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 28,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000008,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 4,
+    "startDate": "2026-07-04T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 24,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 27,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000009,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 4,
+    "startDate": "2026-07-04T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 20,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 17,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000010,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 5,
+    "startDate": "2026-07-11T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 31,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 20,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000011,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 5,
+    "startDate": "2026-07-11T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 35,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 28,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000012,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 6,
+    "startDate": "2026-07-18T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 24,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 27,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000013,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 6,
+    "startDate": "2026-07-18T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 20,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 17,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000014,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 7,
+    "startDate": "2026-07-25T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 31,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 20,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000015,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 7,
+    "startDate": "2026-07-25T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 35,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 28,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000016,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 8,
+    "startDate": "2026-08-01T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 24,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 27,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000017,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 8,
+    "startDate": "2026-08-01T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 20,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 17,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000018,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 9,
+    "startDate": "2026-08-08T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 31,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 20,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000019,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 9,
+    "startDate": "2026-08-08T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 35,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 28,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000020,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 10,
+    "startDate": "2026-08-15T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": 24,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": 27,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000021,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 10,
+    "startDate": "2026-08-15T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": 20,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": 17,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
+      }
+    ]
+  },
+  {
+    "id": 900000022,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 11,
+    "startDate": "2026-08-22T16:00:00.000Z",
     "homeTeam": "Development State",
     "homeConference": "Test Conference",
     "homeClassification": "fbs",
@@ -19,19 +586,19 @@
         "spread": -3.5,
         "formattedSpread": "Development State -3.5",
         "spreadOpen": -2.5,
-        "overUnder": 52.5,
-        "overUnderOpen": 51.5,
+        "overUnder": 51.5,
+        "overUnderOpen": 50.5,
         "homeMoneyline": -165,
         "awayMoneyline": 145
       }
     ]
   },
   {
-    "id": 900000002,
+    "id": 900000023,
     "season": 2026,
     "seasonType": "regular",
-    "week": 1,
-    "startDate": "2026-08-29T19:30:00.000Z",
+    "week": 11,
+    "startDate": "2026-08-22T19:30:00.000Z",
     "homeTeam": "Mock University",
     "homeConference": "Sample League",
     "homeClassification": "fbs",
@@ -43,40 +610,13 @@
     "lines": [
       {
         "provider": "Development Sportsbook",
-        "spread": -10.5,
-        "formattedSpread": "Mock University -10.5",
-        "spreadOpen": -9.5,
+        "spread": -7.5,
+        "formattedSpread": "Mock University -7.5",
+        "spreadOpen": -6.5,
         "overUnder": 48.5,
-        "overUnderOpen": 49.5,
-        "homeMoneyline": -425,
-        "awayMoneyline": 340
-      }
-    ]
-  },
-  {
-    "id": 900000004,
-    "season": 2026,
-    "seasonType": "regular",
-    "week": 2,
-    "startDate": "2026-09-05T16:00:00.000Z",
-    "homeTeam": "Offline University",
-    "homeConference": "Test Conference",
-    "homeClassification": "fbs",
-    "homeScore": null,
-    "awayTeam": "No Network State",
-    "awayConference": "Sample League",
-    "awayClassification": "fbs",
-    "awayScore": null,
-    "lines": [
-      {
-        "provider": "Development Sportsbook",
-        "spread": -6.5,
-        "formattedSpread": "Offline University -6.5",
-        "spreadOpen": -5.5,
-        "overUnder": 55.5,
-        "overUnderOpen": 54.5,
-        "homeMoneyline": -245,
-        "awayMoneyline": 205
+        "overUnderOpen": 47.5,
+        "homeMoneyline": -285,
+        "awayMoneyline": 235
       }
     ]
   }

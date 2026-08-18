@@ -34,6 +34,65 @@ export async function seedDevelopmentDatabase(season: number) {
     ])
     .onConflictDoNothing();
 
+  const weeklyPicks = Array.from({ length: 8 }, (_, index) => {
+    const week = index + 3;
+    const firstGameId = 900000000 + week * 2;
+    const id = 9100005 + index * 4;
+
+    return [
+      {
+        id,
+        teamId: 10001,
+        season,
+        week,
+        gameId: firstGameId,
+        pickType: "SPREAD" as const,
+        duration: "FULL" as const,
+        odds: -110,
+        double: false,
+        spread: -3.5,
+        cfbTeamId: 101,
+      },
+      {
+        id: id + 1,
+        teamId: 10001,
+        season,
+        week,
+        gameId: firstGameId + 1,
+        pickType: "OVER" as const,
+        duration: "FULL" as const,
+        odds: -105,
+        double: true,
+        total: 48.5,
+      },
+      {
+        id: id + 2,
+        teamId: 10002,
+        season,
+        week,
+        gameId: firstGameId,
+        pickType: "SPREAD" as const,
+        duration: "FULL" as const,
+        odds: -110,
+        double: false,
+        spread: 3.5,
+        cfbTeamId: 102,
+      },
+      {
+        id: id + 3,
+        teamId: 10002,
+        season,
+        week,
+        gameId: firstGameId + 1,
+        pickType: "UNDER" as const,
+        duration: "FULL" as const,
+        odds: -110,
+        double: false,
+        total: 48.5,
+      },
+    ];
+  }).flat();
+
   await db
     .insert(picks)
     .values([
@@ -87,6 +146,57 @@ export async function seedDevelopmentDatabase(season: number) {
         double: false,
         total: 55.5,
       },
+      {
+        id: 9100001,
+        teamId: 10002,
+        season,
+        week: 1,
+        gameId: 900000001,
+        pickType: "SPREAD",
+        duration: "FULL",
+        odds: -110,
+        double: false,
+        spread: 3.5,
+        cfbTeamId: 102,
+      },
+      {
+        id: 9100002,
+        teamId: 10001,
+        season,
+        week: 2,
+        gameId: 900000005,
+        pickType: "OVER",
+        duration: "FULL",
+        odds: -105,
+        double: true,
+        total: 48.5,
+      },
+      {
+        id: 9100003,
+        teamId: 10002,
+        season,
+        week: 2,
+        gameId: 900000004,
+        pickType: "SPREAD",
+        duration: "FULL",
+        odds: -110,
+        double: false,
+        spread: 6.5,
+        cfbTeamId: 108,
+      },
+      {
+        id: 9100004,
+        teamId: 10002,
+        season,
+        week: 2,
+        gameId: 900000005,
+        pickType: "UNDER",
+        duration: "FULL",
+        odds: -110,
+        double: false,
+        total: 48.5,
+      },
+      ...weeklyPicks,
     ])
     .onConflictDoNothing();
 }

@@ -8,9 +8,6 @@ application. The fixture filenames include the configured `SEASON`; add a matchi
 when changing seasons.
 
 Run `pnpm db:seed` to migrate and populate the development SQLite database with two teams, two
-users, and example picks referencing those fixtures. The seed is idempotent. Development also adds
-a one-click `Development Admin` sign-in provider; it is not available in production.
-
-### TODO
-
-- charts and stuff
+users, ten completed weeks of picks and results, and an open week 11 referencing those fixtures.
+The seed is idempotent. Development also adds a one-click `Development Admin` sign-in provider; it
+is not available in production.

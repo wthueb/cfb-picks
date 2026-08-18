@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { RouterOutputs } from "~/utils/api";
+import { StatsLineChart } from "~/components/stats-line-chart";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -10,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { Skeleton } from "~/components/ui/skeleton";
 import { withSession } from "~/server/auth";
 import { api } from "~/utils/api";
 
@@ -60,21 +62,34 @@ function StatCard(props: { team: RouterOutputs["picks"]["stats"][number] }) {
 }
 
 export default function Stats() {
-  // TODO: look into graphs and things
-
   const stats = api.picks.stats.useQuery();
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-2">
-      {stats.data && (
-        <ul className="flex w-full flex-col gap-4">
-          {stats.data.map((team) => (
-            <li key={team.id}>
-              <StatCard team={team} />
-            </li>
-          ))}
-        </ul>
-      )}
+      {stats.isLoading ? (
+        <>
+          <Skeleton className="h-[444px] w-full rounded-xl" />
+          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-48 w-full rounded-xl" />
+        </>
+      ) : stats.isError ? (
+        <Card className="w-full">
+          <CardContent>
+            <p className="text-destructive text-center text-sm">Unable to load team stats.</p>
+          </CardContent>
+        </Card>
+      ) : stats.data ? (
+        <>
+          <ul className="flex w-full flex-col gap-4">
+            {stats.data.map((team) => (
+              <li key={team.id}>
+                <StatCard team={team} />
+              </li>
+            ))}
+          </ul>
+          <StatsLineChart teams={stats.data} />
+        </>
+      ) : null}
     </div>
   );
 }

@@ -45,6 +45,7 @@
     "nodemailer": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "recharts": "^3.10.1",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
     "zod": "catalog:"

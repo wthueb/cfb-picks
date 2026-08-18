@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import type { NextAuthOptions } from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
+import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
@@ -62,23 +63,43 @@ const authConfig: NextAuthOptions = {
     // if we wanted to have more to maintain but only have one db round trip, we could override
     // all of the adapter methods and populate the team as part of the AdapterUser
     // that's probably not worth the effort for this small of an app with a local db though
-    async session({ session, user }) {
-      const team = await db.select().from(teams).where(eq(teams.id, user.teamId)).get();
-      if (!team) throw new Error(`User ${user.id} has invalid teamId ${user.teamId}`);
+    async session({ session, token, user }) {
+      const adapterUser = user as typeof user | undefined;
+      const sessionToken = token as typeof token | undefined;
+      const userId = adapterUser?.id ?? sessionToken?.sub;
+      if (!userId) throw new Error("Session has no user ID");
+
+      const dbUser = await db.select().from(users).where(eq(users.id, userId)).get();
+      if (!dbUser) throw new Error(`User ${userId} does not exist`);
+
+      const team = await db.select().from(teams).where(eq(teams.id, dbUser.teamId)).get();
+      if (!team) throw new Error(`User ${userId} has invalid teamId ${dbUser.teamId}`);
 
       return {
         ...session,
         user: {
           // manually copy over properties so we don't expose anything unwanted
-          id: user.id,
-          teamId: user.teamId,
+          id: dbUser.id,
+          teamId: dbUser.teamId,
           team,
-          isAdmin: user.isAdmin,
+          isAdmin: dbUser.isAdmin,
         },
       };
     },
   },
 };
+
+if (env.NODE_ENV === "development") {
+  authConfig.session = { strategy: "jwt" };
+  authConfig.providers.push(
+    CredentialsProvider({
+      name: "Development Admin",
+      credentials: {},
+      authorize: async () =>
+        (await db.select().from(users).where(eq(users.id, "development-admin")).get()) ?? null,
+    }),
+  );
+}
 
 if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
   authConfig.providers.push(

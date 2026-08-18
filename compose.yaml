@@ -7,7 +7,7 @@ services:
       dockerfile: ./apps/web/Dockerfile
     restart: unless-stopped
     environment:
-      - DATABASE_URL=file:/config/db.sqlite
+      - DATABASE_URL=file:/config/cfb-picks.db
       - CFB_API_KEY=${CFB_API_KEY}
       - SEASON=${SEASON}
       - AUTH_SECRET=${AUTH_SECRET}
@@ -35,7 +35,7 @@ services:
       dockerfile: ./apps/notifier/Dockerfile
     restart: unless-stopped
     environment:
-      - DATABASE_URL=file:/config/db.sqlite
+      - DATABASE_URL=file:/config/cfb-picks.db
       - CFB_API_KEY=${CFB_API_KEY}
       - SEASON=${SEASON}
       - SMTP_HOST=${SMTP_HOST}

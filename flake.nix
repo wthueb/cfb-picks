@@ -24,6 +24,7 @@
         {
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
+              agent-browser
               nodejs
               pnpm_11
               turbo

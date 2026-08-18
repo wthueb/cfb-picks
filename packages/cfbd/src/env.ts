@@ -4,7 +4,7 @@ import z from "zod";
 export const env = createEnv({
   server: {
     REDIS_URL: z.url().default("redis://localhost:6379"),
-    CFB_API_KEY: z.string(),
+    CFB_API_KEY: process.env.NODE_ENV === "production" ? z.string() : z.string().optional(),
     SEASON: z.coerce.number().min(2000),
   },
 

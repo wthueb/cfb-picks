@@ -1,0 +1,83 @@
+[
+  {
+    "id": 900000001,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 1,
+    "startDate": "2026-08-29T16:00:00.000Z",
+    "homeTeam": "Development State",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": null,
+    "awayTeam": "Fixture Tech",
+    "awayConference": "Test Conference",
+    "awayClassification": "fbs",
+    "awayScore": null,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -3.5,
+        "formattedSpread": "Development State -3.5",
+        "spreadOpen": -2.5,
+        "overUnder": 52.5,
+        "overUnderOpen": 51.5,
+        "homeMoneyline": -165,
+        "awayMoneyline": 145
+      }
+    ]
+  },
+  {
+    "id": 900000002,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 1,
+    "startDate": "2026-08-29T19:30:00.000Z",
+    "homeTeam": "Mock University",
+    "homeConference": "Sample League",
+    "homeClassification": "fbs",
+    "homeScore": null,
+    "awayTeam": "JSON College",
+    "awayConference": "Sample League",
+    "awayClassification": "fcs",
+    "awayScore": null,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -10.5,
+        "formattedSpread": "Mock University -10.5",
+        "spreadOpen": -9.5,
+        "overUnder": 48.5,
+        "overUnderOpen": 49.5,
+        "homeMoneyline": -425,
+        "awayMoneyline": 340
+      }
+    ]
+  },
+  {
+    "id": 900000004,
+    "season": 2026,
+    "seasonType": "regular",
+    "week": 2,
+    "startDate": "2026-09-05T16:00:00.000Z",
+    "homeTeam": "Offline University",
+    "homeConference": "Test Conference",
+    "homeClassification": "fbs",
+    "homeScore": null,
+    "awayTeam": "No Network State",
+    "awayConference": "Sample League",
+    "awayClassification": "fbs",
+    "awayScore": null,
+    "lines": [
+      {
+        "provider": "Development Sportsbook",
+        "spread": -6.5,
+        "formattedSpread": "Offline University -6.5",
+        "spreadOpen": -5.5,
+        "overUnder": 55.5,
+        "overUnderOpen": 54.5,
+        "homeMoneyline": -245,
+        "awayMoneyline": 205
+      }
+    ]
+  }
+]

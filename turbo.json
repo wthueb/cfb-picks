@@ -29,6 +29,10 @@
     "clean": {
       "cache": false
     },
+    "seed": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "//#clean": {
       "cache": false
     },
@@ -37,5 +41,5 @@
       "interactive": true
     }
   },
-  "globalEnv": ["SKIP_ENV_VALIDATION", "DATABASE_URL"]
+  "globalEnv": ["SKIP_ENV_VALIDATION", "DATABASE_URL", "NODE_ENV", "SEASON"]
 }

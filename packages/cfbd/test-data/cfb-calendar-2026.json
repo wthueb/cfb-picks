@@ -1,0 +1,20 @@
+[
+  {
+    "season": 2026,
+    "week": 1,
+    "seasonType": "regular",
+    "startDate": "2026-08-24T04:00:00.000Z",
+    "endDate": "2026-08-31T03:59:59.999Z",
+    "firstGameStart": "2026-08-29T16:00:00.000Z",
+    "lastGameStart": "2026-08-30T00:00:00.000Z"
+  },
+  {
+    "season": 2026,
+    "week": 2,
+    "seasonType": "regular",
+    "startDate": "2026-08-31T04:00:00.000Z",
+    "endDate": "2026-09-07T03:59:59.999Z",
+    "firstGameStart": "2026-09-05T16:00:00.000Z",
+    "lastGameStart": "2026-09-06T00:00:00.000Z"
+  }
+]

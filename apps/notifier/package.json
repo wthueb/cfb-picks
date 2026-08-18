@@ -16,7 +16,7 @@
     "@cfb-picks/cfbd": "workspace:*",
     "@cfb-picks/db": "workspace:*",
     "@cfb-picks/lib": "workspace:*",
-    "@react-email/components": "^0.5.3",
+    "@react-email/components": "^1.0.12",
     "@t3-oss/env-core": "catalog:",
     "date-fns": "catalog:",
     "date-fns-tz": "catalog:",

@@ -16,13 +16,18 @@ COPY --from=builder /app/out/json/ .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/cache pnpm install --store-dir=/pnpm/cache --prefer-offline --frozen-lockfile
 COPY --from=builder /app/out/full/ .
 RUN PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN=false SKIP_ENV_VALIDATION=1 DATABASE_URL=file:./fake-db-just-for-build.sqlite turbo build --env-mode loose
-RUN --mount=type=cache,id=pnpm,target=/pnpm/cache pnpm --filter @cfb-picks/web --store-dir=/pnpm/cache deploy --prod /app/runtime
 
 FROM gcr.io/distroless/nodejs24-debian13 AS runner
 WORKDIR /app
-COPY --from=installer /app/runtime /app
+COPY --from=installer /app/apps/web/.next/standalone /app
+COPY --from=installer /app/apps/web/.next/static /app/apps/web/.next/static
+COPY --from=installer /app/apps/web/public /app/apps/web/public
+COPY --from=installer /app/packages/db/dist /app/packages/db/dist
+COPY --from=installer /app/packages/db/drizzle /app/packages/db/drizzle
 
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 EXPOSE 3000
 
-CMD ["node_modules/@cfb-picks/db/dist/start.js", "node_modules/next/dist/bin/next", "start"]
+CMD ["packages/db/dist/start.js", "apps/web/server.js"]

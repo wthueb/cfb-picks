@@ -25,7 +25,7 @@
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
               nodejs
-              pnpm_10
+              pnpm_11
               turbo
             ];
           };

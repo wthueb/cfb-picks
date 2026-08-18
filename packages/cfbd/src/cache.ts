@@ -2,7 +2,7 @@ import { createClient } from "redis";
 
 import { env } from "./env.js";
 
-export const client = createClient({
+export const client: ReturnType<typeof createClient> = createClient({
   url: env.REDIS_URL,
   socket: {
     reconnectStrategy: () => 1000,

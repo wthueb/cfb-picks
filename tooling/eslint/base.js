@@ -12,6 +12,9 @@ const gitignorePath = path.join(import.meta.dirname, "../../.gitignore");
 const gitignoreConfig = existsSync(gitignorePath)
   ? includeIgnoreFile(gitignorePath)
   : { ignores: [] };
+const turboRecommended = /** @type {import("eslint").Linter.Config} */ (
+  turboPlugin.configs?.["flat/recommended"] ?? {}
+);
 
 /**
  * All packages that leverage t3-env should use this rule
@@ -45,11 +48,11 @@ export default tseslint.config(
   // Ignore files not tracked by VCS and any config files
   gitignoreConfig,
   { ignores: ["**/*.config.*"] },
+  turboRecommended,
   {
     files: ["**/*.js", "**/*.ts", "**/*.tsx"],
     plugins: {
       import: importPlugin,
-      turbo: turboPlugin,
     },
     extends: [
       eslint.configs.recommended,
@@ -58,7 +61,6 @@ export default tseslint.config(
       ...tseslint.configs.stylisticTypeChecked,
     ],
     rules: {
-      ...turboPlugin.configs.recommended.rules,
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

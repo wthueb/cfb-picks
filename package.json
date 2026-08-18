@@ -2,10 +2,10 @@
   "name": "cfb-picks",
   "private": true,
   "engines": {
-    "node": ">=22.14.0",
-    "pnpm": ">=9.6.0"
+    "node": ">=24.19.0",
+    "pnpm": ">=11.0.0"
   },
-  "packageManager": "pnpm@10.11.1",
+  "packageManager": "pnpm@11.22.0",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
@@ -28,14 +28,8 @@
   "devDependencies": {
     "@cfb-picks/prettier-config": "workspace:*",
     "prettier": "catalog:",
-    "turbo": "^2.5.8",
+    "turbo": "^2.10.10",
     "typescript": "catalog:"
   },
-  "prettier": "@cfb-picks/prettier-config",
-  "pnpm": {
-    "overrides": {
-      "react": "catalog:react19",
-      "react-dom": "catalog:react19"
-    }
-  }
+  "prettier": "@cfb-picks/prettier-config"
 }

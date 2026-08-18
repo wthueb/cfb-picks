@@ -32,9 +32,10 @@
   },
   "prettier": "@cfb-picks/prettier-config",
   "dependencies": {
-    "@t3-oss/env-core": "^0.13.8",
+    "@t3-oss/env-core": "catalog:",
     "async-lock": "^1.4.1",
     "cfbd": "^5.11.5",
-    "redis": "^5.8.2"
+    "redis": "catalog:",
+    "zod": "catalog:"
   }
 }

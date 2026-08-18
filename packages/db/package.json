@@ -40,8 +40,8 @@
   },
   "dependencies": {
     "@libsql/client": "^0.15.15",
-    "@t3-oss/env-core": "^0.13.8",
-    "drizzle-orm": "^0.44.5",
+    "@t3-oss/env-core": "catalog:",
+    "drizzle-orm": "catalog:",
     "drizzle-zod": "^0.8.3",
     "zod": "catalog:"
   },
@@ -49,10 +49,10 @@
     "@cfb-picks/eslint-config": "workspace:*",
     "@cfb-picks/prettier-config": "workspace:*",
     "@cfb-picks/tsconfig": "workspace:*",
-    "dotenv-cli": "^10.0.0",
+    "dotenv-cli": "catalog:",
     "drizzle-kit": "^0.31.4",
     "eslint": "catalog:",
-    "next-auth": "^4.24.11",
+    "next-auth": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },

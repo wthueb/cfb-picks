@@ -24,7 +24,7 @@
   "dependencies": {
     "@cfb-picks/cfbd": "workspace:*",
     "@cfb-picks/db": "workspace:*",
-    "date-fns-tz": "^3.2.0"
+    "date-fns-tz": "catalog:"
   },
   "devDependencies": {
     "@cfb-picks/eslint-config": "workspace:*",

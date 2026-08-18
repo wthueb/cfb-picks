@@ -2,6 +2,9 @@ packages:
   - apps/*
   - packages/*
   - tooling/*
+injectWorkspacePackages: true
+syncInjectedDepsAfterScripts:
+  - build
 catalog:
   "@t3-oss/env-core": ^0.13.8
   "@types/node": ^24.3.3

@@ -3,8 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "files": [
+    ".next",
+    "next.config.ts",
+    "public",
+    "src/env.ts"
+  ],
   "scripts": {
-    "build": "pnpm with-env next build",
+    "build": "pnpm with-env next build --webpack",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "pnpm with-env next dev",
     "format": "prettier --check . --ignore-path ../../.gitignore",

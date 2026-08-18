@@ -5,7 +5,7 @@
 .git
 .github
 .gitignore
-.next
+**/.next
 .turbo
 Dockerfile
 README.md

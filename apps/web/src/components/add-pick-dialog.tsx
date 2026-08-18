@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 
 import type { CFBPick, Duration, PickType } from "@cfb-picks/db/schema";
 import { durations, isTeamTotalPickType, pickTypes } from "@cfb-picks/db/schema";
@@ -23,10 +23,6 @@ import { Label } from "./ui/label";
 import { Skeleton } from "./ui/skeleton";
 import { Switch } from "./ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-
-export type AddPickDialogHandle = {
-  clear: () => void;
-};
 
 type GameType = RouterOutputs["cfb"]["games"][number];
 
@@ -101,17 +97,10 @@ function pickFormReducer(state: PickFormState, action: PickFormAction): PickForm
   }
 }
 
-export function AddPickDialog(props: {
-  pick?: CFBPick;
-  week: number;
-  ref?: React.Ref<AddPickDialogHandle>;
-  children: React.ReactNode;
-}) {
+export function AddPickDialog(props: { pick?: CFBPick; week: number; children: React.ReactNode }) {
   const [state, dispatch] = useReducer(pickFormReducer, initialState);
 
   const clear = () => dispatch({ type: "RESET" });
-
-  useImperativeHandle(props.ref, () => ({ clear }));
 
   const games = api.cfb.games.useQuery({ week: props.week });
 
@@ -245,7 +234,13 @@ export function AddPickDialog(props: {
     (state.team === state.game?.awayId ? state.game?.awayTeam : state.game?.homeTeam) ?? "";
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen && !props.pick) clear();
+      }}
+    >
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <DialogHeader className="text-center">
@@ -261,7 +256,7 @@ export function AddPickDialog(props: {
             <Label>Game</Label>
             <GameCombobox
               games={games.data ?? []}
-              defaultValue={state.game}
+              value={state.game}
               onChange={(game) => dispatch({ type: "SET_GAME", game })}
             />
           </div>
@@ -271,7 +266,7 @@ export function AddPickDialog(props: {
                 <Label>Pick Type</Label>
                 <Select
                   items={pickTypeSelectItems}
-                  defaultValue={state.pickType}
+                  value={state.pickType}
                   onChange={(pickType) => dispatch({ type: "SET_PICK_TYPE", pickType })}
                   className="w-[130px]"
                 />
@@ -282,7 +277,7 @@ export function AddPickDialog(props: {
                     <Label>Team</Label>
                     <Select
                       items={[state.game.homeTeam, state.game.awayTeam]}
-                      defaultValue={selectedTeamName}
+                      value={selectedTeamName}
                       onChange={(t) =>
                         dispatch({
                           type: "SET_TEAM",
@@ -317,7 +312,7 @@ export function AddPickDialog(props: {
                     <Label>Team</Label>
                     <Select
                       items={[state.game.homeTeam, state.game.awayTeam]}
-                      defaultValue={selectedTeamName}
+                      value={selectedTeamName}
                       onChange={(t) =>
                         dispatch({
                           type: "SET_TEAM",
@@ -373,7 +368,7 @@ export function AddPickDialog(props: {
               <Label>Duration</Label>
               <Select
                 items={durations}
-                defaultValue={state.duration}
+                value={state.duration}
                 onChange={(duration) => dispatch({ type: "SET_DURATION", duration })}
               />
             </div>

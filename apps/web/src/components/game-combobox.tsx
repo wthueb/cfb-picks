@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -20,17 +20,11 @@ import { cn } from "~/lib/utils";
 
 export function GameCombobox(props: {
   games: RouterOutputs["cfb"]["games"];
-  defaultValue?: Game;
+  value?: Game;
   onChange: (game?: RouterOutputs["cfb"]["games"][number]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
-
-  useEffect(() => {
-    if (props.defaultValue) {
-      setValue(props.defaultValue.id.toString());
-    }
-  }, [props.defaultValue]);
+  const value = props.value?.id.toString() ?? "";
 
   const session = useSession();
 
@@ -71,9 +65,7 @@ export function GameCombobox(props: {
                   onSelect={() => {
                     if (game.id.toString() !== value) {
                       props.onChange(game);
-                      setValue(game.id.toString());
                     } else {
-                      setValue("");
                       props.onChange(undefined);
                     }
                     setOpen(false);

@@ -1,6 +1,5 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
-import type { AddPickDialogHandle } from "~/components/add-pick-dialog";
 import { AddPickDialog } from "~/components/add-pick-dialog";
 import { PickList } from "~/components/pick-list";
 import { Button } from "~/components/ui/button";
@@ -25,6 +24,7 @@ export default function Home() {
         <WeekSelect
           weeks={calendar.data}
           defaultType="current"
+          selectedWeek={week}
           onChange={(w) => setWeek(w.week)}
           className="bg-accent text-accent-foreground flex-1"
         />
@@ -36,16 +36,12 @@ export default function Home() {
 }
 
 function AddPickButton(props: { week: number; disabled: boolean }) {
-  const dialogRef = useRef<AddPickDialogHandle>(null);
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div>
-          <AddPickDialog week={props.week} ref={dialogRef}>
-            <Button disabled={props.disabled} onClick={dialogRef.current?.clear}>
-              Add Pick
-            </Button>
+          <AddPickDialog week={props.week}>
+            <Button disabled={props.disabled}>Add Pick</Button>
           </AddPickDialog>
         </div>
       </TooltipTrigger>

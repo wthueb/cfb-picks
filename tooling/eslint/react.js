@@ -3,7 +3,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 
 /** @type {Awaited<import('typescript-eslint').Config>} */
 export default [
-  reactHooks.configs["recommended-latest"],
+  reactHooks.configs.flat.recommended,
   {
     files: ["**/*.ts", "**/*.tsx"],
     plugins: {

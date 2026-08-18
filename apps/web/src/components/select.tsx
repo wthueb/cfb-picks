@@ -1,5 +1,4 @@
 import type { JSX } from "react";
-import { useEffect, useState } from "react";
 
 import {
   Select as NormalSelect,
@@ -16,33 +15,27 @@ type SelectItem<T extends string> = T | SelectItemWithDisplay<T>;
 
 export function Select<T extends string>(props: {
   items: readonly SelectItem<T>[];
-  defaultValue: NoInfer<T>;
+  value: NoInfer<T>;
   onChange: (value: T) => void;
   className?: string;
 }): JSX.Element;
 export function Select<T extends string, G extends string>(props: {
   items: Record<G, SelectItem<T>[]>;
-  defaultValue: NoInfer<`${G}-${T}`>;
+  value: NoInfer<`${G}-${T}`>;
   onChange: (value: `${G}-${T}`) => void;
   className?: string;
 }): JSX.Element;
 export function Select<T extends string, G extends string>(props: {
   items: readonly SelectItem<T>[] | Record<G, SelectItem<T>[]>;
-  defaultValue: NoInfer<T | `${G}-${T}`>;
+  value: NoInfer<T | `${G}-${T}`>;
   onChange: (value: T | `${G}-${T}`) => void;
   className?: string;
 }) {
-  const [value, setValue] = useState<T | `${G}-${T}`>(props.defaultValue);
-
-  useEffect(() => {
-    setValue(props.defaultValue);
-  }, [props.defaultValue]);
-
   let displayString: string;
 
   if (!Array.isArray(props.items)) {
     const groupedItems = props.items as Record<G, SelectItem<T>[]>;
-    const [group, v] = (value as `${G}-${T}`).split("-") as [G, T];
+    const [group, v] = (props.value as `${G}-${T}`).split("-") as [G, T];
 
     const display =
       typeof groupedItems[group][0] === "string"
@@ -55,16 +48,15 @@ export function Select<T extends string, G extends string>(props: {
     const itemsArray = props.items as SelectItem<T>[];
     displayString =
       typeof itemsArray[0] === "string"
-        ? (value as T)
-        : ((itemsArray as SelectItemWithDisplay<T>[]).find((item) => item.value === value)
-            ?.display ?? value);
+        ? (props.value as T)
+        : ((itemsArray as SelectItemWithDisplay<T>[]).find((item) => item.value === props.value)
+            ?.display ?? props.value);
   }
 
   return (
     <NormalSelect
-      value={value}
+      value={props.value}
       onValueChange={(v) => {
-        setValue(v as T | `${G}-${T}`);
         props.onChange(v as T | `${G}-${T}`);
       }}
     >

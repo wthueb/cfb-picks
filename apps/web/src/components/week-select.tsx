@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo } from "react";
 
 import type { Week } from "~/server/api/routers/cfb";
 import type { RouterOutputs } from "~/utils/api";
@@ -8,6 +8,7 @@ import { Skeleton } from "./ui/skeleton";
 export function WeekSelect(props: {
   weeks?: RouterOutputs["cfb"]["calendar"];
   defaultType: "first" | "last" | "current";
+  selectedWeek?: number;
   onChange: (week: Week) => void;
   className?: string;
 }) {
@@ -36,12 +37,13 @@ export function WeekSelect(props: {
     return defaultWeek;
   }, [props.weeks, props.defaultType]);
 
-  const [initialized, setInitialized] = useState(false);
-  const onChangeRef = useRef(props.onChange);
+  const notifyDefaultChange = useEffectEvent((week: Week) => {
+    props.onChange(week);
+  });
 
   useEffect(() => {
-    onChangeRef.current = props.onChange;
-  }, [props.onChange]);
+    if (defaultValue) notifyDefaultChange(defaultValue);
+  }, [defaultValue]);
 
   const handleSelectChange = (v: string) => {
     if (!props.weeks) return;
@@ -52,19 +54,13 @@ export function WeekSelect(props: {
     }
   };
 
-  // Initialize with default value on first render
-  if (defaultValue && !initialized) {
-    setInitialized(true);
-    onChangeRef.current(defaultValue);
-  }
-
   return props.weeks && defaultValue ? (
     <Select
       items={props.weeks.map((w) => ({
         value: w.week.toString(),
         display: `Week ${w.week}`,
       }))}
-      defaultValue={defaultValue.week.toString()}
+      value={(props.selectedWeek ?? defaultValue.week).toString()}
       onChange={handleSelectChange}
       className={props.className}
     />

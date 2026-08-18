@@ -8,11 +8,8 @@ const config: NextConfig = {
     locales: ["en"],
     defaultLocale: "en",
   },
+  serverExternalPackages: ["@cfb-picks/db"],
   transpilePackages: ["@cfb-picks/cfbd"],
-  webpack(config, { isServer }) {
-    if (isServer) config.externals.push(/^@cfb-picks\/db(?:\/.*)?$/);
-    return config;
-  },
   output: "standalone",
 };
 

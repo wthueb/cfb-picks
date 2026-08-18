@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { PickList } from "~/components/pick-list";
@@ -11,7 +11,7 @@ import { api } from "~/utils/api";
 export default function Picks() {
   const searchParams = useSearchParams();
 
-  const [teamId, setTeamId] = useState<number>();
+  const [selectedTeamId, setSelectedTeamId] = useState<number>();
   const [week, setWeek] = useState<number>();
 
   const teams = api.picks.teams.useQuery(undefined, { refetchInterval: 1000 * 30 });
@@ -21,21 +21,9 @@ export default function Picks() {
     (w) => teams.data?.flatMap((t) => t.picks.map((p) => p.week)).includes(w.week) ?? false,
   );
 
-  const teamIdSet = useRef(false);
-
-  useEffect(() => {
-    if (!teams.data || teamIdSet.current) return;
-
-    const teamIdParam = searchParams.get("teamId");
-    if (teamIdParam) {
-      const id = parseInt(teamIdParam);
-      setTeamId(id);
-    } else {
-      setTeamId(teams.data[0]?.id);
-    }
-
-    teamIdSet.current = true;
-  }, [teams.data, searchParams]);
+  const teamIdParam = searchParams.get("teamId");
+  const requestedTeamId = teamIdParam ? parseInt(teamIdParam) : undefined;
+  const teamId = selectedTeamId ?? requestedTeamId ?? teams.data?.[0]?.id;
 
   const hasPicks = teams.data?.some((team) => team.picks.length > 0);
   const team = teams.data?.find((t) => t.id === teamId);
@@ -54,6 +42,7 @@ export default function Picks() {
         <WeekSelect
           weeks={weeks}
           defaultType="last"
+          selectedWeek={week}
           onChange={(w) => setWeek(w.week)}
           className="bg-accent text-accent-foreground flex-1"
         />
@@ -63,10 +52,10 @@ export default function Picks() {
               value: t.id.toString(),
               display: t.name,
             }))}
-            defaultValue={teamId.toString()}
+            value={teamId.toString()}
             onChange={(v) => {
               const teamId = parseInt(v);
-              setTeamId(teamId);
+              setSelectedTeamId(teamId);
             }}
             className="bg-accent text-accent-foreground flex-1"
           />

@@ -11,8 +11,8 @@ catalog:
   dotenv-cli: ^10.0.0
   drizzle-orm: ^0.44.5
   eslint: ^9.35.0
-  next-auth: ^4.24.11
-  nodemailer: ^6.10.1
+  next-auth: ^4.24.15
+  nodemailer: ^7.0.7
   prettier: ^3.6.2
   prettier-plugin-tailwindcss: ^0.6.14
   redis: ^5.8.2
@@ -27,16 +27,16 @@ catalog:
   "@trpc/server": ^11.5.1
 catalogs:
   react19:
-    react: 19.1.1
-    react-dom: 19.1.1
-    "@types/react": ^19.1.13
-    "@types/react-dom": ^19.1.9
+    react: 19.2.8
+    react-dom: 19.2.8
+    "@types/react": ^19.2.18
+    "@types/react-dom": ^19.2.4
 overrides:
   react: catalog:react19
   react-dom: catalog:react19
 peerDependencyRules:
   allowedVersions:
-    "next-auth>@auth/core": 0.40.0
+    "next-auth>@auth/core": 0.41.3
 allowBuilds:
   "@prisma/client": false
   "@prisma/engines": false

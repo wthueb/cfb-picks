@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "dev": "pnpm with-env next dev --turbo",
+    "dev": "pnpm with-env next dev",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "pnpm with-env next start",
@@ -14,7 +14,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@auth/drizzle-adapter": "^1.10.0",
+    "@auth/drizzle-adapter": "^1.11.3",
     "@cfb-picks/cfbd": "workspace:*",
     "@cfb-picks/db": "workspace:*",
     "@cfb-picks/lib": "workspace:*",
@@ -40,7 +40,7 @@
     "date-fns-tz": "catalog:",
     "drizzle-orm": "catalog:",
     "lucide-react": "^0.544.0",
-    "next": "^15.5.3",
+    "next": "16.3.1",
     "next-auth": "catalog:",
     "nodemailer": "catalog:",
     "react": "catalog:react19",
@@ -50,7 +50,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@auth/core": "^0.40.0",
+    "@auth/core": "^0.41.3",
     "@cfb-picks/eslint-config": "workspace:*",
     "@cfb-picks/prettier-config": "workspace:*",
     "@cfb-picks/tsconfig": "workspace:*",

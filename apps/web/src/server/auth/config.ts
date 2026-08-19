@@ -1,5 +1,5 @@
 import type { InferSelectModel } from "drizzle-orm";
-import type { NextAuthOptions } from "next-auth";
+import type { DefaultSession, NextAuthOptions } from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -11,7 +11,7 @@ import { accounts, sessions, teams, users, verificationTokens } from "@cfb-picks
 
 import { env } from "~/env";
 
-type SessionUser = {
+type SessionUser = NonNullable<DefaultSession["user"]> & {
   id: string;
   teamId: number;
   team: InferSelectModel<typeof teams>;
@@ -19,13 +19,19 @@ type SessionUser = {
 };
 
 declare module "next-auth/adapters" {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface AdapterUser extends InferSelectModel<typeof users> {}
+  interface AdapterUser {
+    teamId: number;
+    sendNotifications: boolean;
+    isAdmin: boolean;
+  }
 }
 
 declare module "@auth/core/adapters" {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface AdapterUser extends InferSelectModel<typeof users> {}
+  interface AdapterUser {
+    teamId: number;
+    sendNotifications: boolean;
+    isAdmin: boolean;
+  }
 }
 
 declare module "next-auth" {

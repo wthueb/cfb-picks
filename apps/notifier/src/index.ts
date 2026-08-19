@@ -1,5 +1,5 @@
-import { render } from "@react-email/components";
 import nodemailer from "nodemailer";
+import { render } from "react-email";
 
 import type { Game } from "@cfb-picks/cfbd";
 import type { InferSelectModel } from "@cfb-picks/db";

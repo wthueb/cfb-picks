@@ -1,12 +1,4 @@
-import {
-  Body,
-  Font,
-  Head,
-  Html,
-  pixelBasedPreset,
-  Preview,
-  Tailwind,
-} from "@react-email/components";
+import { Body, Font, Head, Html, pixelBasedPreset, Preview, Tailwind } from "react-email";
 
 import type { Game } from "@cfb-picks/cfbd";
 import type { InferSelectModel } from "@cfb-picks/db";

@@ -19,13 +19,13 @@
     "@cfb-picks/cfbd": "workspace:*",
     "@cfb-picks/db": "workspace:*",
     "@cfb-picks/lib": "workspace:*",
-    "@react-email/components": "^1.0.12",
     "@t3-oss/env-core": "catalog:",
     "date-fns": "catalog:",
     "date-fns-tz": "catalog:",
     "nodemailer": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "react-email": "^6.9.2",
     "redis": "catalog:",
     "zod": "catalog:"
   },
@@ -33,7 +33,7 @@
     "@cfb-picks/eslint-config": "workspace:*",
     "@cfb-picks/prettier-config": "workspace:*",
     "@cfb-picks/tsconfig": "workspace:*",
-    "@react-email/preview-server": "^4.2.11",
+    "@react-email/ui": "^6.9.2",
     "@types/node": "catalog:",
     "@types/nodemailer": "catalog:",
     "@types/react": "catalog:react19",
@@ -41,8 +41,7 @@
     "dotenv-cli": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "react-email": "^4.2.11",
-    "tsx": "^4.20.5",
+    "tsx": "^4.23.12",
     "typescript": "catalog:"
   },
   "prettier": "@cfb-picks/prettier-config"

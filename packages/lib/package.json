@@ -33,6 +33,7 @@
     "@cfb-picks/eslint-config": "workspace:*",
     "@cfb-picks/prettier-config": "workspace:*",
     "@cfb-picks/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

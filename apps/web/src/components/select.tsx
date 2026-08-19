@@ -48,7 +48,7 @@ export function Select<T extends string, G extends string>(props: {
     const itemsArray = props.items as SelectItem<T>[];
     displayString =
       typeof itemsArray[0] === "string"
-        ? (props.value as T)
+        ? props.value
         : ((itemsArray as SelectItemWithDisplay<T>[]).find((item) => item.value === props.value)
             ?.display ?? props.value);
   }

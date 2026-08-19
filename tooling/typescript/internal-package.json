@@ -9,6 +9,7 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "noEmit": false,
+    "rootDir": "${configDir}",
     "outDir": "${configDir}/dist"
   }
 }

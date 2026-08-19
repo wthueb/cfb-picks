@@ -44,7 +44,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.15",
+    "@libsql/client": "^0.17.4",
     "@t3-oss/env-core": "catalog:",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "^0.8.3",
@@ -54,8 +54,9 @@
     "@cfb-picks/eslint-config": "workspace:*",
     "@cfb-picks/prettier-config": "workspace:*",
     "@cfb-picks/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
     "dotenv-cli": "catalog:",
-    "drizzle-kit": "^0.31.4",
+    "drizzle-kit": "^0.31.10",
     "eslint": "catalog:",
     "next-auth": "catalog:",
     "prettier": "catalog:",

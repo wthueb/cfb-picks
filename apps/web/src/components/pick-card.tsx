@@ -98,11 +98,11 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
           {(actionType === ActionType.EditDelete || session.data?.user.isAdmin) && (
             <div>
               <AddPickDialog pick={pick} week={pick.week}>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" aria-label={`Edit pick ${props.num + 1}`}>
                   <Pencil />
                 </Button>
               </AddPickDialog>
-              <DeleteButton pickId={pick.id} />
+              <DeleteButton pickId={pick.id} pickNumber={props.num + 1} />
             </div>
           )}
         </CardAction>
@@ -134,7 +134,7 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
   );
 }
 
-function DeleteButton(props: { pickId: number }) {
+function DeleteButton(props: { pickId: number; pickNumber: number }) {
   const util = api.useUtils();
 
   const deletePick = api.picks.deletePick.useMutation({
@@ -146,7 +146,12 @@ function DeleteButton(props: { pickId: number }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive"
+          aria-label={`Delete pick ${props.pickNumber}`}
+        >
           <Trash2 />
         </Button>
       </AlertDialogTrigger>

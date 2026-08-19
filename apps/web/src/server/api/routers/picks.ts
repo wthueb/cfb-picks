@@ -3,10 +3,13 @@ import { and, eq } from "drizzle-orm";
 import z from "zod";
 
 import type { CFBPick } from "@cfb-picks/db/schema";
-import { getGameById } from "@cfb-picks/cfbd";
+import type { PickInsight } from "@cfb-picks/lib/board";
+import { getGameById, getGamesForYear } from "@cfb-picks/cfbd";
 import { durations, overUnderPickTypes, picks, teamTotalPickTypes } from "@cfb-picks/db/schema";
+import { classifyPickInsights } from "@cfb-picks/lib/board";
 import { isGameLocked } from "@cfb-picks/lib/dates";
-import { getPotential, scorePick, scorePickByWagerAmount } from "@cfb-picks/lib/picks";
+import { scorePick, scorePickByWagerAmount } from "@cfb-picks/lib/picks";
+import { aggregateTeamPerformance, rankTeamPerformance } from "@cfb-picks/lib/stats";
 
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -67,75 +70,140 @@ export const picksRouter = createTRPCRouter({
 
     const teams = [];
 
-    for (const team of res) {
+    for (const { picks: teamPicks, ...team } of res) {
       if (env.NODE_ENV === "production" && team.id === 1) continue;
 
-      const picks = [];
+      const scoredPicks = [];
 
-      for (const pick of team.picks.map((p) => asTypedPick(p))) {
+      for (const pick of teamPicks.map((p) => asTypedPick(p))) {
         const game = await getGameById(pick.gameId);
 
         if (!game) throw new Error(`Game not found for gameId ${pick.gameId}`);
 
         if (!game.completed) continue;
 
-        picks.push({
-          ...pick,
-          potential: getPotential(pick),
-          result: scorePick(pick, game),
-          resultByWagerAmount: scorePickByWagerAmount(pick, game),
+        const result = scorePick(pick, game);
+        const resultByWagerAmount = scorePickByWagerAmount(pick, game);
+
+        if (result === null || resultByWagerAmount === null) continue;
+
+        scoredPicks.push({
+          id: pick.id,
+          week: pick.week,
+          pickType: pick.pickType,
+          duration: pick.duration,
+          double: pick.double,
+          result,
+          resultByWagerAmount,
+          startDate: game.startDate,
         });
       }
 
-      teams.push({
-        ...team,
-        picks,
-        totalPicks: picks.length,
-        wins: picks.filter((p) => p.result !== null && p.result > 0).length,
-        losses: picks.filter((p) => p.result !== null && p.result < 0).length,
-        potential: picks.reduce((acc, p) => acc + p.potential, 0),
-        winnings: picks.reduce((acc, p) => acc + (p.result ?? 0), 0),
-        winningsByWagerAmount: picks.reduce((acc, p) => acc + (p.resultByWagerAmount ?? 0), 0),
-      });
+      teams.push({ team, scoredPicks });
     }
 
-    return teams.sort((a, b) => b.winnings - a.winnings);
+    const latestWeek = Math.max(0, ...teams.flatMap((team) => team.scoredPicks.map((p) => p.week)));
+    const rankedTeams = rankTeamPerformance(
+      teams.map(({ team, scoredPicks }) => ({
+        ...team,
+        ...aggregateTeamPerformance(scoredPicks, latestWeek),
+      })),
+    );
+
+    return { latestWeek, teams: rankedTeams };
   }),
 
-  teams: protectedProcedure.query(async ({ ctx }) => {
-    const res = await ctx.db.query.teams.findMany({
-      with: {
-        users: { columns: { id: true, name: true } },
-        picks: {
-          where: (pick, { eq }) => eq(pick.season, env.SEASON),
+  weeklyBoard: protectedProcedure
+    .input(z.object({ week: z.number().int().min(1).max(52).optional() }))
+    .query(async ({ input, ctx }) => {
+      const res = await ctx.db.query.teams.findMany({
+        with: {
+          users: { columns: { id: true, name: true } },
+          picks: {
+            where: (pick, { eq }) => eq(pick.season, env.SEASON),
+          },
         },
-      },
-    });
+      });
 
-    const teams = [];
+      const visiblePicks = [];
 
-    for (const team of res) {
-      if (env.NODE_ENV === "production" && team.id === 1) continue;
+      for (const { picks: teamPicks, ...team } of res) {
+        if (env.NODE_ENV === "production" && team.id === 1) continue;
 
-      const picks = [];
+        for (const pick of teamPicks.map((p) => asTypedPick(p))) {
+          const game = await getGameById(pick.gameId);
+          if (!game) throw new Error(`Game not found for gameId ${pick.gameId}`);
 
-      for (const pick of team.picks.map((p) => asTypedPick(p))) {
-        const game = await getGameById(pick.gameId);
-        if (!game) throw new Error(`Game not found for gameId ${pick.gameId}`);
+          const revealed = ctx.session.user.isAdmin || isGameLocked(game.startDate);
+          const visible = revealed || pick.teamId === ctx.session.user.teamId;
+          if (!visible) continue;
 
-        if (!ctx.session.user.isAdmin && !isGameLocked(game.startDate)) continue;
-
-        picks.push({ ...pick, game } satisfies PickWithGame);
+          visiblePicks.push({ pick, game, team, revealed });
+        }
       }
 
-      teams.push({
-        ...team,
-        picks: picks.sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime()),
-      });
-    }
+      const latestVisibleWeek = Math.max(0, ...visiblePicks.map((entry) => entry.pick.week));
+      const week = input.week ?? (latestVisibleWeek || undefined);
+      const gamesForYear = await getGamesForYear(env.SEASON);
+      const currentWeek =
+        gamesForYear
+          .filter((game) => !game.completed)
+          .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0]?.week ?? 1;
+      const selectedWeek = week ?? currentWeek;
+      const weekPicks = visiblePicks.filter((entry) => entry.pick.week === selectedWeek);
+      const classified = classifyPickInsights(
+        weekPicks.filter((entry) => entry.revealed).map((entry) => ({ pick: entry.pick })),
+      );
+      const insights = new Map(classified.map((entry) => [entry.pick.id, entry.insight]));
+      const boardPicks = weekPicks.map((entry) => {
+        const insight: PickInsight | "pending" = entry.revealed
+          ? (insights.get(entry.pick.id) ?? "unique")
+          : "pending";
 
-    return teams;
-  }),
+        return { ...entry, insight };
+      });
+
+      const teamResults = res
+        .filter((team) => env.NODE_ENV !== "production" || team.id !== 1)
+        .map(({ picks: _picks, ...team }) => ({
+          ...team,
+          picks: boardPicks
+            .filter((entry) => entry.team.id === team.id)
+            .sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime())
+            .map(({ pick, game, insight }) => ({ pick, game, insight })),
+        }));
+
+      const gameGroups = new Map<number, typeof boardPicks>();
+
+      for (const entry of boardPicks) {
+        gameGroups.set(entry.game.id, [...(gameGroups.get(entry.game.id) ?? []), entry]);
+      }
+
+      const gameResults = Array.from(gameGroups.entries())
+        .flatMap(([id, entries]) => {
+          const firstEntry = entries[0];
+          if (!firstEntry) return [];
+
+          return [
+            {
+              id,
+              game: firstEntry.game,
+              picks: entries.map(({ pick, team, insight }) => ({ pick, team, insight })),
+            },
+          ];
+        })
+        .sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime());
+
+      const weekGames = gamesForYear.filter((game) => game.week === selectedWeek);
+
+      return {
+        week: selectedWeek,
+        allGamesLocked:
+          weekGames.length > 0 && weekGames.every((game) => isGameLocked(game.startDate)),
+        teams: teamResults,
+        games: gameResults,
+      };
+    }),
 
   selfPicks: protectedProcedure
     .input(
@@ -167,7 +235,8 @@ export const picksRouter = createTRPCRouter({
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {
-    const teamId = "teamId" in input ? input.teamId : ctx.session.user.teamId;
+    const teamId =
+      "teamId" in input && ctx.session.user.isAdmin ? input.teamId : ctx.session.user.teamId;
 
     const existingPicks = await ctx.db
       .select()
@@ -182,7 +251,7 @@ export const picksRouter = createTRPCRouter({
       throw new Error("Moneyline picks can no longer be created");
     }
 
-    if (!id && existingPicks.length > 5) {
+    if (!id && existingPicks.length >= 5) {
       throw new Error("Already have 5 picks for this week");
     }
 

@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useId, useReducer, useState } from "react";
 
 import type { CFBPick, Duration, PickType } from "@cfb-picks/db/schema";
 import { durations, isTeamTotalPickType, pickTypes } from "@cfb-picks/db/schema";
@@ -99,6 +99,7 @@ function pickFormReducer(state: PickFormState, action: PickFormAction): PickForm
 
 export function AddPickDialog(props: { pick?: CFBPick; week: number; children: React.ReactNode }) {
   const [state, dispatch] = useReducer(pickFormReducer, initialState);
+  const formId = useId();
 
   const clear = () => dispatch({ type: "RESET" });
 
@@ -121,6 +122,17 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
 
   const [open, setOpen] = useState(false);
 
+  const marketComplete =
+    state.pickType === "SPREAD"
+      ? state.team !== undefined && state.spread !== undefined
+      : state.pickType === "MONEYLINE"
+        ? state.team !== undefined
+        : isTeamTotalPickType(state.pickType)
+          ? state.team !== undefined && state.total !== undefined
+          : state.total !== undefined;
+  const canSave =
+    state.game !== undefined && state.odds !== undefined && state.odds !== 0 && marketComplete;
+
   useEffect(() => {
     if (props.pick && games.data) {
       const game = games.data.find((g) => g.id === props.pick?.gameId);
@@ -141,20 +153,10 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
   const addPick = () => {
     if (!state.game) return;
 
-    if (!state.odds) {
-      console.error("Odds are required.");
-      return;
-    }
+    if (state.odds === undefined || state.odds === 0) return;
 
     if (state.pickType === "SPREAD") {
-      if (!state.spread) {
-        console.error("Spread is required for SPREAD pick type.");
-        return;
-      }
-      if (!state.team) {
-        console.error("Team is required for SPREAD pick type.");
-        return;
-      }
+      if (state.spread === undefined || state.team === undefined) return;
       makePick.mutate({
         id: props.pick?.id,
         teamId: props.pick?.teamId,
@@ -168,10 +170,7 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
         spread: state.spread,
       });
     } else if (state.pickType === "MONEYLINE") {
-      if (!state.team) {
-        console.error("Team is required for MONEYLINE pick type.");
-        return;
-      }
+      if (state.team === undefined) return;
       makePick.mutate({
         id: props.pick?.id,
         teamId: props.pick?.teamId,
@@ -184,14 +183,7 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
         cfbTeamId: state.team,
       });
     } else if (isTeamTotalPickType(state.pickType)) {
-      if (!state.team) {
-        console.error("Team is required for team total pick type.");
-        return;
-      }
-      if (!state.total) {
-        console.error("Total is required for team total pick type.");
-        return;
-      }
+      if (state.team === undefined || state.total === undefined) return;
       makePick.mutate({
         id: props.pick?.id,
         teamId: props.pick?.teamId,
@@ -205,10 +197,7 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
         total: state.total,
       });
     } else {
-      if (!state.total) {
-        console.error("Total is required for over/under pick type.");
-        return;
-      }
+      if (state.total === undefined) return;
       makePick.mutate({
         id: props.pick?.id,
         teamId: props.pick?.teamId,
@@ -238,11 +227,14 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (nextOpen && !props.pick) clear();
+        if (nextOpen) {
+          makePick.reset();
+          if (!props.pick) clear();
+        }
       }}
     >
       <DialogTrigger asChild>{props.children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader className="text-center">
           <DialogTitle>
             {!props.pick ? "Add" : "Edit"} Pick for Week {props.week}
@@ -253,29 +245,35 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
         </DialogHeader>
         <div className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Game</Label>
+            <Label htmlFor={`${formId}-game`}>Game</Label>
             <GameCombobox
+              id={`${formId}-game`}
+              ariaLabel="Game"
               games={games.data ?? []}
               value={state.game}
               onChange={(game) => dispatch({ type: "SET_GAME", game })}
             />
           </div>
           {state.game ? (
-            <div className="flex flex-wrap justify-evenly gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>Pick Type</Label>
+            <div className="grid min-w-0 grid-cols-2 gap-4 sm:grid-cols-[8rem_minmax(0,1fr)_8rem]">
+              <div className="col-start-1 row-start-1 flex min-w-0 flex-col gap-2">
+                <Label htmlFor={`${formId}-pick-type`}>Pick Type</Label>
                 <Select
+                  id={`${formId}-pick-type`}
+                  ariaLabel="Pick type"
                   items={pickTypeSelectItems}
                   value={state.pickType}
                   onChange={(pickType) => dispatch({ type: "SET_PICK_TYPE", pickType })}
-                  className="w-[130px]"
+                  className="w-full min-w-0"
                 />
               </div>
               {state.pickType === "SPREAD" || state.pickType === "MONEYLINE" ? (
                 <>
-                  <div className="flex flex-1 flex-col gap-2">
-                    <Label>Team</Label>
+                  <div className="col-span-2 col-start-1 row-start-2 flex min-w-0 flex-col gap-2 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+                    <Label htmlFor={`${formId}-team`}>Team</Label>
                     <Select
+                      id={`${formId}-team`}
+                      ariaLabel="Team"
                       items={[state.game.homeTeam, state.game.awayTeam]}
                       value={selectedTeamName}
                       onChange={(t) =>
@@ -284,33 +282,37 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
                           team: t === state.game?.homeTeam ? state.game.homeId : state.game?.awayId,
                         })
                       }
-                      className="w-full"
+                      className="w-full min-w-0"
                     />
                   </div>
                   {state.pickType === "SPREAD" && (
-                    <div className="flex flex-col gap-2">
-                      <Label>Spread</Label>
+                    <div className="col-start-2 row-start-1 flex min-w-0 flex-col gap-2 sm:col-start-3">
+                      <Label htmlFor={`${formId}-spread`}>Spread</Label>
                       <Input
+                        id={`${formId}-spread`}
                         type="number"
                         placeholder="+/- number"
                         step={0.5}
-                        defaultValue={state.spread}
+                        value={state.spread ?? ""}
+                        aria-invalid={state.spread === undefined}
                         onChange={(e) =>
                           dispatch({
                             type: "SET_SPREAD",
                             spread: !e.target.value ? undefined : parseFloat(e.target.value),
                           })
                         }
-                        className="w-[130px]"
+                        className="w-full min-w-0"
                       />
                     </div>
                   )}
                 </>
               ) : isTeamTotalPickType(state.pickType) ? (
                 <>
-                  <div className="flex flex-1 flex-col gap-2">
-                    <Label>Team</Label>
+                  <div className="col-span-2 col-start-1 row-start-2 flex min-w-0 flex-col gap-2 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+                    <Label htmlFor={`${formId}-team`}>Team</Label>
                     <Select
+                      id={`${formId}-team`}
+                      ariaLabel="Team"
                       items={[state.game.homeTeam, state.game.awayTeam]}
                       value={selectedTeamName}
                       onChange={(t) =>
@@ -319,43 +321,47 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
                           team: t === state.game?.homeTeam ? state.game.homeId : state.game?.awayId,
                         })
                       }
-                      className="w-full"
+                      className="w-full min-w-0"
                     />
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Label>Total</Label>
+                  <div className="col-start-2 row-start-1 flex min-w-0 flex-col gap-2 sm:col-start-3">
+                    <Label htmlFor={`${formId}-total`}>Total</Label>
                     <Input
+                      id={`${formId}-total`}
                       type="number"
                       placeholder="number"
                       min={0}
                       step={0.5}
-                      defaultValue={state.total}
+                      value={state.total ?? ""}
+                      aria-invalid={state.total === undefined}
                       onChange={(e) =>
                         dispatch({
                           type: "SET_TOTAL",
                           total: !e.target.value ? undefined : parseFloat(e.target.value),
                         })
                       }
-                      className="w-[130px]"
+                      className="w-full min-w-0"
                     />
                   </div>
                 </>
               ) : (
-                <div className="flex flex-1 flex-col gap-2">
-                  <Label>Total</Label>
+                <div className="col-start-2 row-start-1 flex min-w-0 flex-col gap-2 sm:col-span-2 sm:col-start-2">
+                  <Label htmlFor={`${formId}-total`}>Total</Label>
                   <Input
+                    id={`${formId}-total`}
                     type="number"
                     placeholder="number"
                     min={0}
                     step={0.5}
-                    defaultValue={state.total}
+                    value={state.total ?? ""}
+                    aria-invalid={state.total === undefined}
                     onChange={(e) =>
                       dispatch({
                         type: "SET_TOTAL",
                         total: !e.target.value ? undefined : parseFloat(e.target.value),
                       })
                     }
-                    className="w-full"
+                    className="w-full min-w-0"
                   />
                 </div>
               )}
@@ -363,41 +369,47 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
           ) : (
             <Skeleton className="h-16.5 w-full" />
           )}
-          <div className="flex flex-wrap items-center justify-evenly gap-4">
-            <div className="flex flex-col gap-2">
-              <Label>Duration</Label>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-4">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor={`${formId}-duration`}>Duration</Label>
               <Select
+                id={`${formId}-duration`}
+                ariaLabel="Duration"
                 items={durations}
                 value={state.duration}
                 onChange={(duration) => dispatch({ type: "SET_DURATION", duration })}
+                className="w-full min-w-0"
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="odds">Odds</Label>
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor={`${formId}-odds`}>Odds</Label>
               <Input
-                id="odds"
+                id={`${formId}-odds`}
                 type="number"
                 placeholder="+/- number"
                 step={10}
-                defaultValue={state.odds}
+                value={state.odds ?? ""}
+                aria-invalid={
+                  state.game !== undefined && (state.odds === undefined || state.odds === 0)
+                }
                 onChange={(e) =>
                   dispatch({
                     type: "SET_ODDS",
                     odds: !e.target.value ? undefined : parseFloat(e.target.value),
                   })
                 }
-                className="w-[130px]"
+                className="w-full min-w-0"
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="double">Double</Label>
+            <div className="flex h-full flex-col gap-2">
+              <Label htmlFor={`${formId}-double`}>Double</Label>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div>
+                  <div className="flex grow items-center">
                     <Switch
-                      id="double"
+                      id={`${formId}-double`}
                       disabled={!canDouble}
-                      defaultChecked={state.double}
+                      checked={state.double}
                       onCheckedChange={(double) => dispatch({ type: "SET_DOUBLE", double })}
                     />
                   </div>
@@ -413,13 +425,19 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
             </div>
           </div>
         </div>
+        <div className="min-h-5">
+          {makePick.isError && (
+            <p className="text-destructive text-sm" role="alert">
+              {makePick.error.message || "Unable to save this pick."}
+            </p>
+          )}
+        </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          {/* TODO: disable button */}
-          <Button type="submit" onClick={addPick}>
-            Save Pick
+          <Button type="button" onClick={addPick} disabled={!canSave || makePick.isPending}>
+            {makePick.isPending ? "Saving..." : "Save Pick"}
           </Button>
         </DialogFooter>
       </DialogContent>

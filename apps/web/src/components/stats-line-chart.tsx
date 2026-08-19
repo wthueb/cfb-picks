@@ -27,23 +27,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { cn } from "~/lib/utils";
 
-type TeamStats = RouterOutputs["picks"]["stats"][number];
+type TeamStats = RouterOutputs["picks"]["stats"]["teams"][number];
 type ChartDatum = { week: number } & Record<string, number>;
 type Metric = "1u" | "wager";
-
-const metricConfig = {
-  "1u": {
-    title: "1u Results",
-    resultKey: "result",
-    ariaLabel: "Cumulative overall 1u bet score for each team by week",
-  },
-  wager: {
-    title: "Wager Results",
-    resultKey: "resultByWagerAmount",
-    ariaLabel: "Cumulative overall wager result for each team by week",
-  },
-} as const;
+type Mode = "cumulative" | "weekly";
 
 const chartColors = [
   "var(--chart-1)",
@@ -52,7 +41,6 @@ const chartColors = [
   "var(--chart-4)",
   "var(--chart-5)",
 ] as const;
-
 const dashPatterns = [undefined, "8 4", "3 3"] as const;
 const chartLabelFontSize = "0.875rem";
 const chartMargin = { top: 8, right: 36, bottom: 20, left: 0 } as const;
@@ -70,40 +58,22 @@ function seriesStyle(index: number) {
   };
 }
 
-function formatUnits(value: number) {
+export function formatUnits(value: number) {
   const rounded = Number(value.toFixed(2));
   return `${rounded > 0 ? "+" : ""}${rounded}u`;
 }
 
-function buildChartData(teams: TeamStats[], metric: Metric) {
-  const latestWeek = Math.max(0, ...teams.flatMap((team) => team.picks.map((pick) => pick.week)));
+function getValue(team: TeamStats, week: number, metric: Metric, mode: Mode) {
+  const result = team.weekly.find((entry) => entry.week === week);
+  if (!result) return 0;
+  if (metric === "1u") return mode === "cumulative" ? result.cumulative1u : result.net1u;
+  return mode === "cumulative" ? result.cumulativeWager : result.netWager;
+}
 
-  if (latestWeek === 0) return [];
+function buildChartData(teams: TeamStats[]) {
+  const latestWeek = Math.max(0, ...teams.flatMap((team) => team.weekly.map((week) => week.week)));
 
-  const weeklyResults = new Map<string, number>();
-
-  for (const team of teams) {
-    for (const pick of team.picks) {
-      const key = `${team.id}:${pick.week}`;
-      const result = pick[metricConfig[metric].resultKey];
-      weeklyResults.set(key, (weeklyResults.get(key) ?? 0) + (result ?? 0));
-    }
-  }
-
-  const totals = new Map(teams.map((team) => [team.id, 0]));
-
-  return Array.from({ length: latestWeek }, (_, index) => {
-    const week = index + 1;
-    const datum: ChartDatum = { week };
-
-    for (const team of teams) {
-      const total = (totals.get(team.id) ?? 0) + (weeklyResults.get(`${team.id}:${week}`) ?? 0);
-      totals.set(team.id, total);
-      datum[seriesKey(team.id)] = total;
-    }
-
-    return datum;
-  });
+  return Array.from({ length: latestWeek }, (_, index) => ({ week: index + 1 }));
 }
 
 function PerformanceTooltip({ active, label, payload }: TooltipContentProps) {
@@ -135,26 +105,52 @@ function PerformanceTooltip({ active, label, payload }: TooltipContentProps) {
 
 export function StatsLineChart(props: { teams: TeamStats[] }) {
   const [metric, setMetric] = useState<Metric>("1u");
+  const [mode, setMode] = useState<Mode>("cumulative");
   const [chartWidth, setChartWidth] = useState(0);
-  const config = metricConfig[metric];
-  const data = buildChartData(props.teams, metric);
+  const [hiddenTeamIds, setHiddenTeamIds] = useState<number[]>([]);
+  const baseData = buildChartData(props.teams);
+  const data: ChartDatum[] = baseData.map(({ week }) => {
+    const datum: ChartDatum = { week };
+    for (const team of props.teams) datum[seriesKey(team.id)] = getValue(team, week, metric, mode);
+    return datum;
+  });
   const availableTickWidth = chartWidth - chartMargin.left - chartMargin.right - yAxisWidth;
   const showEveryWeek =
     chartWidth === 0 || availableTickWidth >= data.length * minimumWeekTickWidth;
   const visibleWeeks = data
     .map(({ week }) => week)
     .filter((week) => showEveryWeek || week % 2 === 0);
+  const title = `${mode === "cumulative" ? "Cumulative" : "Weekly"} ${metric === "1u" ? "1u" : "Wager"} Results`;
+
+  const toggleTeam = (teamId: number) => {
+    setHiddenTeamIds((current) =>
+      current.includes(teamId) ? current.filter((id) => id !== teamId) : [...current, teamId],
+    );
+  };
 
   return (
     <Card className="w-full gap-4">
       <CardHeader>
-        <CardTitle className="text-primary-foreground">{config.title}</CardTitle>
-        <CardDescription>Cumulative results from completed picks by week</CardDescription>
-        <CardAction>
+        <CardTitle className="text-primary-foreground">{title}</CardTitle>
+        <CardDescription>Completed-pick performance by week</CardDescription>
+        <CardAction className="flex gap-2">
+          <Select value={mode} onValueChange={(value) => setMode(value as Mode)}>
+            <SelectTrigger
+              size="sm"
+              className="bg-accent text-accent-foreground w-32"
+              aria-label="Chart mode"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cumulative">Cumulative</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={metric} onValueChange={(value) => setMetric(value as Metric)}>
             <SelectTrigger
               size="sm"
-              className="bg-accent text-accent-foreground w-28"
+              className="bg-accent text-accent-foreground w-24"
               aria-label="Result calculation"
             >
               <SelectValue />
@@ -177,7 +173,7 @@ export function StatsLineChart(props: { teams: TeamStats[] }) {
                   data={data}
                   margin={chartMargin}
                   accessibilityLayer
-                  aria-label={config.ariaLabel}
+                  aria-label={`${title} for each team by week`}
                 >
                   <CartesianGrid vertical={false} stroke="var(--border)" />
                   <XAxis
@@ -213,7 +209,6 @@ export function StatsLineChart(props: { teams: TeamStats[] }) {
                   />
                   {props.teams.map((team, index) => {
                     const style = seriesStyle(index);
-
                     return (
                       <Line
                         key={team.id}
@@ -226,21 +221,28 @@ export function StatsLineChart(props: { teams: TeamStats[] }) {
                         dot={{ r: 3, strokeWidth: 2, fill: "var(--card)" }}
                         activeDot={{ r: 5 }}
                         isAnimationActive={false}
+                        hide={hiddenTeamIds.includes(team.id)}
                       />
                     );
                   })}
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div
-              className="text-muted-foreground mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm"
-              aria-label="Team legend"
-            >
+            <div className="mt-4 flex flex-wrap justify-center gap-2" aria-label="Team legend">
               {props.teams.map((team, index) => {
                 const style = seriesStyle(index);
-
+                const visible = !hiddenTeamIds.includes(team.id);
                 return (
-                  <span key={team.id} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    key={team.id}
+                    className={cn(
+                      "text-muted-foreground hover:bg-accent flex items-center gap-2 rounded-md px-2 py-1 text-sm",
+                      !visible && "opacity-40",
+                    )}
+                    aria-pressed={visible}
+                    onClick={() => toggleTeam(team.id)}
+                  >
                     <svg width="24" height="8" aria-hidden="true">
                       <line
                         x1="1"
@@ -253,7 +255,7 @@ export function StatsLineChart(props: { teams: TeamStats[] }) {
                       />
                     </svg>
                     {team.name}
-                  </span>
+                  </button>
                 );
               })}
             </div>

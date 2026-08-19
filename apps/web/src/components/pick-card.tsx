@@ -37,13 +37,6 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
 
   const { pick } = props;
 
-  const team =
-    "cfbTeamId" in pick
-      ? pick.game.homeId === pick.cfbTeamId
-        ? pick.game.homeTeam
-        : pick.game.awayTeam
-      : undefined;
-
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -52,7 +45,7 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
   }, []);
 
   const pickStatus = useMemo(() => getPickResult(pick, pick.game), [pick]);
-  const gameLocked = useMemo(() => isGameLocked(pick.game.startDate), [pick]);
+  const gameLocked = useMemo(() => isGameLocked(pick.game.startDate, now), [pick, now]);
 
   enum ActionType {
     EditDelete,
@@ -92,14 +85,26 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
         <CardAction className="flex items-center gap-2">
           {actionType === ActionType.Locked && <Locked />}
           {actionType === ActionType.InProgress && <InProgress />}
-          {actionType === ActionType.Win && <Check className="text-primary-foreground" />}
-          {actionType === ActionType.Loss && <X className="text-destructive" />}
-          {actionType === ActionType.Push && <Minus />}
+          {actionType === ActionType.Win && (
+            <span aria-label="Pick won" role="img">
+              <Check className="text-primary-foreground" aria-hidden="true" />
+            </span>
+          )}
+          {actionType === ActionType.Loss && (
+            <span aria-label="Pick lost" role="img">
+              <X className="text-destructive" aria-hidden="true" />
+            </span>
+          )}
+          {actionType === ActionType.Push && (
+            <span aria-label="Pick pushed" role="img">
+              <Minus aria-hidden="true" />
+            </span>
+          )}
           {(actionType === ActionType.EditDelete || session.data?.user.isAdmin) && (
             <div>
               <AddPickDialog pick={pick} week={pick.week}>
                 <Button variant="ghost" size="icon" aria-label={`Edit pick ${props.num + 1}`}>
-                  <Pencil />
+                  <Pencil aria-hidden="true" />
                 </Button>
               </AddPickDialog>
               <DeleteButton pickId={pick.id} pickNumber={props.num + 1} />
@@ -108,17 +113,7 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <span>
-          {pick.pickType === "SPREAD"
-            ? `${team} ${pick.spread > 0 ? "+" : ""}${pick.spread}`
-            : pick.pickType === "MONEYLINE"
-              ? `${team} ML`
-              : isTeamTotalPickType(pick.pickType)
-                ? `${team} Team Total ${pick.pickType.endsWith("OVER") ? "o" : "u"}${pick.total}`
-                : `${pick.pickType === "OVER" ? "o" : "u"}${pick.total}`}
-          {pick.duration !== "FULL" && ` (${pick.duration}) `}
-          {` (${pick.odds > 0 ? "+" : ""}${pick.odds})${pick.double ? " (2u)" : ""}`}
-        </span>
+        <span>{formatPick(pick)}</span>
       </CardContent>
       {/* we don't get live scores unless we use different endpoints */}
       {pick.game.completed && (
@@ -152,7 +147,7 @@ function DeleteButton(props: { pickId: number; pickNumber: number }) {
           className="text-destructive"
           aria-label={`Delete pick ${props.pickNumber}`}
         >
-          <Trash2 />
+          <Trash2 aria-hidden="true" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -178,7 +173,9 @@ function Locked() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Lock />
+        <span aria-label="Pick is locked" role="img">
+          <Lock aria-hidden="true" />
+        </span>
       </TooltipTrigger>
       <TooltipContent side="left" className="bg-accent">
         <p className="text-accent-foreground text-sm">Pick is locked</p>
@@ -191,11 +188,34 @@ function InProgress() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <CircleDashed />
+        <span aria-label="Game in progress" role="img">
+          <CircleDashed aria-hidden="true" />
+        </span>
       </TooltipTrigger>
       <TooltipContent side="left" className="bg-accent">
         <p className="text-accent-foreground text-sm">Game in progress</p>
       </TooltipContent>
     </Tooltip>
   );
+}
+
+export function formatPick(pick: PickWithGame) {
+  const team =
+    "cfbTeamId" in pick
+      ? pick.game.homeId === pick.cfbTeamId
+        ? pick.game.homeTeam
+        : pick.game.awayTeam
+      : undefined;
+  const selection =
+    pick.pickType === "SPREAD"
+      ? `${team} ${pick.spread > 0 ? "+" : ""}${pick.spread}`
+      : pick.pickType === "MONEYLINE"
+        ? `${team} ML`
+        : isTeamTotalPickType(pick.pickType)
+          ? `${team} Team Total ${pick.pickType.endsWith("OVER") ? "o" : "u"}${pick.total}`
+          : `${pick.pickType === "OVER" ? "o" : "u"}${pick.total}`;
+  const duration = pick.duration === "FULL" ? "" : ` (${pick.duration})`;
+  const odds = ` (${pick.odds > 0 ? "+" : ""}${pick.odds})`;
+
+  return `${selection}${duration}${odds}${pick.double ? " (2u)" : ""}`;
 }

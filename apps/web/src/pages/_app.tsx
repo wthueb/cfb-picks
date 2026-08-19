@@ -3,11 +3,11 @@ import type { AppType } from "next/app";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import Link from "next/link";
-import { SessionProvider, signIn, signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/router";
+import { SessionProvider } from "next-auth/react";
 
-import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { Skeleton } from "~/components/ui/skeleton";
+import { UserMenu } from "~/components/user-menu";
 import { cn } from "~/lib/utils";
 
 import "~/styles/globals.css";
@@ -19,31 +19,40 @@ const inter = Inter({
 });
 
 function Nav() {
-  const session = useSession();
+  const router = useRouter();
+  const links = [
+    { href: "/stats", label: "Stats" },
+    { href: "/board", label: "Board" },
+  ];
 
   return (
-    <nav className="bg-card text-card-foreground m-2 flex h-10 items-center justify-between gap-4 rounded-md border-1 px-4">
-      <div className="flex h-full items-center gap-4 text-sm font-medium">
-        <Link href="/" className="text-primary-foreground text-xl font-semibold">
+    <nav className="bg-card text-card-foreground m-2 flex min-h-10 items-center justify-between gap-2 rounded-md border px-2 sm:px-4">
+      <div className="flex h-full items-center gap-1 text-sm font-medium sm:gap-2">
+        <Link
+          href="/"
+          aria-current={router.pathname === "/" ? "page" : undefined}
+          className="text-primary-foreground rounded-md px-2 py-1 text-lg font-semibold sm:text-xl"
+        >
           CFB Picks
         </Link>
         <Separator orientation="vertical" />
-        <Link href="/stats">Stats</Link>
-        <Link href="/teams">Teams</Link>
-      </div>
-      <div>
-        {session.status === "loading" ? (
-          <Skeleton className="h-8 w-[8ch]" />
-        ) : (
-          <Button
-            variant="ghost"
-            onClick={session.data ? () => signOut() : () => signIn()}
-            className="text-muted-foreground"
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={router.pathname === link.href ? "page" : undefined}
+            className={cn(
+              "rounded-md px-2 py-1 transition-colors",
+              router.pathname === link.href
+                ? "bg-accent text-accent-foreground"
+                : "hover:bg-accent/60",
+            )}
           >
-            {session.data ? "Sign out" : "Sign in"}
-          </Button>
-        )}
+            {link.label}
+          </Link>
+        ))}
       </div>
+      <UserMenu />
     </nav>
   );
 }
@@ -78,7 +87,7 @@ const CFBPicks: AppType<{ session: Session | null }> = ({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <SessionProvider session={session}>
-        <div className={cn(inter.className, "flex min-h-screen w-screen min-w-[390px] flex-col")}>
+        <div className={cn(inter.className, "flex min-h-screen w-full flex-col")}>
           <Nav />
           <main className="flex-1">
             <Component {...pageProps} />

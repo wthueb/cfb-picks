@@ -1,25 +1,21 @@
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
-function getNoon(date: Date) {
-  const noon = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
-  return noon;
-}
-
-export function isGameLocked(startDate: Date) {
-  const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  const startDateUtc = fromZonedTime(startDate, localTimeZone);
-  const startDateEastern = toZonedTime(startDateUtc, "America/New_York");
-
-  const now = new Date();
-
+export function getGameLockDate(startDate: Date) {
+  const startDateEastern = toZonedTime(startDate, "America/New_York");
   if (startDateEastern.getDay() !== 6 || startDateEastern.getHours() < 12) {
-    return startDate <= now;
+    return startDate;
   }
 
-  const noonEastern = getNoon(startDateEastern);
+  const noonEastern = new Date(
+    startDateEastern.getFullYear(),
+    startDateEastern.getMonth(),
+    startDateEastern.getDate(),
+    12,
+  );
 
-  const noonLocal = toZonedTime(noonEastern, localTimeZone);
+  return fromZonedTime(noonEastern, "America/New_York");
+}
 
-  return noonLocal <= now;
+export function isGameLocked(startDate: Date, now = new Date()) {
+  return getGameLockDate(startDate) <= now;
 }

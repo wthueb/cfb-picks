@@ -22,6 +22,8 @@ export function GameCombobox(props: {
   games: RouterOutputs["cfb"]["games"];
   value?: Game;
   onChange: (game?: RouterOutputs["cfb"]["games"][number]) => void;
+  id?: string;
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const value = props.value?.id.toString() ?? "";
@@ -41,13 +43,19 @@ export function GameCombobox(props: {
     <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
+          id={props.id}
           variant="outline"
           role="combobox"
+          aria-label={props.ariaLabel}
           aria-expanded={open}
           aria-controls={comboboxId}
-          className="justify-between"
+          className="w-full min-w-0 justify-between overflow-hidden"
         >
-          {selectedGame ? `${selectedGame.awayTeam} @ ${selectedGame.homeTeam}` : "Select game..."}
+          <span className="min-w-0 truncate text-left">
+            {selectedGame
+              ? `${selectedGame.awayTeam} @ ${selectedGame.homeTeam}`
+              : "Select game..."}
+          </span>
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>

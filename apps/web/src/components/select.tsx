@@ -18,18 +18,24 @@ export function Select<T extends string>(props: {
   value: NoInfer<T>;
   onChange: (value: T) => void;
   className?: string;
+  id?: string;
+  ariaLabel?: string;
 }): JSX.Element;
 export function Select<T extends string, G extends string>(props: {
   items: Record<G, SelectItem<T>[]>;
   value: NoInfer<`${G}-${T}`>;
   onChange: (value: `${G}-${T}`) => void;
   className?: string;
+  id?: string;
+  ariaLabel?: string;
 }): JSX.Element;
 export function Select<T extends string, G extends string>(props: {
   items: readonly SelectItem<T>[] | Record<G, SelectItem<T>[]>;
   value: NoInfer<T | `${G}-${T}`>;
   onChange: (value: T | `${G}-${T}`) => void;
   className?: string;
+  id?: string;
+  ariaLabel?: string;
 }) {
   let displayString: string;
 
@@ -60,7 +66,7 @@ export function Select<T extends string, G extends string>(props: {
         props.onChange(v as T | `${G}-${T}`);
       }}
     >
-      <SelectTrigger className={props.className}>
+      <SelectTrigger id={props.id} aria-label={props.ariaLabel} className={props.className}>
         <SelectValue>{displayString}</SelectValue>
       </SelectTrigger>
       <SelectContent>

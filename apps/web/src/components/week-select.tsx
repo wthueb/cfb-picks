@@ -11,6 +11,7 @@ export function WeekSelect(props: {
   selectedWeek?: number;
   onChange: (week: Week) => void;
   className?: string;
+  ariaLabel?: string;
 }) {
   const defaultValue = useMemo(() => {
     if (!props.weeks?.[0]) return;
@@ -42,8 +43,8 @@ export function WeekSelect(props: {
   });
 
   useEffect(() => {
-    if (defaultValue) notifyDefaultChange(defaultValue);
-  }, [defaultValue]);
+    if (defaultValue && props.selectedWeek === undefined) notifyDefaultChange(defaultValue);
+  }, [defaultValue, props.selectedWeek]);
 
   const handleSelectChange = (v: string) => {
     if (!props.weeks) return;
@@ -63,6 +64,7 @@ export function WeekSelect(props: {
       value={(props.selectedWeek ?? defaultValue.week).toString()}
       onChange={handleSelectChange}
       className={props.className}
+      ariaLabel={props.ariaLabel ?? "Week"}
     />
   ) : (
     <Skeleton className="h-9 w-full" />

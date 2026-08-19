@@ -11,9 +11,17 @@
       "default": "./dist/dates.js",
       "types": "./dist/dates.d.ts"
     },
+    "./board": {
+      "default": "./dist/board.js",
+      "types": "./dist/board.d.ts"
+    },
     "./picks": {
       "default": "./dist/picks.js",
       "types": "./dist/picks.d.ts"
+    },
+    "./stats": {
+      "default": "./dist/stats.js",
+      "types": "./dist/stats.d.ts"
     }
   },
   "scripts": {
@@ -22,6 +30,7 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
+    "test": "node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

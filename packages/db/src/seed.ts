@@ -1,3 +1,5 @@
+import { sql } from "drizzle-orm";
+
 import { db } from "./client.js";
 import { picks, teams, users } from "./schema.js";
 
@@ -5,17 +7,17 @@ export async function seedDevelopmentDatabase(season: number) {
   await db
     .insert(teams)
     .values([
-      { id: 10001, name: "Development Team" },
-      { id: 10002, name: "Fixture Friends" },
+      { id: 10001, name: "Team A" },
+      { id: 10002, name: "Team B" },
     ])
-    .onConflictDoNothing();
+    .onConflictDoUpdate({ target: teams.id, set: { name: sql`excluded.name` } });
 
   await db
     .insert(users)
     .values([
       {
         id: "development-admin",
-        name: "Development Admin",
+        name: "Player 1",
         email: "admin@cfb-picks.test",
         emailVerified: new Date(),
         teamId: 10001,
@@ -24,15 +26,33 @@ export async function seedDevelopmentDatabase(season: number) {
       },
       {
         id: "development-user",
-        name: "Development User",
+        name: "Player 2",
         email: "user@cfb-picks.test",
         emailVerified: new Date(),
         teamId: 10002,
         sendNotifications: false,
         isAdmin: false,
       },
+      {
+        id: "development-player-3",
+        name: "Player 3",
+        email: "player3@cfb-picks.test",
+        emailVerified: new Date(),
+        teamId: 10001,
+        sendNotifications: false,
+        isAdmin: false,
+      },
+      {
+        id: "development-player-4",
+        name: "Player 4",
+        email: "player4@cfb-picks.test",
+        emailVerified: new Date(),
+        teamId: 10002,
+        sendNotifications: false,
+        isAdmin: false,
+      },
     ])
-    .onConflictDoNothing();
+    .onConflictDoUpdate({ target: users.id, set: { name: sql`excluded.name` } });
 
   const weeklyPicks = Array.from({ length: 8 }, (_, index) => {
     const week = index + 3;

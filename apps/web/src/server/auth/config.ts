@@ -86,6 +86,7 @@ const authConfig: NextAuthOptions = {
         user: {
           // manually copy over properties so we don't expose anything unwanted
           id: dbUser.id,
+          name: dbUser.name,
           teamId: dbUser.teamId,
           team,
           isAdmin: dbUser.isAdmin,

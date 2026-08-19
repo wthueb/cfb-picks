@@ -1,7 +1,71 @@
-import { sql } from "drizzle-orm";
+import { and, gte, lt, sql } from "drizzle-orm";
 
 import { db } from "./client.js";
 import { picks, teams, users } from "./schema.js";
+import { historicalPicks } from "./seed-data.js";
+
+const developmentUsers = [
+  {
+    id: "development-admin",
+    name: "Player 1",
+    email: "player1@cfb-picks.test",
+    emailVerified: new Date(),
+    image: null,
+    teamId: 10001,
+    sendNotifications: false,
+    isAdmin: true,
+  },
+  {
+    id: "development-user",
+    name: "Player 2",
+    email: "player2@cfb-picks.test",
+    emailVerified: new Date(),
+    image: null,
+    teamId: 10001,
+    sendNotifications: false,
+    isAdmin: false,
+  },
+  {
+    id: "development-player-3",
+    name: "Player 3",
+    email: "player3@cfb-picks.test",
+    emailVerified: new Date(),
+    image: null,
+    teamId: 10002,
+    sendNotifications: false,
+    isAdmin: false,
+  },
+  {
+    id: "development-player-4",
+    name: "Player 4",
+    email: "player4@cfb-picks.test",
+    emailVerified: new Date(),
+    image: null,
+    teamId: 10002,
+    sendNotifications: false,
+    isAdmin: false,
+  },
+  {
+    id: "development-player-5",
+    name: "Player 5",
+    email: "player5@cfb-picks.test",
+    emailVerified: new Date(),
+    image: null,
+    teamId: 10003,
+    sendNotifications: false,
+    isAdmin: false,
+  },
+  {
+    id: "development-player-6",
+    name: "Player 6",
+    email: "player6@cfb-picks.test",
+    emailVerified: new Date(),
+    image: null,
+    teamId: 10003,
+    sendNotifications: false,
+    isAdmin: false,
+  },
+];
 
 export async function seedDevelopmentDatabase(season: number) {
   await db
@@ -9,214 +73,79 @@ export async function seedDevelopmentDatabase(season: number) {
     .values([
       { id: 10001, name: "Team A" },
       { id: 10002, name: "Team B" },
+      { id: 10003, name: "Team C" },
     ])
     .onConflictDoUpdate({ target: teams.id, set: { name: sql`excluded.name` } });
 
   await db
     .insert(users)
-    .values([
-      {
-        id: "development-admin",
-        name: "Player 1",
-        email: "admin@cfb-picks.test",
-        emailVerified: new Date(),
-        teamId: 10001,
-        sendNotifications: false,
-        isAdmin: true,
+    .values(developmentUsers)
+    .onConflictDoUpdate({
+      target: users.id,
+      set: {
+        name: sql`excluded.name`,
+        email: sql`excluded.email`,
+        emailVerified: sql`excluded.emailVerified`,
+        image: sql`excluded.image`,
+        teamId: sql`excluded.teamId`,
+        sendNotifications: sql`excluded.sendNotifications`,
+        isAdmin: sql`excluded.isAdmin`,
       },
-      {
-        id: "development-user",
-        name: "Player 2",
-        email: "user@cfb-picks.test",
-        emailVerified: new Date(),
-        teamId: 10002,
-        sendNotifications: false,
-        isAdmin: false,
-      },
-      {
-        id: "development-player-3",
-        name: "Player 3",
-        email: "player3@cfb-picks.test",
-        emailVerified: new Date(),
-        teamId: 10001,
-        sendNotifications: false,
-        isAdmin: false,
-      },
-      {
-        id: "development-player-4",
-        name: "Player 4",
-        email: "player4@cfb-picks.test",
-        emailVerified: new Date(),
-        teamId: 10002,
-        sendNotifications: false,
-        isAdmin: false,
-      },
-    ])
-    .onConflictDoUpdate({ target: users.id, set: { name: sql`excluded.name` } });
+    });
 
-  const weeklyPicks = Array.from({ length: 8 }, (_, index) => {
-    const week = index + 3;
-    const firstGameId = 900000000 + week * 2;
-    const id = 9100005 + index * 4;
+  await db.delete(picks).where(and(gte(picks.gameId, 900000000), lt(picks.gameId, 1000000000)));
 
-    return [
-      {
-        id,
-        teamId: 10001,
-        season,
-        week,
-        gameId: firstGameId,
-        pickType: "SPREAD" as const,
-        duration: "FULL" as const,
-        odds: -110,
-        double: false,
-        spread: -3.5,
-        cfbTeamId: 101,
-      },
-      {
-        id: id + 1,
-        teamId: 10001,
-        season,
-        week,
-        gameId: firstGameId + 1,
-        pickType: "OVER" as const,
-        duration: "FULL" as const,
-        odds: -105,
-        double: true,
-        total: 48.5,
-      },
-      {
-        id: id + 2,
-        teamId: 10002,
-        season,
-        week,
-        gameId: firstGameId,
-        pickType: "SPREAD" as const,
-        duration: "FULL" as const,
-        odds: -110,
-        double: false,
-        spread: 3.5,
-        cfbTeamId: 102,
-      },
-      {
-        id: id + 3,
-        teamId: 10002,
-        season,
-        week,
-        gameId: firstGameId + 1,
-        pickType: "UNDER" as const,
-        duration: "FULL" as const,
-        odds: -110,
-        double: false,
-        total: 48.5,
-      },
-    ];
-  }).flat();
+  const pickValues = historicalPicks.map(
+    ([
+      id,
+      teamId,
+      week,
+      gameId,
+      pickType,
+      duration,
+      odds,
+      double,
+      total,
+      spread,
+      cfbTeamId,
+      createdAt,
+    ]) => ({
+      id,
+      teamId,
+      season,
+      week,
+      gameId,
+      pickType,
+      duration,
+      odds,
+      double,
+      total,
+      spread,
+      cfbTeamId,
+      createdAt: new Date(createdAt * 1000),
+    }),
+  );
 
-  await db
-    .insert(picks)
-    .values([
-      {
-        id: 9000001,
-        teamId: 10001,
-        season,
-        week: 1,
-        gameId: 900000001,
-        pickType: "SPREAD",
-        duration: "FULL",
-        odds: -110,
-        double: false,
-        spread: -3.5,
-        cfbTeamId: 101,
-      },
-      {
-        id: 9000002,
-        teamId: 10001,
-        season,
-        week: 1,
-        gameId: 900000002,
-        pickType: "OVER",
-        duration: "FULL",
-        odds: -105,
-        double: true,
-        total: 48.5,
-      },
-      {
-        id: 9000003,
-        teamId: 10001,
-        season,
-        week: 2,
-        gameId: 900000004,
-        pickType: "TT_OVER",
-        duration: "1H",
-        odds: -115,
-        double: false,
-        total: 14.5,
-        cfbTeamId: 107,
-      },
-      {
-        id: 9000004,
-        teamId: 10002,
-        season,
-        week: 1,
-        gameId: 900000003,
-        pickType: "UNDER",
-        duration: "FULL",
-        odds: -110,
-        double: false,
-        total: 55.5,
-      },
-      {
-        id: 9100001,
-        teamId: 10002,
-        season,
-        week: 1,
-        gameId: 900000001,
-        pickType: "SPREAD",
-        duration: "FULL",
-        odds: -110,
-        double: false,
-        spread: 3.5,
-        cfbTeamId: 102,
-      },
-      {
-        id: 9100002,
-        teamId: 10001,
-        season,
-        week: 2,
-        gameId: 900000005,
-        pickType: "OVER",
-        duration: "FULL",
-        odds: -105,
-        double: true,
-        total: 48.5,
-      },
-      {
-        id: 9100003,
-        teamId: 10002,
-        season,
-        week: 2,
-        gameId: 900000004,
-        pickType: "SPREAD",
-        duration: "FULL",
-        odds: -110,
-        double: false,
-        spread: 6.5,
-        cfbTeamId: 108,
-      },
-      {
-        id: 9100004,
-        teamId: 10002,
-        season,
-        week: 2,
-        gameId: 900000005,
-        pickType: "UNDER",
-        duration: "FULL",
-        odds: -110,
-        double: false,
-        total: 48.5,
-      },
-      ...weeklyPicks,
-    ])
-    .onConflictDoNothing();
+  for (let index = 0; index < pickValues.length; index += 50) {
+    await db
+      .insert(picks)
+      .values(pickValues.slice(index, index + 50))
+      .onConflictDoUpdate({
+        target: picks.id,
+        set: {
+          teamId: sql`excluded.teamId`,
+          season: sql`excluded.season`,
+          week: sql`excluded.week`,
+          gameId: sql`excluded.gameId`,
+          pickType: sql`excluded.pickType`,
+          duration: sql`excluded.duration`,
+          odds: sql`excluded.odds`,
+          double: sql`excluded.double`,
+          total: sql`excluded.total`,
+          spread: sql`excluded.spread`,
+          cfbTeamId: sql`excluded.cfbTeamId`,
+          createdAt: sql`excluded.createdAt`,
+        },
+      });
+  }
 }

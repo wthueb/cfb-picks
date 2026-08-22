@@ -5,7 +5,7 @@ export function PickList(props: { picks: PickWithGame[] }) {
   return (
     <div className="w-full">
       {props.picks.length === 0 ? (
-        <p className="text-center">No picks found for this week.</p>
+        <p className="text-center">No picks made yet for this week.</p>
       ) : (
         <ul className="flex flex-col gap-4">
           {props.picks.map((pick, i) => (

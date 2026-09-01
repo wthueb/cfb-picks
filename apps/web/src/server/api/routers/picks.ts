@@ -8,6 +8,7 @@ import { getGameById, getGamesForYear } from "@cfb-picks/cfbd";
 import { durations, overUnderPickTypes, picks, teamTotalPickTypes } from "@cfb-picks/db/schema";
 import { classifyPickInsights } from "@cfb-picks/lib/board";
 import { isGameLocked } from "@cfb-picks/lib/dates";
+import { isGameEligibleForPicks } from "@cfb-picks/lib/games";
 import { scorePick, scorePickByWagerAmount } from "@cfb-picks/lib/picks";
 import { aggregateTeamPerformance, rankTeamPerformance } from "@cfb-picks/lib/stats";
 
@@ -262,6 +263,7 @@ export const picksRouter = createTRPCRouter({
 
     const game = await getGameById(input.gameId);
     if (!game) throw new Error(`Game not found for gameId ${input.gameId}`);
+    if (!isGameEligibleForPicks(game)) throw new Error("Cannot pick an FCS vs FCS game");
 
     if (!ctx.session.user.isAdmin && isGameLocked(new Date(game.startDate)))
       throw new Error("Cannot make a pick for a game that has already started");

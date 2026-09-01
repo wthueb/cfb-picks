@@ -1,6 +1,7 @@
 import z from "zod";
 
 import { getCalendarForYear, getGameById, getGamesForYear, getLinesForYear } from "@cfb-picks/cfbd";
+import { isGameEligibleForPicks } from "@cfb-picks/lib/games";
 
 import type { RouterOutputs } from "~/utils/api";
 import { env } from "~/env";
@@ -21,6 +22,7 @@ export const cfbRouter = createTRPCRouter({
         .filter(
           (game) =>
             (!input.week || game.week === input.week) &&
+            isGameEligibleForPicks(game) &&
             (game.homeClassification === "fbs" ||
               game.awayClassification === "fbs" ||
               game.homeClassification === "fcs" ||

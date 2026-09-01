@@ -5,6 +5,8 @@ import { client, getCalendar, getGames, getLines } from "cfbd";
 import { getCached, setCached } from "./cache.js";
 import { env } from "./env.js";
 
+export type { DivisionClassification } from "cfbd";
+
 const lock = new AsyncLock();
 
 export type Game = Omit<GetGamesResponse[number], "startDate"> & {

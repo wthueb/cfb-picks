@@ -11,6 +11,10 @@
       "default": "./dist/dates.js",
       "types": "./dist/dates.d.ts"
     },
+    "./games": {
+      "default": "./dist/games.js",
+      "types": "./dist/games.d.ts"
+    },
     "./board": {
       "default": "./dist/board.js",
       "types": "./dist/board.d.ts"

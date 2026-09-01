@@ -27,6 +27,9 @@
       "outputs": [".cache/tsbuildinfo.json"]
     },
     "test": {
+      "outputs": []
+    },
+    "@cfb-picks/lib#test": {
       "dependsOn": ["build"],
       "outputs": []
     },

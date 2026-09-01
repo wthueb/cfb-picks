@@ -1,6 +1,7 @@
 name: docker
 
 on:
+  pull_request:
   push:
     branches:
       - master
@@ -12,7 +13,26 @@ permissions:
   id-token: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Install dependencies
+        run: nix develop --command pnpm install --frozen-lockfile
+
+      - name: Test
+        run: nix develop --command pnpm test
+
   docker:
+    needs: test
+    if: github.event_name == 'push'
+
     strategy:
       fail-fast: false
       matrix:

@@ -19,15 +19,7 @@ export const cfbRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const gamesForYear = await getGamesForYear(env.SEASON);
       return gamesForYear
-        .filter(
-          (game) =>
-            (!input.week || game.week === input.week) &&
-            isGameEligibleForPicks(game) &&
-            (game.homeClassification === "fbs" ||
-              game.awayClassification === "fbs" ||
-              game.homeClassification === "fcs" ||
-              game.awayClassification === "fcs"),
-        )
+        .filter((game) => (!input.week || game.week === input.week) && isGameEligibleForPicks(game))
         .map((game) => ({ ...game, startDate: new Date(game.startDate) }))
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
     }),
@@ -49,14 +41,7 @@ export const cfbRouter = createTRPCRouter({
       const linesForYear = await getLinesForYear(env.SEASON);
 
       return linesForYear
-        .filter(
-          (line) =>
-            (!input.week || line.week === input.week) &&
-            (line.homeClassification === "fbs" ||
-              line.awayClassification === "fbs" ||
-              line.homeClassification === "fcs" ||
-              line.awayClassification === "fcs"),
-        )
+        .filter((line) => (!input.week || line.week === input.week) && isGameEligibleForPicks(line))
         .map((line) => ({ ...line, startDate: new Date(line.startDate) }))
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
     }),

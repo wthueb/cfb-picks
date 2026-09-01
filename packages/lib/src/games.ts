@@ -6,5 +6,5 @@ type GameClassifications = {
 };
 
 export function isGameEligibleForPicks(game: GameClassifications) {
-  return !(game.homeClassification === "fcs" && game.awayClassification === "fcs");
+  return game.homeClassification === "fbs" || game.awayClassification === "fbs";
 }

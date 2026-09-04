@@ -105,7 +105,7 @@ async function pollForNotifications(transporter: Transporter): Promise<void> {
       });
 
       await transporter.sendMail({
-        from: env.EMAIL_FROM,
+        from: `CFB Picks <${env.EMAIL_FROM}>`,
         to: user.email,
         subject: "CFB picks have been locked",
         html: emailHtml,

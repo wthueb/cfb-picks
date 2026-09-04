@@ -94,7 +94,9 @@ async function pollForNotifications(transporter: Transporter): Promise<void> {
       }
 
       const pickIds = user.picksToSend.map((pick) => pick.id);
-      const emailHtml = await render(NotificationEmail({ picks: user.picksToSend }));
+      const emailHtml = await render(
+        NotificationEmail({ baseUrl: env.BASE_URL, picks: user.picksToSend }),
+      );
 
       logger.info("notification email sending", {
         email: user.email,

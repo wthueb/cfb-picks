@@ -1,4 +1,4 @@
-import { Body, Font, Head, Html, pixelBasedPreset, Preview, Tailwind } from "react-email";
+import { Body, Button, Font, Head, Html, pixelBasedPreset, Preview, Tailwind } from "react-email";
 
 import type { Game } from "@cfb-picks/cfbd";
 import type { InferSelectModel } from "@cfb-picks/db";
@@ -36,6 +36,7 @@ function PickDisplay(props: {
 }
 
 export default function NotificationEmail(props: {
+  baseUrl: string;
   picks: (CFBPick & { team: InferSelectModel<typeof teams>; game: Game })[];
 }) {
   const uniqueGames = Array.from(new Set(props.picks.map((pick) => pick.game.id))).map((id) => {
@@ -51,6 +52,7 @@ export default function NotificationEmail(props: {
 
   picksByGame.sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime());
 
+  const weeks = [...new Set(props.picks.map((pick) => pick.week))].sort((a, b) => a - b);
   const numPicks = props.picks.length;
 
   return (
@@ -87,6 +89,22 @@ export default function NotificationEmail(props: {
               ))}
             </div>
           ))}
+          {weeks.map((week) => {
+            const boardUrl = new URL("/board", props.baseUrl);
+            boardUrl.searchParams.set("week", week.toString());
+
+            return (
+              <div className="my-6 text-center" key={week}>
+                {weeks.length > 1 && <p className="text-sm font-bold">Week {week}</p>}
+                <Button
+                  className="rounded-md bg-black px-5 py-3 text-sm font-bold text-white"
+                  href={boardUrl.toString()}
+                >
+                  Go To Board
+                </Button>
+              </div>
+            );
+          })}
         </Body>
       </Html>
     </Tailwind>
@@ -94,6 +112,7 @@ export default function NotificationEmail(props: {
 }
 
 NotificationEmail.PreviewProps = {
+  baseUrl: "http://localhost:3000",
   picks: [
     {
       id: 19,

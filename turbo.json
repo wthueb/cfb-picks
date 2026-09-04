@@ -51,6 +51,7 @@
   "globalEnv": [
     "SKIP_ENV_VALIDATION",
     "DATABASE_URL",
+    "BASE_URL",
     "LOG_FORMAT",
     "LOG_LEVEL",
     "NODE_ENV",

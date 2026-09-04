@@ -8,7 +8,7 @@ export const env = createEnv({
   server: {
     SEASON: z.coerce.number().int(),
 
-    NEXTAUTH_URL: z.url(),
+    BASE_URL: z.url(),
     // eslint-disable-next-line no-restricted-properties
     AUTH_SECRET: process.env.NODE_ENV === "production" ? z.string() : z.string().optional(),
 
@@ -94,3 +94,5 @@ export const env = createEnv({
 
   extends: [dbEnv, cfbdEnv],
 });
+
+Object.assign(process.env, { NEXTAUTH_URL: env.BASE_URL });

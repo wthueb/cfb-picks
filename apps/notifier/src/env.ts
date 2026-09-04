@@ -6,6 +6,7 @@ import { env as dbEnv } from "@cfb-picks/db/env";
 
 export const env = createEnv({
   server: {
+    BASE_URL: z.url(),
     SMTP_HOST: z.string().optional(),
     SMTP_PORT: z.coerce.number().optional(),
     SMTP_USER: z.string().optional(),

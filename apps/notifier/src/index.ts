@@ -5,7 +5,7 @@ import { render } from "react-email";
 import type { Game } from "@cfb-picks/cfbd";
 import type { InferSelectModel } from "@cfb-picks/db";
 import type { CFBPick, teams } from "@cfb-picks/db/schema";
-import { getGameById } from "@cfb-picks/cfbd";
+import { getGamesForYear } from "@cfb-picks/cfbd";
 import { db } from "@cfb-picks/db/client";
 import { pickNotifications } from "@cfb-picks/db/schema";
 import { isGameLocked } from "@cfb-picks/lib/dates";
@@ -23,6 +23,7 @@ async function pollForNotifications(transporter: Transporter): Promise<void> {
 
   const picks = await db.query.picks
     .findMany({
+      where: (pick, { eq }) => eq(pick.season, env.SEASON),
       with: {
         notifications: {
           with: {
@@ -34,12 +35,23 @@ async function pollForNotifications(transporter: Transporter): Promise<void> {
     })
     .then((picks) => picks.filter((pick) => env.NODE_ENV !== "production" || pick.teamId !== 1));
 
-  const picksWithGame = (await Promise.all(
-    picks.map(async (pick) => ({
-      ...pick,
-      game: await getGameById(pick.gameId),
-    })),
-  ).then((picks) => picks.filter((pick) => pick.game !== null))) as (CFBPick & {
+  const gamesById = new Map(
+    (await getGamesForYear(env.SEASON)).map((game) => [game.id, game] as const),
+  );
+  const missingGamePicks = picks.filter((pick) => !gamesById.has(pick.gameId));
+
+  if (missingGamePicks.length > 0) {
+    logger.warning("notification pick games not found", {
+      season: env.SEASON,
+      missing_pick_count: missingGamePicks.length,
+      game_ids: [...new Set(missingGamePicks.map((pick) => pick.gameId))],
+    });
+  }
+
+  const picksWithGame = picks.flatMap((pick) => {
+    const game = gamesById.get(pick.gameId);
+    return game ? [{ ...pick, game }] : [];
+  }) as (CFBPick & {
     notifications: InferSelectModel<typeof pickNotifications>[];
     team: InferSelectModel<typeof teams>;
     game: Game;

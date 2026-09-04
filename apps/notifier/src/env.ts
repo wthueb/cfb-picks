@@ -1,6 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import z from "zod";
 
+import { env as cfbdEnv } from "@cfb-picks/cfbd/env";
 import { env as dbEnv } from "@cfb-picks/db/env";
 
 export const env = createEnv({
@@ -53,5 +54,5 @@ export const env = createEnv({
       return env;
     }),
 
-  extends: [dbEnv],
+  extends: [dbEnv, cfbdEnv],
 });

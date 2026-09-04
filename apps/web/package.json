@@ -24,6 +24,7 @@
     "@cfb-picks/cfbd": "workspace:*",
     "@cfb-picks/db": "workspace:*",
     "@cfb-picks/lib": "workspace:*",
+    "@cfb-picks/logging": "workspace:*",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-label": "^2.1.15",

@@ -1,5 +1,12 @@
 # cfb-picks
 
+## Logging
+
+Server processes emit structured logs to stdout. The default format is logfmt with the stable core
+fields `ts`, `level`, `logger`, `src`, and `msg`; operation-specific values are emitted as additional
+fields. Set `LOG_FORMAT=json` for JSON output. `LOG_LEVEL` defaults to `debug` and accepts `debug`,
+`info`, `warning`, `error`, or `critical`.
+
 ## Development data
 
 Development does not connect to Redis or query the CFBD API. It reads the JSON files in

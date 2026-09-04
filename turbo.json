@@ -48,5 +48,12 @@
       "interactive": true
     }
   },
-  "globalEnv": ["SKIP_ENV_VALIDATION", "DATABASE_URL", "NODE_ENV", "SEASON"]
+  "globalEnv": [
+    "SKIP_ENV_VALIDATION",
+    "DATABASE_URL",
+    "LOG_FORMAT",
+    "LOG_LEVEL",
+    "NODE_ENV",
+    "SEASON"
+  ]
 }

@@ -44,6 +44,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@cfb-picks/logging": "workspace:*",
     "@libsql/client": "^0.17.4",
     "@t3-oss/env-core": "catalog:",
     "drizzle-orm": "catalog:",

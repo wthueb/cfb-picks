@@ -4,6 +4,8 @@ import { setTimeout } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import type { Transaction } from "@libsql/client";
 
+import { getLogger } from "@cfb-picks/logging";
+
 import { client } from "./client.js";
 
 interface Journal {
@@ -22,6 +24,7 @@ interface Migration {
 const migrationsFolder = fileURLToPath(new URL("../drizzle", import.meta.url));
 const lockRetryCount = 120;
 const lockRetryDelay = 500;
+const logger = getLogger("cfb_picks.db.migrate");
 
 function readMigrations(): Migration[] {
   const journalPath = `${migrationsFolder}/meta/_journal.json`;
@@ -64,6 +67,11 @@ async function acquireMigrationLock(): Promise<Transaction> {
         throw error;
       }
 
+      logger.debug("database migration lock busy", {
+        attempt,
+        max_attempts: lockRetryCount,
+        retry_delay_ms: lockRetryDelay,
+      });
       await setTimeout(lockRetryDelay);
     }
   }
@@ -72,8 +80,11 @@ async function acquireMigrationLock(): Promise<Transaction> {
 }
 
 export async function migrate(): Promise<void> {
+  const startedAt = Date.now();
   const migrations = readMigrations();
   let transaction: Transaction | undefined;
+
+  logger.info("database migration started", { migration_count: migrations.length });
 
   try {
     await client.execute("PRAGMA foreign_keys = OFF");
@@ -96,6 +107,12 @@ export async function migrate(): Promise<void> {
     );
 
     for (const migration of pendingMigrations) {
+      logger.info("database migration applying", {
+        migration_hash: migration.hash,
+        migration_timestamp: migration.timestamp,
+        statement_count: migration.statements.length,
+      });
+
       for (const statement of migration.statements) {
         await transaction.execute(statement);
       }
@@ -112,11 +129,22 @@ export async function migrate(): Promise<void> {
       await transaction.commit();
     }
 
-    console.log(
-      pendingMigrations.length === 0
-        ? "Database migrations are up to date"
-        : `Applied ${pendingMigrations.length} database migration(s)`,
-    );
+    if (pendingMigrations.length === 0) {
+      logger.info("database migrations are up to date", {
+        duration_ms: Date.now() - startedAt,
+      });
+    } else {
+      logger.info("database migrations completed", {
+        duration_ms: Date.now() - startedAt,
+        applied_count: pendingMigrations.length,
+      });
+    }
+  } catch (error) {
+    logger.error("database migration failed", {
+      duration_ms: Date.now() - startedAt,
+      error,
+    });
+    throw error;
   } finally {
     transaction?.close();
     await client.execute("PRAGMA foreign_keys = ON");

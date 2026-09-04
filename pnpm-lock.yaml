@@ -61,6 +61,9 @@ catalogs:
     redis:
       specifier: ^6.2.1
       version: 6.2.1
+    tslog:
+      specifier: ^5.1.0
+      version: 5.1.0
     typescript:
       specifier: ^7.0.2
       version: 7.0.2
@@ -110,6 +113,9 @@ importers:
       '@cfb-picks/lib':
         specifier: workspace:*
         version: link:../../packages/lib
+      '@cfb-picks/logging':
+        specifier: workspace:*
+        version: link:../../packages/logging
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@7.0.2)(zod@4.4.3)
@@ -192,6 +198,9 @@ importers:
       '@cfb-picks/lib':
         specifier: workspace:*
         version: link:../../packages/lib
+      '@cfb-picks/logging':
+        specifier: workspace:*
+        version: link:../../packages/logging
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.23
         version: 1.1.23(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -340,6 +349,9 @@ importers:
 
   packages/cfbd:
     dependencies:
+      '@cfb-picks/logging':
+        specifier: workspace:*
+        version: link:../logging
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@7.0.2)(zod@4.4.3)
@@ -383,6 +395,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@cfb-picks/logging':
+        specifier: workspace:*
+        version: link:../logging
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
@@ -448,6 +463,34 @@ importers:
       '@cfb-picks/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
+      '@cfb-picks/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.2.0
+      eslint:
+        specifier: 'catalog:'
+        version: 10.8.1(jiti@2.7.0)(supports-color@8.1.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.9.6
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+
+  packages/logging:
+    dependencies:
+      tslog:
+        specifier: 'catalog:'
+        version: 5.1.0
+    devDependencies:
+      '@cfb-picks/eslint-config':
+        specifier: link:../../tooling/eslint
+        version: link:../../tooling/eslint
+      '@cfb-picks/prettier-config':
+        specifier: workspace:*
+        version: file:tooling/prettier(supports-color@8.1.1)
       '@cfb-picks/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
@@ -642,6 +685,9 @@ packages:
   '@babel/types@7.29.8':
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
+
+  '@cfb-picks/prettier-config@file:tooling/prettier':
+    resolution: {directory: tooling/prettier, type: directory}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -3339,6 +3385,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -4586,6 +4633,11 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
+  tslog@5.1.0:
+    resolution: {integrity: sha512-g77ALovust2HNBX/63ePEJwetIeX0Vi/dlzqBO+ZAg+aERB54KMmaz/khNPxhFpaxKQ6RQj65sK6vIhj1SJgjQ==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   tsx@4.23.12:
     resolution: {integrity: sha512-FDf4L4sYzKtzWYhU/Xm0AQFdTjdIxNo9ElTf2mxXM6k8YMHXzYUe4yODVaXP4V9uMFbVg8c0qyBccK2OOxb45Q==}
     engines: {node: '>=18.0.0'}
@@ -4897,6 +4949,32 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
+
+  '@cfb-picks/prettier-config@file:tooling/prettier(supports-color@8.1.1)':
+    dependencies:
+      '@ianvs/prettier-plugin-sort-imports': 4.7.1(prettier@3.9.6)(supports-color@8.1.1)
+      prettier: 3.9.6
+      prettier-plugin-tailwindcss: 0.8.1(@ianvs/prettier-plugin-sort-imports@4.7.1(prettier@3.9.6))(prettier@3.9.6)
+    transitivePeerDependencies:
+      - '@prettier/plugin-hermes'
+      - '@prettier/plugin-oxc'
+      - '@prettier/plugin-pug'
+      - '@shopify/prettier-plugin-liquid'
+      - '@trivago/prettier-plugin-sort-imports'
+      - '@vue/compiler-sfc'
+      - '@zackad/prettier-plugin-twig'
+      - content-tag
+      - prettier-plugin-astro
+      - prettier-plugin-css-order
+      - prettier-plugin-ember-template-tag
+      - prettier-plugin-jsdoc
+      - prettier-plugin-marko
+      - prettier-plugin-multiline-arrays
+      - prettier-plugin-organize-attributes
+      - prettier-plugin-organize-imports
+      - prettier-plugin-sort-imports
+      - prettier-plugin-svelte
+      - supports-color
 
   '@drizzle-team/brocli@0.10.2': {}
 
@@ -8567,6 +8645,8 @@ snapshots:
       strip-bom: 3.0.0
 
   tslib@2.8.1: {}
+
+  tslog@5.1.0: {}
 
   tsx@4.23.12:
     dependencies:

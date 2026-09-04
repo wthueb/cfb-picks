@@ -9,15 +9,18 @@ const config: NextConfig = {
   outputFileTracingIncludes: {
     "/*": ["../../node_modules/.pnpm/libsql@*/node_modules/@libsql/**/*"],
   },
+  logging: {
+    incomingRequests: false,
+  },
   reactStrictMode: true,
   i18n: {
     locales: ["en"],
     defaultLocale: "en",
   },
-  serverExternalPackages: ["@cfb-picks/db"],
+  serverExternalPackages: ["@cfb-picks/db", "@cfb-picks/logging", "tslog"],
   webpack(config, { isServer, nextRuntime }) {
     if (isServer && nextRuntime === "nodejs" && Array.isArray(config.externals)) {
-      config.externals.push(/^@cfb-picks\/db(?:\/.*)?$/);
+      config.externals.push(/^@cfb-picks\/(?:db|logging)(?:\/.*)?$/);
     }
 
     return config;

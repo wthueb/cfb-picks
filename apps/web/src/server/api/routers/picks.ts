@@ -11,9 +11,12 @@ import { isGameLocked } from "@cfb-picks/lib/dates";
 import { isGameEligibleForPicks } from "@cfb-picks/lib/games";
 import { scorePick, scorePickByWagerAmount } from "@cfb-picks/lib/picks";
 import { aggregateTeamPerformance, rankTeamPerformance } from "@cfb-picks/lib/stats";
+import { getLogger } from "@cfb-picks/logging";
 
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+
+const logger = getLogger("cfb_picks.web.picks");
 
 const ZodPickNew = z.intersection(
   z.object({
@@ -111,6 +114,12 @@ export const picksRouter = createTRPCRouter({
       })),
     );
 
+    logger.debug("pick statistics generated", {
+      season: env.SEASON,
+      latest_week: latestWeek,
+      team_count: rankedTeams.length,
+      scored_pick_count: teams.reduce((count, team) => count + team.scoredPicks.length, 0),
+    });
     return { latestWeek, teams: rankedTeams };
   }),
 
@@ -197,6 +206,13 @@ export const picksRouter = createTRPCRouter({
 
       const weekGames = gamesForYear.filter((game) => game.week === selectedWeek);
 
+      logger.debug("weekly pick board generated", {
+        season: env.SEASON,
+        week: selectedWeek,
+        team_count: teamResults.length,
+        visible_pick_count: boardPicks.length,
+        game_count: gameResults.length,
+      });
       return {
         week: selectedWeek,
         allGamesLocked:
@@ -232,6 +248,11 @@ export const picksRouter = createTRPCRouter({
         }),
       );
 
+      logger.debug("team picks loaded", {
+        season: env.SEASON,
+        week: input.week,
+        pick_count: picksWithGames.length,
+      });
       return picksWithGames.sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime());
     }),
 
@@ -257,7 +278,12 @@ export const picksRouter = createTRPCRouter({
     }
 
     if (input.double && existingPicks.filter((p) => p.id !== id).some((p) => p.double)) {
-      console.error("Existing picks:", existingPicks);
+      logger.warning("double pick rejected", {
+        season: env.SEASON,
+        week: input.week,
+        team_id: teamId,
+        existing_pick_ids: existingPicks.map((pick) => pick.id),
+      });
       throw new Error("Cannot have more than one double pick per week");
     }
 
@@ -285,11 +311,22 @@ export const picksRouter = createTRPCRouter({
 
       const res = await ctx.db.insert(picks).values(newPick).returning();
 
-      if (res.length !== 1) {
+      const createdPick = res.length === 1 ? res[0] : undefined;
+      if (!createdPick) {
         throw new Error("Failed to create pick");
       }
 
-      return res[0];
+      logger.info("pick created", {
+        pick_id: createdPick.id,
+        team_id: teamId,
+        game_id: input.gameId,
+        season: env.SEASON,
+        week: input.week,
+        pick_type: input.pickType,
+        duration: input.duration,
+        double: input.double,
+      });
+      return createdPick;
     }
 
     const pick = existingPicks.find((p) => p.id === id);
@@ -316,6 +353,16 @@ export const picksRouter = createTRPCRouter({
       throw new Error("Pick not found or not authorized to edit");
     }
 
+    logger.info("pick updated", {
+      pick_id: id,
+      team_id: teamId,
+      game_id: input.gameId,
+      season: env.SEASON,
+      week: input.week,
+      pick_type: input.pickType,
+      duration: input.duration,
+      double: input.double,
+    });
     return res[0];
   }),
 
@@ -336,5 +383,13 @@ export const picksRouter = createTRPCRouter({
     if (res.rowsAffected === 0) {
       throw new Error("Pick not found or not authorized to delete");
     }
+
+    logger.info("pick deleted", {
+      pick_id: input,
+      team_id: pick.teamId,
+      game_id: pick.gameId,
+      season: pick.season,
+      week: pick.week,
+    });
   }),
 });

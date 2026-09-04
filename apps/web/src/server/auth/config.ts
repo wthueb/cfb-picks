@@ -8,8 +8,11 @@ import GoogleProvider from "next-auth/providers/google";
 
 import { db } from "@cfb-picks/db/client";
 import { accounts, sessions, teams, users, verificationTokens } from "@cfb-picks/db/schema";
+import { getLogger } from "@cfb-picks/logging";
 
 import { env } from "~/env";
+
+const logger = getLogger("cfb_picks.web.auth");
 
 type SessionUser = NonNullable<DefaultSession["user"]> & {
   id: string;
@@ -48,6 +51,17 @@ const authConfig: NextAuthOptions = {
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
   }),
+  logger: {
+    debug(code, metadata) {
+      logger.debug("authentication diagnostic", { auth_code: code, auth_metadata: metadata });
+    },
+    warn(code) {
+      logger.warning("authentication warning", { auth_code: code });
+    },
+    error(code, metadata) {
+      logger.error("authentication error", { auth_code: code, error: metadata });
+    },
+  },
   callbacks: {
     async signIn({ user }) {
       const dbUser = await db
@@ -57,12 +71,17 @@ const authConfig: NextAuthOptions = {
         .get();
 
       if (!dbUser) {
-        console.warn(
-          `User with email ${user.email} tried to sign in but does not exist in the db.`,
-        );
+        logger.warning("authentication sign in denied", {
+          email: user.email,
+          reason: "user_not_found",
+        });
         return false;
       }
 
+      logger.info("authentication sign in accepted", {
+        user_id: dbUser.id,
+        team_id: dbUser.teamId,
+      });
       return true;
     },
 
@@ -73,13 +92,31 @@ const authConfig: NextAuthOptions = {
       const adapterUser = user as typeof user | undefined;
       const sessionToken = token as typeof token | undefined;
       const userId = adapterUser?.id ?? sessionToken?.sub;
-      if (!userId) throw new Error("Session has no user ID");
+      if (!userId) {
+        logger.error("authentication session user id missing");
+        throw new Error("Session has no user ID");
+      }
 
       const dbUser = await db.select().from(users).where(eq(users.id, userId)).get();
-      if (!dbUser) throw new Error(`User ${userId} does not exist`);
+      if (!dbUser) {
+        logger.error("authentication session user missing", { user_id: userId });
+        throw new Error(`User ${userId} does not exist`);
+      }
 
       const team = await db.select().from(teams).where(eq(teams.id, dbUser.teamId)).get();
-      if (!team) throw new Error(`User ${userId} has invalid teamId ${dbUser.teamId}`);
+      if (!team) {
+        logger.error("authentication session team missing", {
+          user_id: userId,
+          team_id: dbUser.teamId,
+        });
+        throw new Error(`User ${userId} has invalid teamId ${dbUser.teamId}`);
+      }
+
+      logger.debug("authentication session resolved", {
+        user_id: dbUser.id,
+        team_id: dbUser.teamId,
+        is_admin: dbUser.isAdmin,
+      });
 
       return {
         ...session,

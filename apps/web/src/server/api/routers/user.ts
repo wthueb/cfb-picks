@@ -3,9 +3,12 @@ import { eq } from "drizzle-orm";
 import z from "zod";
 
 import { users } from "@cfb-picks/db/schema";
+import { getLogger } from "@cfb-picks/logging";
 
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+
+const logger = getLogger("cfb_picks.web.user");
 
 function emailNotificationsAvailable() {
   return Boolean(env.SMTP_HOST && env.SMTP_PORT && env.EMAIL_FROM);
@@ -21,9 +24,14 @@ export const userRouter = createTRPCRouter({
 
     if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 
+    const notificationsAvailable = emailNotificationsAvailable();
+    logger.debug("user preferences loaded", {
+      send_notifications: user.sendNotifications,
+      email_notifications_available: notificationsAvailable,
+    });
     return {
       sendNotifications: user.sendNotifications,
-      emailNotificationsAvailable: emailNotificationsAvailable(),
+      emailNotificationsAvailable: notificationsAvailable,
     };
   }),
 
@@ -46,6 +54,9 @@ export const userRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       }
 
+      logger.info("user preferences updated", {
+        send_notifications: input.sendNotifications,
+      });
       return { sendNotifications: input.sendNotifications };
     }),
 });

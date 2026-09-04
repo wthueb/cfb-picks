@@ -19,6 +19,7 @@
     "@cfb-picks/cfbd": "workspace:*",
     "@cfb-picks/db": "workspace:*",
     "@cfb-picks/lib": "workspace:*",
+    "@cfb-picks/logging": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "date-fns": "catalog:",
     "date-fns-tz": "catalog:",

@@ -1,5 +1,5 @@
 {
-  "name": "@cfb-picks/cfbd",
+  "name": "@cfb-picks/logging",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -10,37 +10,27 @@
     ".": {
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./env": {
-      "default": "./dist/env.js",
-      "types": "./dist/env.d.ts"
     }
   },
   "scripts": {
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
+    "test": "pnpm build && node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "tslog": "catalog:"
+  },
   "devDependencies": {
-    "@cfb-picks/eslint-config": "workspace:*",
+    "@cfb-picks/eslint-config": "link:../../tooling/eslint",
     "@cfb-picks/prettier-config": "workspace:*",
     "@cfb-picks/tsconfig": "workspace:*",
-    "@types/async-lock": "^1.4.2",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@cfb-picks/prettier-config",
-  "dependencies": {
-    "@cfb-picks/logging": "workspace:*",
-    "@t3-oss/env-core": "catalog:",
-    "async-lock": "^1.4.1",
-    "cfbd": "^5.24.0",
-    "redis": "catalog:",
-    "zod": "catalog:"
-  }
+  "prettier": "@cfb-picks/prettier-config"
 }

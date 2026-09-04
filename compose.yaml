@@ -8,6 +8,8 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=file:/config/cfb-picks.db
+      - LOG_FORMAT=${LOG_FORMAT:-logfmt}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
       - CFB_API_KEY=${CFB_API_KEY}
       - SEASON=${SEASON}
       - AUTH_SECRET=${AUTH_SECRET}
@@ -36,6 +38,8 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=file:/config/cfb-picks.db
+      - LOG_FORMAT=${LOG_FORMAT:-logfmt}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
       - CFB_API_KEY=${CFB_API_KEY}
       - SEASON=${SEASON}
       - SMTP_HOST=${SMTP_HOST}

@@ -16,6 +16,8 @@ COPY --from=builder /app/out/json/ .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/cache pnpm install --store-dir=/pnpm/cache --prefer-offline --frozen-lockfile
 COPY --from=builder /app/out/full/ .
 RUN PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN=false SKIP_ENV_VALIDATION=1 DATABASE_URL=file:./fake-db-just-for-build.sqlite turbo build --env-mode loose
+RUN mkdir -p apps/web/.next/standalone/node_modules/@cfb-picks \
+  && ln -s ../../packages/logging apps/web/.next/standalone/node_modules/@cfb-picks/logging
 
 FROM gcr.io/distroless/nodejs24-debian13 AS runner
 WORKDIR /app

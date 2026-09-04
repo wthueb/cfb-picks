@@ -1,8 +1,12 @@
 import { and, gte, lt, sql } from "drizzle-orm";
 
+import { getLogger } from "@cfb-picks/logging";
+
 import { db } from "./client.js";
 import { picks, teams, users } from "./schema.js";
 import { historicalPicks } from "./seed-data.js";
+
+const logger = getLogger("cfb_picks.db.seed");
 
 const developmentUsers = [
   {
@@ -68,6 +72,9 @@ const developmentUsers = [
 ];
 
 export async function seedDevelopmentDatabase(season: number) {
+  const startedAt = Date.now();
+  logger.info("development database seed started", { season });
+
   await db
     .insert(teams)
     .values([
@@ -148,4 +155,12 @@ export async function seedDevelopmentDatabase(season: number) {
         },
       });
   }
+
+  logger.info("development database seed completed", {
+    duration_ms: Date.now() - startedAt,
+    season,
+    team_count: 3,
+    user_count: developmentUsers.length,
+    pick_count: pickValues.length,
+  });
 }

@@ -85,21 +85,9 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
         <CardAction className="flex items-center gap-2">
           {actionType === ActionType.Locked && <Locked />}
           {actionType === ActionType.InProgress && <InProgress />}
-          {actionType === ActionType.Win && (
-            <span aria-label="Pick won" role="img">
-              <Check className="text-primary-foreground" aria-hidden="true" />
-            </span>
-          )}
-          {actionType === ActionType.Loss && (
-            <span aria-label="Pick lost" role="img">
-              <X className="text-destructive" aria-hidden="true" />
-            </span>
-          )}
-          {actionType === ActionType.Push && (
-            <span aria-label="Pick pushed" role="img">
-              <Minus aria-hidden="true" />
-            </span>
-          )}
+          {(actionType === ActionType.Win ||
+            actionType === ActionType.Loss ||
+            actionType === ActionType.Push) && <PickResultIndicator pick={pick} />}
           {(actionType === ActionType.EditDelete || session.data?.user.isAdmin) && (
             <div>
               <AddPickDialog pick={pick} week={pick.week}>
@@ -127,6 +115,36 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
       )}
     </Card>
   );
+}
+
+export function PickResultIndicator(props: { pick: PickWithGame }) {
+  const result = getPickResult(props.pick, props.pick.game);
+
+  if (result === PickResult.Win) {
+    return (
+      <span aria-label="Pick won" role="img">
+        <Check className="text-primary-foreground" aria-hidden="true" />
+      </span>
+    );
+  }
+
+  if (result === PickResult.Loss) {
+    return (
+      <span aria-label="Pick lost" role="img">
+        <X className="text-destructive" aria-hidden="true" />
+      </span>
+    );
+  }
+
+  if (result === PickResult.Push) {
+    return (
+      <span aria-label="Pick pushed" role="img">
+        <Minus aria-hidden="true" />
+      </span>
+    );
+  }
+
+  return null;
 }
 
 function DeleteButton(props: { pickId: number; pickNumber: number }) {

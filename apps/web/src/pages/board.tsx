@@ -4,7 +4,7 @@ import { LayoutList, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import type { RouterOutputs } from "~/utils/api";
-import { formatPick, PickCard } from "~/components/pick-card";
+import { formatPick, PickCard, PickResultIndicator } from "~/components/pick-card";
 import { Select } from "~/components/select";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
@@ -219,7 +219,10 @@ function GameBoard(props: { data: BoardData; onSelectTeam: (teamId: number) => v
                       </button>
                       <p className="text-sm">{formatPick(pick)}</p>
                     </div>
-                    <InsightBadge insight={entry.insight} />
+                    <div className="flex items-center gap-3">
+                      <InsightBadge insight={entry.insight} />
+                      <PickResultIndicator pick={pick} />
+                    </div>
                   </li>
                 );
               })}

@@ -172,7 +172,8 @@ function buildOutputRecord(
 ): Record<string, unknown> {
   const metadata = record[settings.meta.property] as unknown as Record<string, unknown>;
   const path = metadata.path as
-    { fileLine?: string; fileName?: string; method?: string } | undefined;
+    | { fileLine?: string; fileName?: string; method?: string }
+    | undefined;
   const timestamp = state.options.timestamp?.() ?? (metadata.date as Date);
   const output: Record<string, unknown> = {
     ts: formatTimestamp(timestamp),

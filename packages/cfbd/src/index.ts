@@ -1,16 +1,17 @@
-import type { GetCalendarResponse, GetGamesResponse, GetLinesResponse } from "cfbd";
+import type { GetCalendarResponse, GetGamesResponse, GetLinesResponse, UserInfo } from "cfbd";
 import AsyncLock from "async-lock";
-import { client, getCalendar, getGames, getLines } from "cfbd";
+import { client, getUserInfo as fetchUserInfo, getCalendar, getGames, getLines } from "cfbd";
 
 import { getLogger } from "@cfb-picks/logging";
 
-import { getCached, setCached } from "./cache.js";
+import { getCachedOrRefresh } from "./cache.js";
 import { env } from "./env.js";
 
 export type { DivisionClassification } from "cfbd";
 
 const lock = new AsyncLock();
 const logger = getLogger("cfb_picks.cfbd.client");
+const requestTimeoutMs = 30 * 1000;
 
 export type Game = Omit<GetGamesResponse[number], "startDate"> & {
   startDate: Date;
@@ -32,32 +33,32 @@ function parseGame(game: GetGamesResponse[number]): Game {
 
 export async function getGamesForYear(year: number) {
   return await lock.acquire("getGamesForYear", async () => {
-    const cacheKey = `cfb-games-${year}`;
-    const cached = await getCached(cacheKey);
+    const cached = await getCachedOrRefresh(`cfb-games-${year}`, 60 * 5, async () => {
+      const startedAt = Date.now();
+      logger.info("cfbd games request started", { year });
+      const res = await getGames({
+        query: { year },
+        signal: AbortSignal.timeout(requestTimeoutMs),
+      });
 
-    if (cached !== null) return (JSON.parse(cached) as GetGamesResponse).map(parseGame);
+      if (!res.data) {
+        logger.error("cfbd games request failed", {
+          year,
+          duration_ms: Date.now() - startedAt,
+          error: res.error,
+        });
+        throw new Error("Error fetching CFB games");
+      }
 
-    const startedAt = Date.now();
-    logger.info("cfbd games request started", { year });
-    const res = await getGames({ query: { year } });
-
-    if (!res.data) {
-      logger.error("cfbd games request failed", {
+      logger.info("cfbd games request completed", {
         year,
         duration_ms: Date.now() - startedAt,
-        error: res.error,
+        game_count: res.data.length,
       });
-      throw new Error("Error fetching CFB games");
-    }
-
-    await setCached(cacheKey, JSON.stringify(res.data), 60 * 5);
-    logger.info("cfbd games request completed", {
-      year,
-      duration_ms: Date.now() - startedAt,
-      game_count: res.data.length,
+      return JSON.stringify(res.data);
     });
 
-    return res.data.map(parseGame);
+    return (JSON.parse(cached) as GetGamesResponse).map(parseGame);
   });
 }
 
@@ -75,64 +76,87 @@ export async function getGameById(id: number) {
 
 export async function getLinesForYear(year: number) {
   return await lock.acquire("getLinesForYear", async () => {
-    const cacheKey = `cfb-lines-${year}`;
-    const cached = await getCached(cacheKey);
+    const cached = await getCachedOrRefresh(`cfb-lines-${year}`, 60 * 30, async () => {
+      const startedAt = Date.now();
+      logger.info("cfbd lines request started", { year });
+      const res = await getLines({
+        query: { year },
+        signal: AbortSignal.timeout(requestTimeoutMs),
+      });
 
-    if (cached !== null) {
-      return JSON.parse(cached) as GetLinesResponse;
-    }
+      if (!res.data) {
+        logger.error("cfbd lines request failed", {
+          year,
+          duration_ms: Date.now() - startedAt,
+          error: res.error,
+        });
+        throw new Error("Error fetching CFB lines");
+      }
 
-    const startedAt = Date.now();
-    logger.info("cfbd lines request started", { year });
-    const res = await getLines({ query: { year } });
-
-    if (!res.data) {
-      logger.error("cfbd lines request failed", {
+      logger.info("cfbd lines request completed", {
         year,
         duration_ms: Date.now() - startedAt,
-        error: res.error,
+        line_count: res.data.length,
       });
-      throw new Error("Error fetching CFB lines");
-    }
-
-    await setCached(cacheKey, JSON.stringify(res.data), 60 * 30);
-    logger.info("cfbd lines request completed", {
-      year,
-      duration_ms: Date.now() - startedAt,
-      line_count: res.data.length,
+      return JSON.stringify(res.data);
     });
 
-    return res.data;
+    return JSON.parse(cached) as GetLinesResponse;
   });
 }
 
 export async function getCalendarForYear(year: number) {
   return await lock.acquire("getCalendarForYear", async () => {
-    const cacheKey = `cfb-calendar-${year}`;
-    const cached = await getCached(cacheKey);
+    const cached = await getCachedOrRefresh(`cfb-calendar-${year}`, 60 * 60 * 6, async () => {
+      const startedAt = Date.now();
+      logger.info("cfbd calendar request started", { year });
+      const res = await getCalendar({
+        query: { year },
+        signal: AbortSignal.timeout(requestTimeoutMs),
+      });
 
-    if (cached !== null) return JSON.parse(cached) as GetCalendarResponse;
+      if (!res.data) {
+        logger.error("cfbd calendar request failed", {
+          year,
+          duration_ms: Date.now() - startedAt,
+          error: res.error,
+        });
+        throw new Error("Error fetching CFB calendar");
+      }
 
-    const startedAt = Date.now();
-    logger.info("cfbd calendar request started", { year });
-    const res = await getCalendar({ query: { year } });
-
-    if (!res.data) {
-      logger.error("cfbd calendar request failed", {
+      logger.info("cfbd calendar request completed", {
         year,
         duration_ms: Date.now() - startedAt,
-        error: res.error,
+        week_count: res.data.length,
       });
-      throw new Error("Error fetching CFB calendar");
-    }
-
-    await setCached(cacheKey, JSON.stringify(res.data), 60 * 60 * 6);
-    logger.info("cfbd calendar request completed", {
-      year,
-      duration_ms: Date.now() - startedAt,
-      week_count: res.data.length,
+      return JSON.stringify(res.data);
     });
 
-    return res.data;
+    return JSON.parse(cached) as GetCalendarResponse;
+  });
+}
+
+export async function getApiUserInfo() {
+  return await lock.acquire("getApiUserInfo", async () => {
+    const cached = await getCachedOrRefresh("cfb-user-info", 60 * 60 * 23, async () => {
+      const startedAt = Date.now();
+      logger.info("cfbd user info request started");
+      const res = await fetchUserInfo({ signal: AbortSignal.timeout(requestTimeoutMs) });
+
+      if (!res.data) {
+        logger.error("cfbd user info request failed", {
+          duration_ms: Date.now() - startedAt,
+          error: res.error,
+        });
+        throw new Error("Error fetching CFBD user info");
+      }
+
+      logger.info("cfbd user info request completed", {
+        duration_ms: Date.now() - startedAt,
+      });
+      return JSON.stringify(res.data);
+    });
+
+    return JSON.parse(cached) as UserInfo;
   });
 }

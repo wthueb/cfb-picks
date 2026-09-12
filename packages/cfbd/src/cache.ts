@@ -1,5 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { setTimeout } from "node:timers/promises";
 import { createClient } from "redis";
 
 import { getLogger } from "@cfb-picks/logging";
@@ -8,7 +10,10 @@ import { env } from "./env.js";
 
 const logger = getLogger("cfb_picks.cfbd.cache");
 
-const developmentCacheKey = /^cfb-(games|lines|calendar)-\d+$/;
+const refreshLockTtlMs = 2 * 60 * 1000;
+const refreshWaitTimeoutMs = refreshLockTtlMs + 5000;
+const refreshWaitIntervalMs = 100;
+const developmentCacheKey = /^cfb-(?:(games|lines|calendar)-\d+|user-info)$/;
 const developmentDataDirectories = [
   resolve(process.cwd(), "packages/cfbd/test-data"),
   resolve(process.cwd(), "../../packages/cfbd/test-data"),
@@ -84,4 +89,69 @@ export async function setCached(key: string, value: string, ttlSeconds: number) 
     },
   });
   logger.debug("cfbd cache entry stored", { cache_key: key, ttl_seconds: ttlSeconds });
+}
+
+async function releaseRefreshLock(lockKey: string, token: string) {
+  try {
+    await getClient().eval(
+      'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end',
+      { keys: [lockKey], arguments: [token] },
+    );
+  } catch (error) {
+    logger.warning("cfbd cache refresh lock release failed", {
+      lock_key: lockKey,
+      error,
+    });
+  }
+}
+
+export async function getCachedOrRefresh(
+  key: string,
+  ttlSeconds: number,
+  refresh: () => Promise<string>,
+) {
+  const cached = await getCached(key);
+  if (cached !== null) return cached;
+
+  const redis = getClient();
+  const lockKey = `${key}:refresh-lock`;
+  const deadline = Date.now() + refreshWaitTimeoutMs;
+
+  while (Date.now() < deadline) {
+    const token = randomUUID();
+    const acquired = await redis.set(lockKey, token, {
+      condition: "NX",
+      expiration: {
+        type: "PX",
+        value: refreshLockTtlMs,
+      },
+    });
+
+    if (acquired) {
+      logger.debug("cfbd cache refresh lock acquired", { cache_key: key });
+      try {
+        const refreshedWhileAcquiring = await redis.get(key);
+        if (refreshedWhileAcquiring !== null) return refreshedWhileAcquiring;
+
+        const value = await refresh();
+        await setCached(key, value, ttlSeconds);
+        return value;
+      } finally {
+        await releaseRefreshLock(lockKey, token);
+      }
+    }
+
+    await setTimeout(refreshWaitIntervalMs);
+    const refreshed = await redis.get(key);
+    if (refreshed !== null) {
+      logger.debug("cfbd cache filled by refresh lock owner", { cache_key: key });
+      return refreshed;
+    }
+  }
+
+  logger.error("cfbd cache refresh lock wait timed out", {
+    cache_key: key,
+    timeout_ms: refreshWaitTimeoutMs,
+  });
+  throw new Error(`Timed out waiting for CFBD cache refresh: ${key}`);
 }

@@ -135,13 +135,15 @@ export const picksRouter = createTRPCRouter({
         },
       });
 
+      const gamesForYear = await getGamesForYear(env.SEASON);
+      const gamesById = new Map(gamesForYear.map((game) => [game.id, game] as const));
       const visiblePicks = [];
 
       for (const { picks: teamPicks, ...team } of res) {
         if (env.NODE_ENV === "production" && team.id === 1) continue;
 
         for (const pick of teamPicks.map((p) => asTypedPick(p))) {
-          const game = await getGameById(pick.gameId);
+          const game = gamesById.get(pick.gameId);
           if (!game) throw new Error(`Game not found for gameId ${pick.gameId}`);
 
           const revealed = ctx.session.user.isAdmin || isGameLocked(game.startDate);
@@ -154,7 +156,6 @@ export const picksRouter = createTRPCRouter({
 
       const latestVisibleWeek = Math.max(0, ...visiblePicks.map((entry) => entry.pick.week));
       const week = input.week ?? (latestVisibleWeek || undefined);
-      const gamesForYear = await getGamesForYear(env.SEASON);
       const currentWeek =
         gamesForYear
           .filter((game) => !game.completed)

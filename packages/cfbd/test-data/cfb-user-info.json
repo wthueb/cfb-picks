@@ -1,0 +1,17 @@
+{
+  "patronLevel": 2,
+  "tierName": "Tier 2",
+  "monthlyLimit": 30000,
+  "remainingCalls": 24000,
+  "usedCalls": 6000,
+  "resetAt": "2026-10-01T00:00:00.000Z",
+  "sharedPool": true,
+  "products": ["cfb"],
+  "features": {
+    "adjustedMetrics": true,
+    "weather": true,
+    "scoreboard": true,
+    "livePlayByPlay": true,
+    "graphQl": false
+  }
+}

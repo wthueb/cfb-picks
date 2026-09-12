@@ -5,7 +5,7 @@ import { render } from "react-email";
 import type { Game } from "@cfb-picks/cfbd";
 import type { InferSelectModel } from "@cfb-picks/db";
 import type { CFBPick, teams } from "@cfb-picks/db/schema";
-import { getGamesForYear } from "@cfb-picks/cfbd";
+import { getApiUserInfo, getGamesForYear } from "@cfb-picks/cfbd";
 import { db } from "@cfb-picks/db/client";
 import { pickNotifications } from "@cfb-picks/db/schema";
 import { isGameLocked } from "@cfb-picks/lib/dates";
@@ -16,6 +16,24 @@ import { env } from "./env.js";
 
 const logger = getLogger("cfb_picks.notifier");
 const pollIntervalMs = 1000 * 60;
+const quotaPollIntervalMs = 1000 * 60 * 60 * 24;
+const quotaPollRetryIntervalMs = 1000 * 60 * 15;
+
+async function pollApiQuota() {
+  const userInfo = await getApiUserInfo();
+  const remainingRatio =
+    userInfo.monthlyLimit && userInfo.remainingCalls !== null
+      ? userInfo.remainingCalls / userInfo.monthlyLimit
+      : null;
+
+  logger.info("cfbd api quota checked", {
+    used_calls: userInfo.usedCalls,
+    remaining_calls: userInfo.remainingCalls,
+    monthly_limit: userInfo.monthlyLimit,
+    remaining_ratio: remainingRatio,
+    reset_at: userInfo.resetAt,
+  });
+}
 
 async function pollForNotifications(transporter: Transporter): Promise<void> {
   const startedAt = Date.now();
@@ -149,6 +167,8 @@ async function main(): Promise<void> {
     smtp_host: env.SMTP_HOST,
     smtp_port: env.SMTP_PORT,
     poll_interval_ms: pollIntervalMs,
+    quota_poll_interval_ms: quotaPollIntervalMs,
+    quota_poll_retry_interval_ms: quotaPollRetryIntervalMs,
   });
 
   const transporter = nodemailer.createTransport({
@@ -166,7 +186,22 @@ async function main(): Promise<void> {
     smtp_port: env.SMTP_PORT,
   });
 
+  let nextQuotaPollAt = 0;
+
   while (true) {
+    if (env.NODE_ENV === "production" && Date.now() >= nextQuotaPollAt) {
+      try {
+        await pollApiQuota();
+        nextQuotaPollAt = Date.now() + quotaPollIntervalMs;
+      } catch (error) {
+        nextQuotaPollAt = Date.now() + quotaPollRetryIntervalMs;
+        logger.error("cfbd api quota poll failed", {
+          retry_in_ms: quotaPollRetryIntervalMs,
+          error,
+        });
+      }
+    }
+
     await pollForNotifications(transporter);
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
   }

@@ -12,6 +12,7 @@ export type { DivisionClassification } from "cfbd";
 const lock = new AsyncLock();
 const logger = getLogger("cfb_picks.cfbd.client");
 const requestTimeoutMs = 30 * 1000;
+export const gameScheduleCacheTtlSeconds = 60 * 60 * 6;
 
 export type Game = Omit<GetGamesResponse[number], "startDate"> & {
   startDate: Date;
@@ -57,6 +58,20 @@ export async function getGamesForYear(year: number) {
       });
       return JSON.stringify(res.data);
     });
+
+    return (JSON.parse(cached) as GetGamesResponse).map(parseGame);
+  });
+}
+
+export async function getGameScheduleForYear(year: number) {
+  if (env.NODE_ENV === "development") return await getGamesForYear(year);
+
+  return await lock.acquire("getGameScheduleForYear", async () => {
+    const cached = await getCachedOrRefresh(
+      `cfb-game-schedule-${year}`,
+      gameScheduleCacheTtlSeconds,
+      async () => JSON.stringify(await getGamesForYear(year)),
+    );
 
     return (JSON.parse(cached) as GetGamesResponse).map(parseGame);
   });

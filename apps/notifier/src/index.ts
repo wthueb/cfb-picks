@@ -5,7 +5,11 @@ import { render } from "react-email";
 import type { Game } from "@cfb-picks/cfbd";
 import type { InferSelectModel } from "@cfb-picks/db";
 import type { CFBPick, teams } from "@cfb-picks/db/schema";
-import { getApiUserInfo, getGamesForYear } from "@cfb-picks/cfbd";
+import {
+  gameScheduleCacheTtlSeconds,
+  getApiUserInfo,
+  getGameScheduleForYear,
+} from "@cfb-picks/cfbd";
 import { db } from "@cfb-picks/db/client";
 import { pickNotifications } from "@cfb-picks/db/schema";
 import { isGameLocked } from "@cfb-picks/lib/dates";
@@ -15,9 +19,9 @@ import NotificationEmail from "../emails/notification.js";
 import { env } from "./env.js";
 
 const logger = getLogger("cfb_picks.notifier");
-const pollIntervalMs = 1000 * 60;
-const quotaPollIntervalMs = 1000 * 60 * 60 * 24;
-const quotaPollRetryIntervalMs = 1000 * 60 * 15;
+const pollIntervalMs = 1000 * 30; // 30sec
+const quotaPollIntervalMs = 1000 * 60 * 60 * 24; // 24hr
+const quotaPollRetryIntervalMs = 1000 * 60 * 15; // 15min
 
 async function pollApiQuota() {
   const userInfo = await getApiUserInfo();
@@ -54,7 +58,7 @@ async function pollForNotifications(transporter: Transporter): Promise<void> {
     .then((picks) => picks.filter((pick) => env.NODE_ENV !== "production" || pick.teamId !== 1));
 
   const gamesById = new Map(
-    (await getGamesForYear(env.SEASON)).map((game) => [game.id, game] as const),
+    (await getGameScheduleForYear(env.SEASON)).map((game) => [game.id, game] as const),
   );
   const missingGamePicks = picks.filter((pick) => !gamesById.has(pick.gameId));
 
@@ -167,6 +171,7 @@ async function main(): Promise<void> {
     smtp_host: env.SMTP_HOST,
     smtp_port: env.SMTP_PORT,
     poll_interval_ms: pollIntervalMs,
+    schedule_cache_ttl_ms: gameScheduleCacheTtlSeconds * 1000,
     quota_poll_interval_ms: quotaPollIntervalMs,
     quota_poll_retry_interval_ms: quotaPollRetryIntervalMs,
   });

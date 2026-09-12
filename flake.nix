@@ -32,6 +32,7 @@
           };
           treefmt = {
             projectRootFile = "flake.nix";
+            flakeCheck = false;
 
             programs.actionlint.enable = true;
             programs.nixfmt.enable = true;

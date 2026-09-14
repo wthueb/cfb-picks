@@ -1,6 +1,21 @@
 import type { Game } from "@cfb-picks/cfbd";
 import type { CFBPick } from "@cfb-picks/db/schema";
 
+export const WEEKLY_PICK_LIMIT = 5;
+
+export function isWeeklyDoubleMissingAfterSubmission(
+  existingPicks: readonly Pick<CFBPick, "id" | "double">[],
+  submission: { id: number | null; double: boolean },
+) {
+  const otherPicks = existingPicks.filter((pick) => pick.id !== submission.id);
+
+  return (
+    otherPicks.length + 1 === WEEKLY_PICK_LIMIT &&
+    !submission.double &&
+    !otherPicks.some((pick) => pick.double)
+  );
+}
+
 export enum PickResult {
   Win = "Win",
   Loss = "Loss",

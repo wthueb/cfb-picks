@@ -9,7 +9,12 @@ import { durations, overUnderPickTypes, picks, teamTotalPickTypes } from "@cfb-p
 import { classifyPickInsights } from "@cfb-picks/lib/board";
 import { isGameLocked } from "@cfb-picks/lib/dates";
 import { isGameEligibleForPicks } from "@cfb-picks/lib/games";
-import { scorePick, scorePickByWagerAmount } from "@cfb-picks/lib/picks";
+import {
+  isWeeklyDoubleMissingAfterSubmission,
+  scorePick,
+  scorePickByWagerAmount,
+  WEEKLY_PICK_LIMIT,
+} from "@cfb-picks/lib/picks";
 import { aggregateTeamPerformance, rankTeamPerformance } from "@cfb-picks/lib/stats";
 import { getLogger } from "@cfb-picks/logging";
 
@@ -269,24 +274,33 @@ export const picksRouter = createTRPCRouter({
       );
 
     const id = "id" in input ? input.id : null;
+    const existingPick = id ? existingPicks.find((pick) => pick.id === id) : undefined;
+
+    if (id && !existingPick) throw new Error("Pick not found or not authorized to edit");
 
     if (!id && input.pickType === "MONEYLINE") {
       throw new Error("Moneyline picks can no longer be created");
     }
 
-    if (!id && existingPicks.length >= 5) {
-      throw new Error("Already have 5 picks for this week");
+    if (!id && existingPicks.length >= WEEKLY_PICK_LIMIT) {
+      throw new Error(`Already have ${WEEKLY_PICK_LIMIT} picks for this week`);
     }
 
-    if (input.double && existingPicks.filter((p) => p.id !== id).some((p) => p.double)) {
-      logger.warning("double pick rejected", {
+    if (isWeeklyDoubleMissingAfterSubmission(existingPicks, { id, double: input.double })) {
+      logger.warning("pick rejected because weekly double is missing", {
         season: env.SEASON,
         week: input.week,
         team_id: teamId,
         existing_pick_ids: existingPicks.map((pick) => pick.id),
       });
-      throw new Error("Cannot have more than one double pick per week");
+      throw new Error(
+        id
+          ? "To change your double, edit another pick and select Double"
+          : "Select a double pick before submitting your fifth pick for this week",
+      );
     }
+
+    const existingDoublePick = existingPicks.find((pick) => pick.id !== id && pick.double);
 
     const game = await getGameById(input.gameId);
     if (!game) throw new Error(`Game not found for gameId ${input.gameId}`);
@@ -294,6 +308,16 @@ export const picksRouter = createTRPCRouter({
 
     if (!ctx.session.user.isAdmin && isGameLocked(new Date(game.startDate)))
       throw new Error("Cannot make a pick for a game that has already started");
+
+    if (input.double && existingDoublePick && !ctx.session.user.isAdmin) {
+      const existingDoubleGame = await getGameById(existingDoublePick.gameId);
+      if (!existingDoubleGame) {
+        throw new Error(`Game not found for gameId ${existingDoublePick.gameId}`);
+      }
+      if (isGameLocked(new Date(existingDoubleGame.startDate))) {
+        throw new Error("Cannot move the double from a locked pick");
+      }
+    }
 
     if (!id) {
       const newPick: InferInsertModel<typeof picks> = {
@@ -310,12 +334,18 @@ export const picksRouter = createTRPCRouter({
         cfbTeamId: "cfbTeamId" in input ? input.cfbTeamId : null,
       };
 
-      const res = await ctx.db.insert(picks).values(newPick).returning();
+      const createdPick = await ctx.db.transaction(async (tx) => {
+        if (input.double && existingDoublePick) {
+          await tx.update(picks).set({ double: false }).where(eq(picks.id, existingDoublePick.id));
+        }
 
-      const createdPick = res.length === 1 ? res[0] : undefined;
-      if (!createdPick) {
-        throw new Error("Failed to create pick");
-      }
+        const created = await tx.insert(picks).values(newPick).returning();
+        if (created.length !== 1 || !created[0]) {
+          throw new Error("Failed to create pick");
+        }
+
+        return created[0];
+      });
 
       logger.info("pick created", {
         pick_id: createdPick.id,
@@ -326,12 +356,10 @@ export const picksRouter = createTRPCRouter({
         pick_type: input.pickType,
         duration: input.duration,
         double: input.double,
+        previous_double_pick_id: existingDoublePick?.id,
       });
       return createdPick;
     }
-
-    const pick = existingPicks.find((p) => p.id === id);
-    if (!pick) throw new Error("Pick not found or not authorized to edit");
 
     const updatedPick: InferInsertModel<typeof picks> = {
       teamId,
@@ -348,11 +376,19 @@ export const picksRouter = createTRPCRouter({
       createdAt: new Date(),
     };
 
-    const res = await ctx.db.update(picks).set(updatedPick).where(eq(picks.id, id)).returning();
+    const res = await ctx.db.transaction(async (tx) => {
+      if (input.double && existingDoublePick) {
+        await tx.update(picks).set({ double: false }).where(eq(picks.id, existingDoublePick.id));
+      }
 
-    if (res.length !== 1) {
-      throw new Error("Pick not found or not authorized to edit");
-    }
+      const updated = await tx.update(picks).set(updatedPick).where(eq(picks.id, id)).returning();
+
+      if (updated.length !== 1) {
+        throw new Error("Pick not found or not authorized to edit");
+      }
+
+      return updated;
+    });
 
     logger.info("pick updated", {
       pick_id: id,
@@ -363,6 +399,7 @@ export const picksRouter = createTRPCRouter({
       pick_type: input.pickType,
       duration: input.duration,
       double: input.double,
+      previous_double_pick_id: existingDoublePick?.id,
     });
     return res[0];
   }),

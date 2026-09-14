@@ -2,6 +2,7 @@ import { useEffect, useId, useReducer, useState } from "react";
 
 import type { CFBPick, Duration, PickType } from "@cfb-picks/db/schema";
 import { durations, isTeamTotalPickType, pickTypes } from "@cfb-picks/db/schema";
+import { WEEKLY_PICK_LIMIT } from "@cfb-picks/lib/picks";
 
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
@@ -106,9 +107,15 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
   const games = api.cfb.games.useQuery({ week: props.week });
 
   const picks = api.picks.selfPicks.useQuery({ week: props.week });
-  const canDouble = picks.data
-    ? !picks.data.filter((p) => p.id !== props.pick?.id).some((pick) => pick.double)
-    : false;
+  const otherDoublePick = picks.data?.find((pick) => pick.id !== props.pick?.id && pick.double);
+  const mustKeepCurrentDouble =
+    props.pick?.double === true && picks.data?.length === WEEKLY_PICK_LIMIT;
+  const canDouble = picks.data !== undefined && !mustKeepCurrentDouble;
+  const doubleTooltip = mustKeepCurrentDouble
+    ? "To change your double, edit another pick and select Double"
+    : otherDoublePick
+      ? "Selecting this will move the double from your current double pick"
+      : null;
 
   const utils = api.useUtils();
 
@@ -414,11 +421,9 @@ export function AddPickDialog(props: { pick?: CFBPick; week: number; children: R
                     />
                   </div>
                 </TooltipTrigger>
-                {!canDouble && (
+                {doubleTooltip && (
                   <TooltipContent side="top" className="bg-accent">
-                    <p className="text-accent-foreground text-sm">
-                      Already made a double pick this week
-                    </p>
+                    <p className="text-accent-foreground text-sm">{doubleTooltip}</p>
                   </TooltipContent>
                 )}
               </Tooltip>

@@ -207,6 +207,7 @@ function GameBoard(props: { data: BoardData; onSelectTeam: (teamId: number) => v
                 return (
                   <li
                     key={entry.pick.id}
+                    data-id={entry.pick.id}
                     className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
                   >
                     <div>

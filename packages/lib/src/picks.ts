@@ -22,26 +22,32 @@ export enum PickResult {
   Push = "Push",
 }
 
+function getGameScores(pick: CFBPick, game: Game): [home: number, away: number] | null {
+  if (pick.duration === "FULL") {
+    return game.homePoints === null || game.awayPoints === null
+      ? null
+      : [game.homePoints, game.awayPoints];
+  }
+
+  const requiredPeriods = pick.duration === "1Q" ? 1 : 2;
+  const homeScores = game.homeLineScores?.slice(0, requiredPeriods);
+  const awayScores = game.awayLineScores?.slice(0, requiredPeriods);
+
+  if (homeScores?.length !== requiredPeriods || awayScores?.length !== requiredPeriods) return null;
+
+  return [
+    homeScores.reduce((total, score) => total + score, 0),
+    awayScores.reduce((total, score) => total + score, 0),
+  ];
+}
+
 export function getPickResult(pick: CFBPick, game: Game): PickResult | null {
   if (!game.completed) return null;
   if (game.id === 401767135 && pick.duration === "FULL") return PickResult.Push;
 
-  const homeLineScores = game.homeLineScores ?? [0, 0, 0, 0];
-  const awayLineScores = game.awayLineScores ?? [0, 0, 0, 0];
-
-  const homeScore =
-    (pick.duration === "1Q"
-      ? homeLineScores[0]
-      : pick.duration === "1H" && homeLineScores[0] !== undefined && homeLineScores[1] !== undefined
-        ? homeLineScores[0] + homeLineScores[1]
-        : game.homePoints) ?? 0;
-
-  const awayScore =
-    (pick.duration === "1Q"
-      ? awayLineScores[0]
-      : pick.duration === "1H" && awayLineScores[0] !== undefined && awayLineScores[1] !== undefined
-        ? awayLineScores[0] + awayLineScores[1]
-        : game.awayPoints) ?? 0;
+  const scores = getGameScores(pick, game);
+  if (!scores) return null;
+  const [homeScore, awayScore] = scores;
 
   if (pick.pickType === "SPREAD") {
     const teamScore = game.homeId === pick.cfbTeamId ? homeScore : awayScore;

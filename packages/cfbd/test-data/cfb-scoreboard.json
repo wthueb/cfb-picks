@@ -1,0 +1,51 @@
+[
+  {
+    "id": 401756888,
+    "startDate": "2026-09-12T01:00:00.000Z",
+    "startTimeTBD": false,
+    "tv": "ESPN",
+    "neutralSite": false,
+    "conferenceGame": false,
+    "status": "in_progress",
+    "period": 3,
+    "clock": "08:42",
+    "situation": "2nd & 7",
+    "possession": "Example State",
+    "lastPlay": "Rush for 3 yards",
+    "venue": {
+      "state": "Example",
+      "city": "Example City",
+      "name": "Example Stadium"
+    },
+    "homeTeam": {
+      "winProbability": 0.62,
+      "lineScores": [7, 3, 7],
+      "points": 17,
+      "classification": "fbs",
+      "conference": "Example Conference",
+      "name": "Example State",
+      "id": 100
+    },
+    "awayTeam": {
+      "winProbability": 0.38,
+      "lineScores": [7, 0, 7],
+      "points": 14,
+      "classification": "fbs",
+      "conference": "Example Conference",
+      "name": "Example Tech",
+      "id": 200
+    },
+    "weather": {
+      "windDirection": 180,
+      "windSpeed": 8,
+      "description": "Clear",
+      "temperature": 72
+    },
+    "betting": {
+      "awayMoneyline": 130,
+      "homeMoneyline": -150,
+      "overUnder": 48.5,
+      "spread": -3.5
+    }
+  }
+]

@@ -4,7 +4,7 @@ import z from "zod";
 
 import type { CFBPick } from "@cfb-picks/db/schema";
 import type { PickInsight } from "@cfb-picks/lib/board";
-import { getGameById, getGamesForYear } from "@cfb-picks/cfbd";
+import { getGameById, getGamesForYear, getGamesWithLiveScores } from "@cfb-picks/cfbd";
 import { durations, overUnderPickTypes, picks, teamTotalPickTypes } from "@cfb-picks/db/schema";
 import { classifyPickInsights } from "@cfb-picks/lib/board";
 import { isGameLocked } from "@cfb-picks/lib/dates";
@@ -166,7 +166,17 @@ export const picksRouter = createTRPCRouter({
           .filter((game) => !game.completed)
           .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0]?.week ?? 1;
       const selectedWeek = week ?? currentWeek;
-      const weekPicks = visiblePicks.filter((entry) => entry.pick.week === selectedWeek);
+      const selectedWeekPicks = visiblePicks.filter((entry) => entry.pick.week === selectedWeek);
+      const uniqueGames = Array.from(
+        new Map(selectedWeekPicks.map((entry) => [entry.game.id, entry.game] as const)).values(),
+      );
+      const liveGamesById = new Map(
+        (await getGamesWithLiveScores(uniqueGames)).map((game) => [game.id, game] as const),
+      );
+      const weekPicks = selectedWeekPicks.map((entry) => ({
+        ...entry,
+        game: liveGamesById.get(entry.game.id) ?? entry.game,
+      }));
       const classified = classifyPickInsights(
         weekPicks.filter((entry) => entry.revealed).map((entry) => ({ pick: entry.pick })),
       );
@@ -253,13 +263,22 @@ export const picksRouter = createTRPCRouter({
           return { ...pick, game } satisfies PickWithGame;
         }),
       );
+      const liveGamesById = new Map(
+        (await getGamesWithLiveScores(picksWithGames.map((pick) => pick.game))).map(
+          (game) => [game.id, game] as const,
+        ),
+      );
+      const hydratedPicks = picksWithGames.map((pick) => ({
+        ...pick,
+        game: liveGamesById.get(pick.game.id) ?? pick.game,
+      }));
 
       logger.debug("team picks loaded", {
         season: env.SEASON,
         week: input.week,
         pick_count: picksWithGames.length,
       });
-      return picksWithGames.sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime());
+      return hydratedPicks.sort((a, b) => a.game.startDate.getTime() - b.game.startDate.getTime());
     }),
 
   makePick: protectedProcedure.input(ZodPick).mutation(async ({ input, ctx }) => {

@@ -13,7 +13,7 @@ const logger = getLogger("cfb_picks.cfbd.cache");
 const refreshLockTtlMs = 2 * 60 * 1000;
 const refreshWaitTimeoutMs = refreshLockTtlMs + 5000;
 const refreshWaitIntervalMs = 100;
-const developmentCacheKey = /^cfb-(?:(games|lines|calendar)-\d+|user-info)$/;
+const developmentCacheKey = /^cfb-(?:(games|lines|calendar)-\d+|scoreboard|user-info)$/;
 const developmentDataDirectories = [
   resolve(process.cwd(), "packages/cfbd/test-data"),
   resolve(process.cwd(), "../../packages/cfbd/test-data"),

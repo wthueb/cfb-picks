@@ -3,6 +3,8 @@ import { useRouter } from "next/router";
 import { LayoutList, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 
+import { formatGameScore } from "@cfb-picks/lib/games";
+
 import type { RouterOutputs } from "~/utils/api";
 import { formatPick, PickCard, PickResultIndicator } from "~/components/pick-card";
 import { Select } from "~/components/select";
@@ -183,54 +185,58 @@ function GameBoard(props: { data: BoardData; onSelectTeam: (teamId: number) => v
 
   return (
     <div className="space-y-4">
-      {props.data.games.map(({ game, picks }) => (
-        <Card key={game.id} className="gap-4">
-          <CardHeader>
-            <CardTitle className="text-primary-foreground">
-              {game.awayTeam} @ {game.homeTeam}
-            </CardTitle>
-            <CardDescription>
-              {game.startDate.toLocaleString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-              {game.completed && ` · Final ${game.awayPoints}-${game.homePoints}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="divide-y">
-              {picks.map((entry) => {
-                const pick = { ...entry.pick, game };
-                return (
-                  <li
-                    key={entry.pick.id}
-                    data-id={entry.pick.id}
-                    className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                  >
-                    <div>
-                      <button
-                        type="button"
-                        className="text-primary-foreground font-medium hover:underline"
-                        onClick={() => props.onSelectTeam(entry.team.id)}
-                      >
-                        {entry.team.name}
-                      </button>
-                      <p className="text-sm">{formatPick(pick)}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <InsightBadge insight={entry.insight} />
-                      <PickResultIndicator pick={pick} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </CardContent>
-        </Card>
-      ))}
+      {props.data.games.map(({ game, picks }) => {
+        const gameScore = formatGameScore(game);
+
+        return (
+          <Card key={game.id} className="gap-4">
+            <CardHeader>
+              <CardTitle className="text-primary-foreground">
+                {game.awayTeam} @ {game.homeTeam}
+              </CardTitle>
+              <CardDescription>
+                {game.startDate.toLocaleString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+                {gameScore && ` · ${gameScore}`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y">
+                {picks.map((entry) => {
+                  const pick = { ...entry.pick, game };
+                  return (
+                    <li
+                      key={entry.pick.id}
+                      data-id={entry.pick.id}
+                      className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                    >
+                      <div>
+                        <button
+                          type="button"
+                          className="text-primary-foreground font-medium hover:underline"
+                          onClick={() => props.onSelectTeam(entry.team.id)}
+                        >
+                          {entry.team.name}
+                        </button>
+                        <p className="text-sm">{formatPick(pick)}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <InsightBadge insight={entry.insight} />
+                        <PickResultIndicator pick={pick} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

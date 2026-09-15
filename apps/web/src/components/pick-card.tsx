@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 
 import { isTeamTotalPickType } from "@cfb-picks/db/schema";
 import { isGameLocked } from "@cfb-picks/lib/dates";
+import { formatGameScore } from "@cfb-picks/lib/games";
 import { getPickResult, PickResult } from "@cfb-picks/lib/picks";
 
 import type { PickWithGame } from "~/server/api/routers/picks";
@@ -46,6 +47,7 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
 
   const pickStatus = useMemo(() => getPickResult(pick, pick.game), [pick]);
   const gameLocked = useMemo(() => isGameLocked(pick.game.startDate, now), [pick, now]);
+  const gameScore = formatGameScore(pick.game, { includeTeamNames: true });
 
   enum ActionType {
     EditDelete,
@@ -103,14 +105,9 @@ export function PickCard(props: { pick: PickWithGame; num: number }) {
       <CardContent>
         <span>{formatPick(pick)}</span>
       </CardContent>
-      {/* we don't get live scores unless we use different endpoints */}
-      {pick.game.completed && (
+      {gameScore && (
         <CardFooter className="text-muted-foreground text-sm">
-          {/* maybe show quarterly scores? formatting to be concise would be tricky */}
-          <span>
-            {pick.game.awayTeam} {pick.game.awayPoints} - {pick.game.homePoints}{" "}
-            {pick.game.homeTeam}
-          </span>
+          <span>{gameScore}</span>
         </CardFooter>
       )}
     </Card>

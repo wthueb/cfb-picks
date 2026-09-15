@@ -1,11 +1,26 @@
-import type { GetCalendarResponse, GetGamesResponse, GetLinesResponse, UserInfo } from "cfbd";
+import type {
+  GameStatus,
+  GetCalendarResponse,
+  GetGamesResponse,
+  GetLinesResponse,
+  GetScoreboardResponse,
+  UserInfo,
+} from "cfbd";
 import AsyncLock from "async-lock";
-import { client, getUserInfo as fetchUserInfo, getCalendar, getGames, getLines } from "cfbd";
+import {
+  client,
+  getScoreboard as fetchScoreboard,
+  getUserInfo as fetchUserInfo,
+  getCalendar,
+  getGames,
+  getLines,
+} from "cfbd";
 
 import { getLogger } from "@cfb-picks/logging";
 
 import { getCachedOrRefresh } from "./cache.js";
 import { env } from "./env.js";
+import { hydrateGamesWithScoreboard } from "./scoreboard.js";
 
 export type { DivisionClassification } from "cfbd";
 
@@ -16,6 +31,9 @@ export const gameScheduleCacheTtlSeconds = 60 * 60 * 6;
 
 export type Game = Omit<GetGamesResponse[number], "startDate"> & {
   startDate: Date;
+  status?: GameStatus;
+  period?: number | null;
+  clock?: string | null;
 };
 
 if (env.NODE_ENV === "production") {
@@ -60,6 +78,44 @@ export async function getGamesForYear(year: number) {
     });
 
     return (JSON.parse(cached) as GetGamesResponse).map(parseGame);
+  });
+}
+
+async function getCurrentScoreboard() {
+  return await lock.acquire("getCurrentScoreboard", async () => {
+    const cached = await getCachedOrRefresh("cfb-scoreboard", 60, async () => {
+      const startedAt = Date.now();
+      logger.info("cfbd scoreboard request started");
+      const res = await fetchScoreboard({
+        query: { classification: "fbs" },
+        signal: AbortSignal.timeout(requestTimeoutMs),
+      });
+
+      if (!res.data) {
+        logger.error("cfbd scoreboard request failed", {
+          duration_ms: Date.now() - startedAt,
+          error: res.error,
+        });
+        throw new Error("Error fetching CFB scoreboard");
+      }
+
+      logger.info("cfbd scoreboard request completed", {
+        duration_ms: Date.now() - startedAt,
+        game_count: res.data.length,
+      });
+      return JSON.stringify(res.data);
+    });
+
+    return JSON.parse(cached) as GetScoreboardResponse;
+  });
+}
+
+export async function getGamesWithLiveScores(games: Game[]) {
+  return await hydrateGamesWithScoreboard(games, getCurrentScoreboard, new Date(), (error) => {
+    logger.warning("cfbd live score hydration failed", {
+      game_ids: games.map((game) => game.id),
+      error,
+    });
   });
 }
 

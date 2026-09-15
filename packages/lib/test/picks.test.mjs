@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { isWeeklyDoubleMissingAfterSubmission } from "../dist/picks.js";
+import { getPickResult, isWeeklyDoubleMissingAfterSubmission, PickResult } from "../dist/picks.js";
 
 function pick(id, double = false) {
   return { id, double };
@@ -62,4 +62,39 @@ test("prevents editing the only double out of a completed week", () => {
   const existingPicks = [pick(1), pick(2), pick(3, true), pick(4), pick(5)];
 
   assert.equal(isWeeklyDoubleMissingAfterSubmission(existingPicks, { id: 3, double: false }), true);
+});
+
+test("does not score completed picks when required score data is missing", () => {
+  const game = {
+    id: 1,
+    completed: true,
+    homePoints: null,
+    awayPoints: null,
+    homeLineScores: null,
+    awayLineScores: null,
+  };
+
+  assert.equal(getPickResult({ duration: "FULL" }, game), null);
+  assert.equal(getPickResult({ duration: "1Q" }, game), null);
+  assert.equal(
+    getPickResult({ duration: "1H" }, { ...game, homeLineScores: [7], awayLineScores: [3] }),
+    null,
+  );
+});
+
+test("scores completed picks when required score data is zero", () => {
+  assert.equal(
+    getPickResult(
+      { duration: "FULL", pickType: "UNDER", total: 1 },
+      {
+        id: 1,
+        completed: true,
+        homePoints: 0,
+        awayPoints: 0,
+        homeLineScores: [0],
+        awayLineScores: [0],
+      },
+    ),
+    PickResult.Win,
+  );
 });
